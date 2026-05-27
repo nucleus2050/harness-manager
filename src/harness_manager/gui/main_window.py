@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
         layout.setSpacing(12)
 
         copy = QVBoxLayout()
-        copy.setSpacing(4)
+        copy.setSpacing(7)
         title = self._label(asset.name, "ClientName")
         meta = self._label(
             f"类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}",
@@ -557,9 +557,10 @@ class MainWindow(QMainWindow):
         if selected and asset.type == "skill":
             description = self._label(
                 f"技能描述：{self._skill_description(asset)}",
-                "MutedText",
+                "SkillDescription",
             )
             description.setWordWrap(True)
+            description.setContentsMargins(0, 8, 0, 0)
             copy.addWidget(description)
         layout.addLayout(copy, 1)
 
@@ -593,7 +594,7 @@ class MainWindow(QMainWindow):
 
     def _asset_library_item_height(self, asset: Asset) -> int:
         if asset.id == self.selected_library_asset_id and asset.type == "skill":
-            return 132
+            return 148
         return 86
 
     def _skill_description(self, asset: Asset) -> str:

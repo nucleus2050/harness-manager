@@ -224,6 +224,12 @@ def build_stylesheet(theme: str = "light") -> str:
         font-size: 12px;
     }}
 
+    QLabel#SkillDescription {{
+        color: {tokens['muted']};
+        font-size: 12px;
+        line-height: 18px;
+    }}
+
     QLabel#StatValue {{
         color: {tokens['title']};
         font-size: 24px;

@@ -39,6 +39,8 @@ def test_stylesheet_has_client_cards_and_deploy_buttons():
     assert "QFrame#ClientCard" in stylesheet
     assert "QLabel#ClientName" in stylesheet
     assert "QLabel#ClientPath" in stylesheet
+    assert "QLabel#SkillDescription" in stylesheet
+    assert "line-height: 18px" in stylesheet
     assert "QPushButton#SourceDeleteButton" in stylesheet
     assert "font-size: 11px" in stylesheet
     assert "background: transparent" in stylesheet

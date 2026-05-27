@@ -290,6 +290,7 @@ def test_skill_library_item_expands_selected_skill_description():
     assert "itemClicked.connect" in source
     assert "_asset_library_item_height" in source
     assert "_skill_description" in source
+    assert '"SkillDescription"' in source
     assert "技能描述" in source
     assert "SKILL.md" in services_source
 
