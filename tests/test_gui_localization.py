@@ -42,3 +42,12 @@ def test_dialog_user_facing_text_is_chinese():
 
     for text in ["Cancel", "Create", "Import Offline Package", "All Files"]:
         assert text not in source
+
+
+def test_main_window_uses_harness_manager_terms():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    for text in ["Harness Manager", "Harness", "AGENTS.md", "MCP", "Skills"]:
+        assert text in source
+
+    assert "Skill Package Manager" not in source

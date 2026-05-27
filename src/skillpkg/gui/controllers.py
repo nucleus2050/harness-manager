@@ -10,6 +10,8 @@ from skillpkg.models import ClientConfig, ClientType, InstallStatus, Package, Sk
 from skillpkg.repositories import (
     ClientRepository,
     ImportSourceRepository,
+    AssetRepository,
+    HarnessRepository,
     PackageRepository,
     SkillRepository,
 )
@@ -24,6 +26,8 @@ class MainController:
         initialize_database(conn)
         self.clients = ClientRepository(conn)
         self.import_sources = ImportSourceRepository(conn)
+        self.harnesses = HarnessRepository(conn)
+        self.assets = AssetRepository(conn)
         self.skills = SkillRepository(conn)
         self.packages = PackageRepository(conn)
         self.service = SkillPkgService(self.paths, conn)
@@ -35,6 +39,16 @@ class MainController:
             for client_type, default_path in detected.items():
                 self.clients.set_default_path(client_type, default_path)
 
+
+    def create_harness(self, name: str, description: str = ""):
+        with transaction(self.conn):
+            return self.harnesses.create(name, description)
+
+    def list_harnesses(self):
+        return self.harnesses.list_harnesses()
+
+    def list_assets_by_type(self, asset_type: str):
+        return self.assets.list_by_type(asset_type)
     def list_clients(self) -> list[ClientConfig]:
         return self.clients.list_clients()
 
@@ -128,3 +142,4 @@ class MainController:
                     raise ValueError(f"No target path configured for {client.name}.")
                 return client.effective_path
         raise ValueError(f"Unknown client type: {client_type}")
+

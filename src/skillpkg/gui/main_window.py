@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         self.selected_custom_source_id: str | None = None
         self.current_view = "packages"
 
-        self.setWindowTitle("技能包管理器")
+        self.setWindowTitle("Harness Manager（技能包管理器）")
         self.resize(1240, 760)
         self.setMinimumSize(980, 620)
         self.setStyleSheet(build_stylesheet())
@@ -56,7 +56,9 @@ class MainWindow(QMainWindow):
         self.import_skill_button = self._button("选择客户端", "PrimaryButton")
         self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
         self.packages_view_button = self._button("软件包", "SegmentButtonChecked")
-        self.skills_view_button = self._button("技能库", "SegmentButton")
+        self.agents_view_button = self._button("AGENTS.md", "SegmentButton")
+        self.mcp_view_button = self._button("MCP", "SegmentButton")
+        self.skills_view_button = self._button("技能库 Skills", "SegmentButton")
         self.new_package_button = self._button("新建包", "PrimaryButton")
         self.import_archive_button = self._button("导入包", "CompactButton")
         self.export_archive_button = self._button("导出包", "CompactButton")
@@ -166,6 +168,8 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
         layout.addWidget(self.packages_view_button)
+        layout.addWidget(self.agents_view_button)
+        layout.addWidget(self.mcp_view_button)
         layout.addWidget(self.skills_view_button)
         layout.addStretch(1)
         return switch
@@ -179,7 +183,7 @@ class MainWindow(QMainWindow):
 
         copy = QVBoxLayout()
         copy.setSpacing(5)
-        copy.addWidget(self._label("技能包管理器", "PageTitle"))
+        copy.addWidget(self._label("Harness Manager（技能包管理器）", "PageTitle"))
         subtitle = self._label(
             "整理可复用技能集合，导出离线包，并部署到 Codex、Claude Code 或 OpenCode。",
             "MutedText",
@@ -251,7 +255,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 18, 20, 20)
         layout.setSpacing(12)
-        layout.addLayout(self._section_header("全部技能", "当前工具管理的所有技能，包含来源与内部 ID。"))
+        layout.addLayout(self._section_header("全部技能 Skills", "当前工具管理的所有技能，包含来源与内部 ID。"))
         layout.addWidget(self.library_skill_list, 1)
         return card
 
@@ -623,3 +627,4 @@ def run_app(argv: list[str] | None = None) -> int:
         return int(app.exec())
     finally:
         conn.close()
+
