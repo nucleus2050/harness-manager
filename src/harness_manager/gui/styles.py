@@ -226,8 +226,8 @@ def build_stylesheet(theme: str = "light") -> str:
 
     QLabel#SkillDescription {{
         color: {tokens['muted']};
-        font-size: 12px;
-        line-height: 18px;
+        font-size: 11px;
+        line-height: 16px;
     }}
 
     QLabel#StatValue {{

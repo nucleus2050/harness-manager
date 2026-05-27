@@ -292,6 +292,8 @@ def test_skill_library_item_shows_truncated_description_by_default():
     assert "_skill_description" in source
     assert "SKILL_DESCRIPTION_MAX_LENGTH" in source
     assert "_truncate_description" in source
+    assert "return 162" in source
+    assert "description.setContentsMargins(0, 2, 0, 0)" in source
     assert '"SkillDescription"' in source
     assert "技能描述" in source
     assert "SKILL.md" in services_source
