@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 if TYPE_CHECKING:
-    from skillpkg.models import Harness
+    from skillpkg.models import Asset, Harness
 
 
 def _dialog_stylesheet() -> str:
@@ -213,6 +213,51 @@ class _HarnessDialog(QDialog):
         return self.harnesses[row]
 
 
+class _AssetDialog(QDialog):
+    def __init__(self, parent: QWidget, assets: list["Asset"]) -> None:
+        super().__init__(parent)
+        self.assets = assets
+        self.setWindowTitle("选择组件")
+        self.setModal(True)
+        self.setMinimumWidth(520)
+        self.setStyleSheet(_dialog_stylesheet())
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 20, 22, 18)
+        layout.setSpacing(14)
+
+        title_label = QLabel("选择组件")
+        title_label.setObjectName("DialogTitle")
+        message = QLabel("请选择要加入任务套件的组件")
+        message.setObjectName("DialogMessage")
+        layout.addWidget(title_label)
+        layout.addWidget(message)
+
+        self.list_widget = QListWidget()
+        for asset in assets:
+            self.list_widget.addItem(f"{asset.name}\n{asset.type} - {asset.id}")
+        if assets:
+            self.list_widget.setCurrentRow(0)
+        layout.addWidget(self.list_widget)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton("取消")
+        confirm = QPushButton("继续")
+        confirm.setObjectName("PrimaryDialogButton")
+        cancel.clicked.connect(self.reject)
+        confirm.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(confirm)
+        layout.addLayout(buttons)
+
+    def selected_asset(self) -> "Asset | None":
+        row = self.list_widget.currentRow()
+        if row < 0 or row >= len(self.assets):
+            return None
+        return self.assets[row]
+
+
 class _HarnessDetailsDialog(QDialog):
     def __init__(
         self,
@@ -296,6 +341,13 @@ def choose_harness(parent: QWidget, harnesses: list["Harness"]) -> "Harness | No
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.selected_harness()
+
+
+def choose_asset(parent: QWidget, assets: list["Asset"]) -> "Asset | None":
+    dialog = _AssetDialog(parent, assets)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.selected_asset()
 
 
 def ask_harness_details(
