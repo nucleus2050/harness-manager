@@ -67,6 +67,7 @@ class MainWindow(QMainWindow):
         self.export_archive_button = self._button("导出套件", "CompactButton")
         self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
         self.add_mcp_button = self._button("添加 MCP", "CompactButton")
+        self.new_mcp_config_button = self._button("新建 MCP 配置", "PrimaryButton")
         self.add_skill_asset_button = self._button("添加技能", "CompactButton")
         self.install_codex_button = self._button("安装", "DeployInstallButton")
         self.uninstall_codex_button = self._button("卸载", "DeployUninstallButton")
@@ -286,6 +287,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(
             self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
         )
+        layout.addWidget(self.new_mcp_config_button)
         layout.addWidget(self.library_skill_list, 1)
         return card
 
@@ -315,6 +317,12 @@ class MainWindow(QMainWindow):
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
         layout.addWidget(add_button)
+
+        if asset.type == "mcp":
+            edit_button = self._button("编辑", "CompactButton")
+            edit_button.setMinimumWidth(76)
+            edit_button.clicked.connect(self._guard(lambda asset=asset: self._edit_mcp_config(asset)))
+            layout.addWidget(edit_button)
 
         remove_button = self._button("移出套件", "CompactButton")
         remove_button.setMinimumWidth(92)
@@ -441,6 +449,7 @@ class MainWindow(QMainWindow):
         self.edit_harness_button.clicked.connect(self._guard(self._edit_harness))
         self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
         self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
+        self.new_mcp_config_button.clicked.connect(self._guard(self._new_mcp_config))
         self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
@@ -522,6 +531,7 @@ class MainWindow(QMainWindow):
         self.agents_view_button.style().polish(self.agents_view_button)
         self.mcp_view_button.style().unpolish(self.mcp_view_button)
         self.mcp_view_button.style().polish(self.mcp_view_button)
+        self.new_mcp_config_button.setVisible(self.current_view == "mcp")
 
     def _refresh_asset_library(self, skills: list[Skill]) -> None:
         self.library_skill_list.clear()
@@ -741,6 +751,32 @@ class MainWindow(QMainWindow):
         self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
         dialogs.show_info(self, "添加完成", f"已将 {name} 加入任务套件。")
+
+    def _new_mcp_config(self) -> None:
+        details = dialogs.ask_mcp_config(self, "新建 MCP 配置")
+        if details is None:
+            return
+        title, display_name, mcp_kind, config_json = details
+        self.controller.create_mcp_config_asset(title, display_name, mcp_kind, config_json)
+        self.refresh()
+        dialogs.show_info(self, "保存完成", f"已保存 MCP 配置 {title}。")
+
+    def _edit_mcp_config(self, asset: Asset) -> None:
+        config_path = self.controller.paths.root / asset.relative_path
+        details = dialogs.ask_mcp_config(
+            self,
+            "编辑 MCP 配置",
+            asset.name,
+            asset.name,
+            "custom",
+            config_path.read_text(encoding="utf-8"),
+        )
+        if details is None:
+            return
+        title, display_name, mcp_kind, config_json = details
+        self.controller.update_mcp_config_asset(asset.id, title, display_name, mcp_kind, config_json)
+        self.refresh()
+        dialogs.show_info(self, "保存完成", f"已更新 MCP 配置 {title}。")
 
     def _add_first_skill_to_harness(self) -> None:
         skills = self.controller.list_assets_by_type("skill")

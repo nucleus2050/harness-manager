@@ -23,6 +23,17 @@ def test_main_window_has_skill_library_and_client_selection_text():
     assert "软件包" not in source
 
 
+def test_mcp_config_management_text_is_present():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+
+    for text in ["新建 MCP 配置", "编辑", "完整 JSON 配置", "格式化", "MCP 标题（唯一）"]:
+        assert text in source + dialog_source
+
+    assert "ask_mcp_config" in source
+    assert "McpConfigDialog" in dialog_source
+
+
 def test_main_window_tracks_selected_client():
     source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
 

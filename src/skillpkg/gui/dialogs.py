@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import json
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -343,6 +345,95 @@ class _HarnessDetailsDialog(QDialog):
         return name, self.description_input.toPlainText().strip()
 
 
+class McpConfigDialog(QDialog):
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str = "新建 MCP 配置",
+        mcp_title: str = "",
+        display_name: str = "",
+        mcp_kind: str = "custom",
+        config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
+    ) -> None:
+        super().__init__(parent)
+        self.mcp_kind = mcp_kind
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setMinimumSize(720, 620)
+        self.setStyleSheet(_dialog_stylesheet())
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 22, 24, 20)
+        layout.setSpacing(14)
+        title_label = QLabel(title)
+        title_label.setObjectName("DialogTitle")
+        layout.addWidget(title_label)
+
+        kind_row = QHBoxLayout()
+        for kind in ["custom", "fetch", "time", "memory", "sequential-thinking", "context7"]:
+            button = QPushButton("自定义" if kind == "custom" else kind)
+            button.setCheckable(True)
+            button.setChecked(kind == self.mcp_kind)
+            button.clicked.connect(lambda _checked=False, value=kind: self._select_kind(value))
+            kind_row.addWidget(button)
+        kind_row.addStretch(1)
+        layout.addLayout(kind_row)
+
+        layout.addWidget(QLabel("MCP 标题（唯一）"))
+        self.title_input = QLineEdit()
+        self.title_input.setPlaceholderText("my-mcp-server")
+        self.title_input.setText(mcp_title)
+        layout.addWidget(self.title_input)
+
+        layout.addWidget(QLabel("显示名称"))
+        self.display_name_input = QLineEdit()
+        self.display_name_input.setPlaceholderText("例如 @modelcontextprotocol/server-time")
+        self.display_name_input.setText(display_name)
+        layout.addWidget(self.display_name_input)
+
+        header = QHBoxLayout()
+        header.addWidget(QLabel("完整 JSON 配置"))
+        header.addStretch(1)
+        format_button = QPushButton("格式化")
+        format_button.clicked.connect(self._format_json)
+        header.addWidget(format_button)
+        layout.addLayout(header)
+
+        self.config_input = QPlainTextEdit()
+        self.config_input.setPlainText(config_json)
+        self.config_input.setMinimumHeight(260)
+        layout.addWidget(self.config_input)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton("取消")
+        save = QPushButton("保存")
+        save.setObjectName("PrimaryDialogButton")
+        cancel.clicked.connect(self.reject)
+        save.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(save)
+        layout.addLayout(buttons)
+
+    def _select_kind(self, value: str) -> None:
+        self.mcp_kind = value
+
+    def _format_json(self) -> None:
+        parsed = json.loads(self.config_input.toPlainText())
+        self.config_input.setPlainText(json.dumps(parsed, ensure_ascii=False, indent=2))
+
+    def value(self) -> tuple[str, str, str, str] | None:
+        title = self.title_input.text().strip()
+        if not title:
+            return None
+        return (
+            title,
+            self.display_name_input.text().strip(),
+            self.mcp_kind,
+            self.config_input.toPlainText(),
+        )
+
+
 def choose_directory(parent: QWidget, title: str) -> Path | None:
     value = QFileDialog.getExistingDirectory(parent, title)
     return Path(value) if value else None
@@ -397,6 +488,20 @@ def ask_harness_details(
     description: str = "",
 ) -> tuple[str, str] | None:
     dialog = _HarnessDetailsDialog(parent, title, name, description)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.value()
+
+
+def ask_mcp_config(
+    parent: QWidget,
+    title: str = "新建 MCP 配置",
+    mcp_title: str = "",
+    display_name: str = "",
+    mcp_kind: str = "custom",
+    config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
+) -> tuple[str, str, str, str] | None:
+    dialog = McpConfigDialog(parent, title, mcp_title, display_name, mcp_kind, config_json)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.value()
