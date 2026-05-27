@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def test_main_window_has_skill_library_and_client_selection_text():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for text in [
         "技能库",
@@ -24,7 +24,7 @@ def test_main_window_has_skill_library_and_client_selection_text():
 
 
 def test_sidebar_stats_include_mcp_and_agents_counts():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "mcp_count_value" in source
     assert "agents_count_value" in source
@@ -33,8 +33,8 @@ def test_sidebar_stats_include_mcp_and_agents_counts():
 
 
 def test_settings_page_text_and_actions_exist():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     for text in [
         "设置",
@@ -59,8 +59,8 @@ def test_settings_page_text_and_actions_exist():
 
 
 def test_mcp_config_management_text_is_present():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     for text in ["新增 MCP", "MCP 服务器管理", "已配置", "编辑", "完整 JSON 配置", "格式化", "MCP 标题（唯一）"]:
         assert text in source + dialog_source
@@ -70,7 +70,7 @@ def test_mcp_config_management_text_is_present():
 
 
 def test_mcp_page_uses_management_layout_not_full_width_button():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "_build_mcp_toolbar" in source
     assert "_build_mcp_summary" in source
@@ -80,14 +80,14 @@ def test_mcp_page_uses_management_layout_not_full_width_button():
 
 
 def test_mcp_config_dialog_has_no_builtin_type_buttons():
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     for text in ["sequential-thinking", "context7", "mcp_kind", "setCheckable"]:
         assert text not in dialog_source
 
 
 def test_main_window_tracks_selected_client():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "selected_client_type" in source
     assert "_select_client" in source
@@ -96,7 +96,7 @@ def test_main_window_tracks_selected_client():
 
 
 def test_asset_tab_switch_refreshes_visible_library():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "_refresh_current_asset_library()" in source
     assert "self.current_view = asset_type\n        self._refresh_current_asset_library()" in source
@@ -104,8 +104,8 @@ def test_asset_tab_switch_refreshes_visible_library():
 
 
 def test_join_harness_prompts_for_target_harness():
-    main_source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    main_source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "choose_harness" in main_source
     assert "list_harnesses_without_asset(asset.id)" in main_source
@@ -115,7 +115,7 @@ def test_join_harness_prompts_for_target_harness():
 
 
 def test_harness_picker_uses_refined_card_style():
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "HarnessPickerDialog" in dialog_source
     assert "QListWidget#HarnessPickerList" in dialog_source
@@ -124,7 +124,7 @@ def test_harness_picker_uses_refined_card_style():
 
 
 def test_asset_library_adds_harness_action_on_each_item():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "_asset_library_item" in source
     assert "setItemWidget" in source
@@ -134,8 +134,8 @@ def test_asset_library_adds_harness_action_on_each_item():
 
 
 def test_asset_library_removes_component_from_selected_harness():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "_remove_asset_from_chosen_harness" in source
     assert "list_harnesses_with_asset(asset.id)" in source
@@ -145,7 +145,7 @@ def test_asset_library_removes_component_from_selected_harness():
 
 
 def test_asset_library_item_has_safe_height_and_layout():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "QSize" in source
     assert "row.setMinimumHeight(78)" in source
@@ -154,8 +154,8 @@ def test_asset_library_item_has_safe_height_and_layout():
 
 
 def test_harness_form_supports_description_and_editing():
-    main_source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
-    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    main_source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "ask_harness_details" in main_source
     assert "编辑任务套件" in main_source
@@ -164,7 +164,7 @@ def test_harness_form_supports_description_and_editing():
 
 
 def test_harness_details_show_components_grouped_by_type():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for text in ["已加入的技能", "已加入的 AGENTS.md", "已加入的 MCP"]:
         assert text in source
@@ -175,14 +175,14 @@ def test_harness_details_show_components_grouped_by_type():
 
 
 def test_empty_harness_asset_group_uses_single_list_item():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert 'self.skill_list.addItem(f"{title}\\n0 个组件 - {empty_text}")' in source
     assert 'self.skill_list.addItem(empty_text)' not in source
 
 
 def test_harness_asset_group_lists_concrete_component_names():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert 'names = "、".join(asset.name for asset in assets)' in source
     assert 'self.skill_list.addItem(f"{title}\\n{len(assets)} 个组件：{names}")' in source

@@ -6,19 +6,19 @@ from pathlib import Path
 
 import pytest
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect, initialize_database
-from skillpkg.file_ops import make_zip
-from skillpkg.fingerprint import fingerprint_directory
-from skillpkg.services import SkillPkgService
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect, initialize_database
+from harness_manager.file_ops import make_zip
+from harness_manager.fingerprint import fingerprint_directory
+from harness_manager.services import HarnessService
 
 
-def _service(app_root: Path) -> SkillPkgService:
+def _service(app_root: Path) -> HarnessService:
     paths = AppPaths(app_root)
     paths.ensure()
     conn = connect(paths.db_path)
     initialize_database(conn)
-    return SkillPkgService(paths, conn)
+    return HarnessService(paths, conn)
 
 
 def _offline_archive(
@@ -33,7 +33,7 @@ def _offline_archive(
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text(skill_body, encoding="utf-8")
     (staging / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    return make_zip(staging, tmp_path / f"{skill_name}.skillpkg.zip")
+    return make_zip(staging, tmp_path / f"{skill_name}.harness.zip")
 
 
 def test_export_then_import_offline_package_round_trips_sample_skill(
@@ -45,7 +45,7 @@ def test_export_then_import_offline_package_round_trips_sample_skill(
 
     archive_path = source_service.export_package(package.id)
 
-    fresh_root = tmp_path / "FreshSkillPkgManager"
+    fresh_root = tmp_path / "FreshHarnessManager"
     fresh_root.mkdir()
     fresh_service = _service(fresh_root)
     imported_package_id = fresh_service.import_offline_package(archive_path)
@@ -74,7 +74,7 @@ def test_export_then_import_offline_package_round_trips_sample_skill(
 
 
 def test_import_offline_package_rejects_manifest_relative_path_escape(tmp_path):
-    app_root = tmp_path / "SkillPkgManager"
+    app_root = tmp_path / "HarnessManager"
     app_root.mkdir()
     service = _service(app_root)
     staging = tmp_path / "staging"
@@ -96,7 +96,7 @@ def test_import_offline_package_rejects_manifest_relative_path_escape(tmp_path):
         ),
         encoding="utf-8",
     )
-    archive_path = make_zip(staging, tmp_path / "bad.skillpkg.zip")
+    archive_path = make_zip(staging, tmp_path / "bad.harness.zip")
 
     with pytest.raises(ValueError):
         service.import_offline_package(archive_path)
@@ -112,7 +112,7 @@ def test_import_offline_package_rejects_manifest_relative_path_escape(tmp_path):
 def test_import_offline_package_rejects_malformed_manifest_missing_required_objects(
     tmp_path, manifest
 ):
-    app_root = tmp_path / "SkillPkgManager"
+    app_root = tmp_path / "HarnessManager"
     app_root.mkdir()
     service = _service(app_root)
     archive_path = _offline_archive(tmp_path, manifest)
@@ -124,7 +124,7 @@ def test_import_offline_package_rejects_malformed_manifest_missing_required_obje
 def test_import_offline_package_rejects_fingerprint_mismatch_without_package(
     tmp_path,
 ):
-    app_root = tmp_path / "SkillPkgManager"
+    app_root = tmp_path / "HarnessManager"
     app_root.mkdir()
     service = _service(app_root)
     manifest = {
@@ -152,7 +152,7 @@ def test_import_offline_package_rejects_fingerprint_mismatch_without_package(
 def test_import_offline_package_rejects_duplicate_package_name_before_importing_skill(
     tmp_path, sample_skill
 ):
-    app_root = tmp_path / "SkillPkgManager"
+    app_root = tmp_path / "HarnessManager"
     app_root.mkdir()
     service = _service(app_root)
     existing_skill = service.import_skill(sample_skill, "codex")
@@ -176,7 +176,7 @@ def test_import_offline_package_rejects_duplicate_package_name_before_importing_
     (skill_dir / "SKILL.md").write_text("# New Skill\n\nBody\n", encoding="utf-8")
     manifest["skills"][0]["fingerprint"] = fingerprint_directory(skill_dir)
     (staging / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    archive_path = make_zip(staging, tmp_path / "duplicate.skillpkg.zip")
+    archive_path = make_zip(staging, tmp_path / "duplicate.harness.zip")
 
     with pytest.raises(ValueError):
         service.import_offline_package(archive_path)
@@ -189,7 +189,7 @@ def test_import_offline_package_rejects_duplicate_package_name_before_importing_
 def test_import_offline_package_rolls_back_new_skill_when_package_logging_fails(
     tmp_path, monkeypatch
 ):
-    app_root = tmp_path / "SkillPkgManager"
+    app_root = tmp_path / "HarnessManager"
     app_root.mkdir()
     service = _service(app_root)
     staging = tmp_path / "rollback-staging"
@@ -210,7 +210,7 @@ def test_import_offline_package_rolls_back_new_skill_when_package_logging_fails(
         ],
     }
     (staging / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    archive_path = make_zip(staging, tmp_path / "rollback.skillpkg.zip")
+    archive_path = make_zip(staging, tmp_path / "rollback.harness.zip")
     original_add = service.logs.add
 
     def fail_package_log(action, *args, **kwargs):

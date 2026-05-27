@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect, initialize_database
-from skillpkg.repositories import AssetRepository, HarnessRepository
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect, initialize_database
+from harness_manager.repositories import AssetRepository, HarnessRepository
 
 
 def test_create_harness_and_asset_membership(app_root):

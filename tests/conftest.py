@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def app_root(tmp_path: Path) -> Path:
-    root = tmp_path / "SkillPkgManager"
+    root = tmp_path / "HarnessManager"
     root.mkdir()
     return root
 

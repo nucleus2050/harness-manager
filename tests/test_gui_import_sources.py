@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def test_main_window_has_custom_source_text_and_direct_import_flow():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for text in ["导入来源", "添加自定义目录", "配置目录", "从自定义目录导入"]:
         assert text in source

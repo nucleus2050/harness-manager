@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skillpkg.gui.styles import build_stylesheet
+from harness_manager.gui.styles import build_stylesheet
 
 
 def test_stylesheet_defines_modern_theme_tokens():

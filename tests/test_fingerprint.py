@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skillpkg.fingerprint import fingerprint_directory
+from harness_manager.fingerprint import fingerprint_directory
 
 
 def test_fingerprint_directory_matches_for_same_relative_paths_and_contents(tmp_path):

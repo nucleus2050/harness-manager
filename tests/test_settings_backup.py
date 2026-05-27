@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 import zipfile
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.settings import SettingsService
+from harness_manager.app_paths import AppPaths
+from harness_manager.settings import SettingsService
 
 
 def test_settings_default_and_save_language(app_root):

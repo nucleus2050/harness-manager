@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skillpkg.models import Asset, Harness
+from harness_manager.models import Asset, Harness
 
 
 def test_asset_model_stores_type_and_path():

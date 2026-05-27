@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def test_main_window_user_facing_text_is_chinese():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for text in [
         "任务套件管理器",
@@ -37,7 +37,7 @@ def test_main_window_user_facing_text_is_chinese():
 
 
 def test_dialog_user_facing_text_is_chinese():
-    source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     for text in ["取消", "创建", "导入离线包", "任务套件", "所有文件"]:
         assert text in source
@@ -47,7 +47,7 @@ def test_dialog_user_facing_text_is_chinese():
 
 
 def test_main_window_uses_harness_manager_terms():
-    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for text in ["Harness Manager", "任务套件", "AGENTS.md", "MCP", "技能"]:
         assert text in source

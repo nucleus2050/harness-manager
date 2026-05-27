@@ -3,8 +3,8 @@ import zipfile
 
 import pytest
 
-import skillpkg.file_ops as file_ops
-from skillpkg.file_ops import copy_directory, extract_zip, safe_remove_directory
+import harness_manager.file_ops as file_ops
+from harness_manager.file_ops import copy_directory, extract_zip, safe_remove_directory
 
 
 def _make_directory_symlink(link: Path, target: Path) -> None:
@@ -32,7 +32,7 @@ def test_safe_remove_directory_refuses_filesystem_root(monkeypatch: pytest.Monke
     def fail_if_called(path: Path) -> None:
         raise AssertionError(f"rmtree must not be called for root: {path}")
 
-    monkeypatch.setattr("skillpkg.file_ops.shutil.rmtree", fail_if_called)
+    monkeypatch.setattr("harness_manager.file_ops.shutil.rmtree", fail_if_called)
 
     with pytest.raises(ValueError):
         safe_remove_directory(root)

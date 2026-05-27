@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect, initialize_database
-from skillpkg.fingerprint import fingerprint_directory
-from skillpkg.repositories import PackageRepository
-from skillpkg.services import SkillPkgService, _slug
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect, initialize_database
+from harness_manager.fingerprint import fingerprint_directory
+from harness_manager.repositories import PackageRepository
+from harness_manager.services import HarnessService, _slug
 
 
-def _service(app_root: Path) -> SkillPkgService:
+def _service(app_root: Path) -> HarnessService:
     paths = AppPaths(app_root)
     paths.ensure()
     conn = connect(paths.db_path)
     initialize_database(conn)
-    return SkillPkgService(paths, conn)
+    return HarnessService(paths, conn)
 
 
 def test_slug_normalizes_to_safe_lowercase_id():

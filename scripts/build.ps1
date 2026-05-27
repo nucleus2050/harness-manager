@@ -4,9 +4,9 @@ python -m pip install -e .[dev]
 python -m PyInstaller `
   --noconfirm `
   --windowed `
-  --name SkillPkgManager `
-  --icon src/skillpkg/resources/app.ico `
+  --name HarnessManager `
+  --icon src/harness_manager/resources/app.ico `
   --paths src `
-  src/skillpkg/__main__.py
+  src/harness_manager/__main__.py
 
-Write-Host "Built dist\SkillPkgManager\SkillPkgManager.exe"
+Write-Host "Built dist\HarnessManager\HarnessManager.exe"

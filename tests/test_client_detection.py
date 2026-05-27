@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skillpkg.client_detection import detect_default_paths
+from harness_manager.client_detection import detect_default_paths
 
 
 def test_detect_default_paths_uses_userprofile(monkeypatch, tmp_path):

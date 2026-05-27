@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from skillpkg.app_paths import AppPaths
+from harness_manager.app_paths import AppPaths
 
 
 def test_app_paths_create_required_directories(app_root):
@@ -14,7 +14,7 @@ def test_app_paths_create_required_directories(app_root):
     assert paths.skills_dir.is_dir()
     assert paths.exports_dir.is_dir()
     assert paths.config_dir.is_dir()
-    assert paths.db_path == app_root / "data" / "skillpkg.db"
+    assert paths.db_path == app_root / "data" / "harness.db"
 
 
 def test_skill_path_uses_skill_id(app_root):

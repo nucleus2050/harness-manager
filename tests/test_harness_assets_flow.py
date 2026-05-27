@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect
-from skillpkg.gui.controllers import MainController
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect
+from harness_manager.gui.controllers import MainController
 
 
 def test_controller_adds_asset_to_harness(app_root, tmp_path):

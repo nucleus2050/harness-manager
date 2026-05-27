@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect, initialize_database
-from skillpkg.services import SkillPkgService
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect, initialize_database
+from harness_manager.services import HarnessService
 
 
 def _service(app_root):
@@ -10,7 +10,7 @@ def _service(app_root):
     paths.ensure()
     conn = connect(paths.db_path)
     initialize_database(conn)
-    return paths, conn, SkillPkgService(paths, conn)
+    return paths, conn, HarnessService(paths, conn)
 
 
 def test_import_agents_md_asset(app_root, tmp_path):

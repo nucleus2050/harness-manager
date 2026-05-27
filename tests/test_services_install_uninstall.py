@@ -4,21 +4,21 @@ from pathlib import Path
 
 import pytest
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect, initialize_database
-from skillpkg.fingerprint import fingerprint_directory
-from skillpkg.services import SkillPkgService
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect, initialize_database
+from harness_manager.fingerprint import fingerprint_directory
+from harness_manager.services import HarnessService
 
 
-def _service(app_root: Path) -> SkillPkgService:
+def _service(app_root: Path) -> HarnessService:
     paths = AppPaths(app_root)
     paths.ensure()
     conn = connect(paths.db_path)
     initialize_database(conn)
-    return SkillPkgService(paths, conn)
+    return HarnessService(paths, conn)
 
 
-def _package_with_sample(service: SkillPkgService, sample_skill: Path) -> tuple[str, str]:
+def _package_with_sample(service: HarnessService, sample_skill: Path) -> tuple[str, str]:
     skill = service.import_skill(sample_skill, "codex")
     package = service.create_package("Daily Tools", "Useful daily workflow", [skill.id])
     return package.id, skill.id

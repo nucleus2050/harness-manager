@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from skillpkg.app_paths import AppPaths
-from skillpkg.db import connect, initialize_database
-from skillpkg.repositories import ClientRepository, PackageRepository, SkillRepository
+from harness_manager.app_paths import AppPaths
+from harness_manager.db import connect, initialize_database
+from harness_manager.repositories import ClientRepository, PackageRepository, SkillRepository
 
 
 def test_initialize_database_seeds_clients(app_root):

@@ -9,7 +9,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
 pytest
-python -m skillpkg
+python -m harness_manager
 ```
 
 ## Build
@@ -22,7 +22,7 @@ python -m skillpkg
 
 The app stores runtime data under the directory where it is launched:
 
-- `data/skillpkg.db`
+- `data/harness.db`
 - `skills/`
 - `assets/`
 - `exports/`
