@@ -336,7 +336,7 @@ def test_harness_details_show_components_grouped_by_type():
 def test_empty_harness_asset_group_uses_single_list_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
-    assert 'self.skill_list.addItem(f"{title}\\n0 个组件 - {empty_text}")' in source
+    assert '_add_wrapped_harness_asset_group(f"{title}\\n0 个组件 - {empty_text}")' in source
     assert 'self.skill_list.addItem(empty_text)' not in source
 
 
@@ -344,5 +344,15 @@ def test_harness_asset_group_lists_concrete_component_names():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert 'names = "、".join(asset.name for asset in assets)' in source
-    assert 'self.skill_list.addItem(f"{title}\\n{len(assets)} 个组件：{names}")' in source
+    assert '_add_wrapped_harness_asset_group(f"{title}\\n{len(assets)} 个组件：{names}")' in source
     assert 'self.skill_list.addItem(f"{asset.name}\\nID：{asset.id}")' not in source
+
+
+def test_harness_asset_groups_wrap_and_grow_for_long_text():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "_add_wrapped_harness_asset_group" in source
+    assert "_harness_asset_group_height" in source
+    assert "label.setWordWrap(True)" in source
+    assert "item.setSizeHint(QSize(0, self._harness_asset_group_height(text)))" in source
+    assert "self.skill_list.setItemWidget(item, frame)" in source

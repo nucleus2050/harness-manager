@@ -1219,10 +1219,27 @@ class MainWindow(QMainWindow):
 
     def _add_asset_group(self, title: str, assets: list[Asset], empty_text: str) -> None:
         if not assets:
-            self.skill_list.addItem(f"{title}\n0 个组件 - {empty_text}")
+            self._add_wrapped_harness_asset_group(f"{title}\n0 个组件 - {empty_text}")
             return
         names = "、".join(asset.name for asset in assets)
-        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件：{names}")
+        self._add_wrapped_harness_asset_group(f"{title}\n{len(assets)} 个组件：{names}")
+
+    def _add_wrapped_harness_asset_group(self, text: str) -> None:
+        item = QListWidgetItem()
+        item.setSizeHint(QSize(0, self._harness_asset_group_height(text)))
+        frame = QFrame()
+        frame.setObjectName("AssetLibraryItem")
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(14, 10, 14, 10)
+        label = self._label(text, "MutedText")
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        self.skill_list.addItem(item)
+        self.skill_list.setItemWidget(item, frame)
+
+    def _harness_asset_group_height(self, text: str) -> int:
+        extra_lines = max(0, len(text) // 80)
+        return 60 + extra_lines * 18
 
     def _asset_type_label(self, asset_type: str) -> str:
         return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
