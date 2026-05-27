@@ -4,7 +4,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -292,8 +292,9 @@ class MainWindow(QMainWindow):
     def _asset_library_item(self, asset: Asset) -> QWidget:
         row = QFrame()
         row.setObjectName("AssetLibraryItem")
+        row.setMinimumHeight(78)
         layout = QHBoxLayout(row)
-        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setContentsMargins(16, 12, 16, 12)
         layout.setSpacing(12)
 
         copy = QVBoxLayout()
@@ -309,6 +310,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(copy, 1)
 
         add_button = self._button("加入套件", "CompactButton")
+        add_button.setMinimumWidth(92)
         add_button.clicked.connect(
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
@@ -537,7 +539,7 @@ class MainWindow(QMainWindow):
         for asset in self.library_assets:
             item = QListWidgetItem()
             widget = self._asset_library_item(asset)
-            item.setSizeHint(widget.sizeHint())
+            item.setSizeHint(QSize(0, 86))
             self.library_skill_list.addItem(item)
             self.library_skill_list.setItemWidget(item, widget)
 

@@ -160,7 +160,7 @@ def build_stylesheet() -> str:
         border: 1px solid #e2e8f0;
         border-radius: 14px;
         margin: 5px 0;
-        padding: 12px;
+        padding: 8px;
         color: #172033;
     }
 

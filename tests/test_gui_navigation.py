@@ -50,6 +50,15 @@ def test_asset_library_adds_harness_action_on_each_item():
     assert "join_harness_button" not in source
 
 
+def test_asset_library_item_has_safe_height_and_layout():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "QSize" in source
+    assert "row.setMinimumHeight(78)" in source
+    assert "item.setSizeHint(QSize(0, 86))" in source
+    assert "add_button.setMinimumWidth(92)" in source
+
+
 def test_harness_form_supports_description_and_editing():
     main_source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
