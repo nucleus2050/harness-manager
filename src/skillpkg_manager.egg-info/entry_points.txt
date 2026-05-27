@@ -1,2 +1,0 @@
-[console_scripts]
-skillpkg = skillpkg.__main__:main
