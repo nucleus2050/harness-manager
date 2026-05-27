@@ -9,7 +9,7 @@ def test_main_window_has_skill_library_and_client_selection_text():
     for text in [
         "技能库",
         "任务套件",
-        "加入任务套件",
+        "加入套件",
         "添加 AGENTS.md",
         "添加 MCP",
         "添加技能",
@@ -37,10 +37,17 @@ def test_join_harness_prompts_for_target_harness():
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "choose_harness" in main_source
-    assert "choose_asset" in main_source
-    assert "选择组件" in dialog_source
     assert "选择任务套件" in dialog_source
     assert "请选择要加入的任务套件" in dialog_source
+
+
+def test_asset_library_adds_harness_action_on_each_item():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "_asset_library_item" in source
+    assert "setItemWidget" in source
+    assert "加入套件" in source
+    assert "join_harness_button" not in source
 
 
 def test_harness_form_supports_description_and_editing():

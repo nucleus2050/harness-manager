@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
     QMainWindow,
     QPushButton,
     QScrollArea,
@@ -67,7 +68,6 @@ class MainWindow(QMainWindow):
         self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
         self.add_mcp_button = self._button("添加 MCP", "CompactButton")
         self.add_skill_asset_button = self._button("添加技能", "CompactButton")
-        self.join_harness_button = self._button("加入任务套件", "PrimaryButton")
         self.install_codex_button = self._button("安装", "DeployInstallButton")
         self.uninstall_codex_button = self._button("卸载", "DeployUninstallButton")
         self.install_claude_button = self._button("安装", "DeployInstallButton")
@@ -286,9 +286,34 @@ class MainWindow(QMainWindow):
         layout.addLayout(
             self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
         )
-        layout.addWidget(self.join_harness_button)
         layout.addWidget(self.library_skill_list, 1)
         return card
+
+    def _asset_library_item(self, asset: Asset) -> QWidget:
+        row = QFrame()
+        row.setObjectName("AssetLibraryItem")
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(12)
+
+        copy = QVBoxLayout()
+        copy.setSpacing(4)
+        title = self._label(asset.name, "ClientName")
+        meta = self._label(
+            f"类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}",
+            "MutedText",
+        )
+        meta.setWordWrap(True)
+        copy.addWidget(title)
+        copy.addWidget(meta)
+        layout.addLayout(copy, 1)
+
+        add_button = self._button("加入套件", "CompactButton")
+        add_button.clicked.connect(
+            self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
+        )
+        layout.addWidget(add_button)
+        return row
 
     def _deploy_row(
         self, title: str, badge: str, install_button: QPushButton, uninstall_button: QPushButton
@@ -408,7 +433,6 @@ class MainWindow(QMainWindow):
         self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
         self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
         self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
-        self.join_harness_button.clicked.connect(self._guard(self._add_selected_skill_to_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
         self.install_codex_button.clicked.connect(self._guard(lambda: self._install("codex")))
@@ -511,9 +535,11 @@ class MainWindow(QMainWindow):
             self.library_skill_list.addItem(empty_text)
             return
         for asset in self.library_assets:
-            self.library_skill_list.addItem(
-                f"{asset.name}\n类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}"
-            )
+            item = QListWidgetItem()
+            widget = self._asset_library_item(asset)
+            item.setSizeHint(widget.sizeHint())
+            self.library_skill_list.addItem(item)
+            self.library_skill_list.setItemWidget(item, widget)
 
     def _show_harnesses_view(self) -> None:
         self.current_view = "harnesses"
@@ -717,10 +743,7 @@ class MainWindow(QMainWindow):
         self.refresh()
         dialogs.show_info(self, "添加完成", f"已将技能 {asset.name} 加入任务套件。")
 
-    def _add_selected_skill_to_harness(self) -> None:
-        asset = self._selected_or_prompted_library_asset()
-        if asset is None:
-            return
+    def _add_asset_to_chosen_harness(self, asset: Asset) -> None:
         if not self.harnesses:
             raise ValueError("当前没有任务套件，请先新建任务套件。")
         harness = dialogs.choose_harness(self, self.harnesses)
@@ -729,14 +752,6 @@ class MainWindow(QMainWindow):
         self.controller.add_asset_to_harness(harness.id, asset.id, asset.type)
         self.refresh()
         dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入 {harness.name}。")
-
-    def _selected_or_prompted_library_asset(self) -> Asset | None:
-        if not self.library_assets:
-            raise ValueError("当前没有可加入的组件。")
-        row = self.library_skill_list.currentRow()
-        if 0 <= row < len(self.library_assets):
-            return self.library_assets[row]
-        return dialogs.choose_asset(self, self.library_assets)
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)
