@@ -353,6 +353,12 @@ def test_harness_asset_groups_wrap_and_grow_for_long_text():
 
     assert "_add_wrapped_harness_asset_group" in source
     assert "_harness_asset_group_height" in source
+    assert "self.skill_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)" in source
+    assert "self.skill_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)" in source
+    assert "item.setFlags(Qt.ItemFlag.NoItemFlags)" in source
     assert "label.setWordWrap(True)" in source
+    assert "title_label = self._label(title, \"SectionTitle\")" in source
+    assert "body_label = self._label(body, \"MutedText\")" in source
     assert "item.setSizeHint(QSize(0, self._harness_asset_group_height(text)))" in source
     assert "self.skill_list.setItemWidget(item, frame)" in source
+    assert "return 112 + extra_lines * 20" in source

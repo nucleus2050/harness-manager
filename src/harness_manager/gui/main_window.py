@@ -450,6 +450,8 @@ class MainWindow(QMainWindow):
         layout.setSpacing(14)
         layout.addWidget(self.current_harness_title)
         layout.addWidget(self.current_harness_meta)
+        self.skill_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        self.skill_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         asset_actions = QFrame()
         asset_actions.setObjectName("ActionBar")
         asset_layout = QHBoxLayout(asset_actions)
@@ -1225,21 +1227,27 @@ class MainWindow(QMainWindow):
         self._add_wrapped_harness_asset_group(f"{title}\n{len(assets)} 个组件：{names}")
 
     def _add_wrapped_harness_asset_group(self, text: str) -> None:
+        title, separator, body = text.partition("\n")
         item = QListWidgetItem()
+        item.setFlags(Qt.ItemFlag.NoItemFlags)
         item.setSizeHint(QSize(0, self._harness_asset_group_height(text)))
         frame = QFrame()
         frame.setObjectName("AssetLibraryItem")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(14, 10, 14, 10)
-        label = self._label(text, "MutedText")
-        label.setWordWrap(True)
-        layout.addWidget(label)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(5)
+        title_label = self._label(title, "SectionTitle")
+        body = body if separator else ""
+        body_label = self._label(body, "MutedText")
+        body_label.setWordWrap(True)
+        layout.addWidget(title_label)
+        layout.addWidget(body_label)
         self.skill_list.addItem(item)
         self.skill_list.setItemWidget(item, frame)
 
     def _harness_asset_group_height(self, text: str) -> int:
-        extra_lines = max(0, len(text) // 80)
-        return 60 + extra_lines * 18
+        extra_lines = max(0, len(text) // 58)
+        return 112 + extra_lines * 20
 
     def _asset_type_label(self, asset_type: str) -> str:
         return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
