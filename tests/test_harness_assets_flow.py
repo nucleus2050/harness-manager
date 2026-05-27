@@ -59,3 +59,19 @@ def test_controller_lists_only_harnesses_without_asset(app_root, tmp_path):
     available = controller.list_harnesses_without_asset(asset.id)
 
     assert [harness.id for harness in available] == [second.id]
+
+
+def test_controller_removes_asset_from_harness(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("代码审查", "")
+    source = tmp_path / "AGENTS.md"
+    source.write_text("# Rules\n", encoding="utf-8")
+    asset = controller.import_agents_md_asset(source, "规则")
+    controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+
+    controller.remove_asset_from_harness(harness.id, asset.id)
+
+    assert controller.list_harness_assets(harness.id) == []

@@ -317,6 +317,34 @@ class MainWindow(QMainWindow):
         layout.addWidget(add_button)
         return row
 
+    def _harness_asset_item(self, harness: Harness, asset: Asset) -> QWidget:
+        row = QFrame()
+        row.setObjectName("AssetLibraryItem")
+        row.setMinimumHeight(78)
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setSpacing(12)
+
+        copy = QVBoxLayout()
+        copy.setSpacing(4)
+        copy.addWidget(self._label(asset.name, "ClientName"))
+        meta = self._label(f"类型：{self._asset_type_label(asset.type)} - ID：{asset.id}", "MutedText")
+        meta.setWordWrap(True)
+        copy.addWidget(meta)
+        layout.addLayout(copy, 1)
+
+        remove_button = self._button("移出套件", "CompactButton")
+        remove_button.setMinimumWidth(92)
+        remove_button.clicked.connect(
+            self._guard(
+                lambda harness_id=harness.id, asset_id=asset.id: self._remove_asset_from_harness(
+                    harness_id, asset_id
+                )
+            )
+        )
+        layout.addWidget(remove_button)
+        return row
+
     def _deploy_row(
         self, title: str, badge: str, install_button: QPushButton, uninstall_button: QPushButton
     ) -> QFrame:
@@ -624,26 +652,36 @@ class MainWindow(QMainWindow):
         )
         self._add_asset_group(
             "已加入的技能",
+            harness,
             self.controller.list_harness_assets_by_type(harness.id, "skill"),
             "暂无技能",
         )
         self._add_asset_group(
             "已加入的 AGENTS.md",
+            harness,
             self.controller.list_harness_assets_by_type(harness.id, "agents_md"),
             "暂无 AGENTS.md",
         )
         self._add_asset_group(
             "已加入的 MCP",
+            harness,
             self.controller.list_harness_assets_by_type(harness.id, "mcp"),
             "暂无 MCP",
         )
 
-    def _add_asset_group(self, title: str, assets: list[Asset], empty_text: str) -> None:
+    def _add_asset_group(
+        self, title: str, harness: Harness, assets: list[Asset], empty_text: str
+    ) -> None:
         if not assets:
             self.skill_list.addItem(f"{title}\n0 个组件 - {empty_text}")
             return
-        names = "、".join(asset.name for asset in assets)
-        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件：{names}")
+        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件")
+        for asset in assets:
+            item = QListWidgetItem()
+            widget = self._harness_asset_item(harness, asset)
+            item.setSizeHint(QSize(0, 86))
+            self.skill_list.addItem(item)
+            self.skill_list.setItemWidget(item, widget)
 
     def _asset_type_label(self, asset_type: str) -> str:
         return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
@@ -757,6 +795,11 @@ class MainWindow(QMainWindow):
         self.controller.add_asset_to_harness(harness.id, asset.id, asset.type)
         self.refresh()
         dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入 {harness.name}。")
+
+    def _remove_asset_from_harness(self, harness_id: str, asset_id: str) -> None:
+        self.controller.remove_asset_from_harness(harness_id, asset_id)
+        self.refresh()
+        dialogs.show_info(self, "移出完成", "已将组件移出任务套件。")
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)

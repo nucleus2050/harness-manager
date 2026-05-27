@@ -447,6 +447,12 @@ class HarnessRepository:
             (harness_id, asset_id, asset_type, sort_order),
         )
 
+    def remove_asset(self, harness_id: str, asset_id: str) -> None:
+        self.conn.execute(
+            "DELETE FROM harness_assets WHERE harness_id = ? AND asset_id = ?",
+            (harness_id, asset_id),
+        )
+
     def list_assets(self, harness_id: str) -> list[Asset]:
         rows = self.conn.execute(
             """
