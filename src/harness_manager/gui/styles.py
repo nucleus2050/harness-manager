@@ -405,8 +405,9 @@ def build_stylesheet(theme: str = "light") -> str:
         background: transparent;
         border: 1px solid transparent;
         color: {tokens['danger_text']};
+        font-size: 12px;
         padding: 3px 7px;
-        font-weight: 700;
+        font-weight: 650;
     }}
 
     QPushButton#SourceDeleteButton:hover {{
