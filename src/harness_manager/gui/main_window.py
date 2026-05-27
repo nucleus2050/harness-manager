@@ -6,7 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QSize, Qt
-from PySide6.QtGui import QColor, QIcon, QPalette, QPixmap
+from PySide6.QtGui import QColor, QCursor, QIcon, QPalette, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -189,6 +189,7 @@ class MainWindow(QMainWindow):
         self.shell_layout.addWidget(content, 1)
         root_layout.addWidget(self.app_shell)
         self.setCentralWidget(root)
+        self._install_resize_cursor_tracking(root)
         self._update_window_margins()
 
     def _build_window_shadow(self) -> QGraphicsDropShadowEffect:
@@ -862,17 +863,20 @@ class MainWindow(QMainWindow):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:
-        if self.isMaximized():
-            self.unsetCursor()
-        else:
-            self.setCursor(self._cursor_for_edges(
-                self._resize_edges_at_position(event.globalPosition().toPoint())
-            ))
+        self._refresh_resize_cursor(event.globalPosition().toPoint())
         super().mouseMoveEvent(event)
 
     def leaveEvent(self, event) -> None:
         self.unsetCursor()
         super().leaveEvent(event)
+
+    def eventFilter(self, watched, event) -> bool:
+        if event.type() == QEvent.Type.MouseMove and self.isActiveWindow():
+            self._refresh_resize_cursor(event.globalPosition().toPoint())
+        elif event.type() == QEvent.Type.Leave:
+            if not self.rect().contains(self.mapFromGlobal(QCursor.pos())):
+                self.unsetCursor()
+        return super().eventFilter(watched, event)
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
@@ -915,6 +919,23 @@ class MainWindow(QMainWindow):
     def _start_system_move(self) -> bool:
         handle = self.windowHandle()
         return bool(handle and handle.startSystemMove())
+
+    def _install_resize_cursor_tracking(self, widget: QWidget) -> None:
+        widget.setMouseTracking(True)
+        widget.installEventFilter(self)
+        for child in widget.findChildren(QWidget):
+            child.setMouseTracking(True)
+            child.installEventFilter(self)
+
+    def _refresh_resize_cursor(self, global_pos: QPoint) -> None:
+        if self.isMaximized():
+            self.unsetCursor()
+            return
+        cursor = self._cursor_for_edges(self._resize_edges_at_position(global_pos))
+        if cursor == Qt.CursorShape.ArrowCursor:
+            self.unsetCursor()
+        else:
+            self.setCursor(cursor)
 
     def _resize_edges_at_position(self, global_pos: QPoint) -> Qt.Edge:
         if self.isMaximized():
