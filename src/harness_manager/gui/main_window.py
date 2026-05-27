@@ -541,13 +541,16 @@ class MainWindow(QMainWindow):
         layout.setSpacing(12)
 
         copy = QVBoxLayout()
-        copy.setSpacing(3)
+        copy.setSpacing(2)
+        copy.setAlignment(Qt.AlignmentFlag.AlignTop)
         title = self._label(asset.name, "ClientName")
+        title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         meta = self._label(
             f"类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}",
             "MutedText",
         )
         meta.setWordWrap(True)
+        meta.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         copy.addWidget(title)
         copy.addWidget(meta)
         if asset.type == "skill":
@@ -556,7 +559,9 @@ class MainWindow(QMainWindow):
                 "SkillDescription",
             )
             description.setWordWrap(True)
-            description.setContentsMargins(0, 2, 0, 0)
+            description.setContentsMargins(0, 0, 0, 0)
+            description.setMaximumHeight(34)
+            description.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
             copy.addWidget(description)
         layout.addLayout(copy, 1)
 
@@ -590,7 +595,7 @@ class MainWindow(QMainWindow):
 
     def _asset_library_item_height(self, asset: Asset) -> int:
         if asset.type == "skill":
-            return 162
+            return 124
         return 86
 
     def _skill_description(self, asset: Asset) -> str:
