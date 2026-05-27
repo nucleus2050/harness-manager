@@ -82,10 +82,6 @@ class MainController:
         with transaction(self.conn):
             self.harnesses.add_asset(harness_id, asset_id, asset_type, len(current) + 1)
 
-    def remove_asset_from_harness(self, harness_id: str, asset_id: str) -> None:
-        with transaction(self.conn):
-            self.harnesses.remove_asset(harness_id, asset_id)
-
     def list_harness_assets(self, harness_id: str):
         return self.harnesses.list_assets(harness_id)
 

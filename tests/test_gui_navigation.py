@@ -101,7 +101,6 @@ def test_empty_harness_asset_group_uses_single_list_item():
 def test_harness_asset_group_lists_concrete_component_names():
     source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
 
-    assert "_harness_asset_item" in source
-    assert "移出套件" in source
-    assert "remove_asset_from_harness" in source
-    assert "setItemWidget" in source
+    assert 'names = "、".join(asset.name for asset in assets)' in source
+    assert 'self.skill_list.addItem(f"{title}\\n{len(assets)} 个组件：{names}")' in source
+    assert 'self.skill_list.addItem(f"{asset.name}\\nID：{asset.id}")' not in source
