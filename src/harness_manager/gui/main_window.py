@@ -49,6 +49,7 @@ RESIZE_GRIP_WIDTH = 18
 CORNER_GRIP_WIDTH = 34
 WINDOW_SHADOW_MARGIN = 10
 TITLE_BAR_HEIGHT = 42
+CLIENT_CARD_MIN_HEIGHT = 92
 
 
 class _WindowsMSG(ctypes.Structure):
@@ -592,16 +593,20 @@ class MainWindow(QMainWindow):
         card.setObjectName(
             "ClientCardSelected" if selected else "ClientCardReady" if ready else "ClientCard"
         )
-        card.setMinimumHeight(76)
+        card.setMinimumHeight(CLIENT_CARD_MIN_HEIGHT)
+        card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         card.setCursor(Qt.CursorShape.PointingHandCursor)
         card.mousePressEvent = lambda _event, client_type=client.type: self._select_client(client_type)
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(14, 11, 14, 11)
-        layout.setSpacing(4)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
 
         header = QHBoxLayout()
+        header.setSpacing(8)
         name = self._label(client.name, "ClientName")
+        name.setWordWrap(True)
         status = self._label("就绪" if ready else "缺失", "ClientStatusReady" if ready else "ClientStatusMissing")
+        status.setMinimumWidth(48)
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         header.addWidget(name, 1)
         header.addWidget(status)
@@ -609,6 +614,7 @@ class MainWindow(QMainWindow):
 
         path_label = self._label(str(path) if path else "未配置路径", "ClientPath")
         path_label.setWordWrap(True)
+        path_label.setMinimumHeight(34)
         layout.addWidget(path_label)
         return card
 
@@ -616,23 +622,29 @@ class MainWindow(QMainWindow):
         selected = source["id"] == self.selected_custom_source_id
         card = QFrame()
         card.setObjectName("ClientCardSelected" if selected else "ClientCard")
-        card.setMinimumHeight(76)
+        card.setMinimumHeight(CLIENT_CARD_MIN_HEIGHT)
+        card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         card.setCursor(Qt.CursorShape.PointingHandCursor)
         source_id = str(source["id"])
         card.mousePressEvent = lambda _event, current_id=source_id: self._select_custom_source(
             current_id
         )
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(14, 11, 14, 11)
-        layout.setSpacing(4)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
         header = QHBoxLayout()
-        header.addWidget(self._label(str(source["name"]), "ClientName"), 1)
+        header.setSpacing(8)
+        name = self._label(str(source["name"]), "ClientName")
+        name.setWordWrap(True)
+        header.addWidget(name, 1)
         status = self._label("自定义", "ClientStatusReady")
+        status.setMinimumWidth(48)
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         header.addWidget(status)
         layout.addLayout(header)
         path_label = self._label(str(source["path"]), "ClientPath")
         path_label.setWordWrap(True)
+        path_label.setMinimumHeight(34)
         layout.addWidget(path_label)
         return card
 

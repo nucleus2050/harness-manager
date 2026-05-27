@@ -213,6 +213,17 @@ def test_asset_library_item_has_safe_height_and_layout():
     assert "add_button.setMinimumWidth(92)" in source
 
 
+def test_client_source_cards_have_safe_height_and_wrapping():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "CLIENT_CARD_MIN_HEIGHT" in source
+    assert "card.setMinimumHeight(CLIENT_CARD_MIN_HEIGHT)" in source
+    assert "card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)" in source
+    assert "name.setWordWrap(True)" in source
+    assert "status.setMinimumWidth(48)" in source
+    assert "path_label.setMinimumHeight(34)" in source
+
+
 def test_harness_form_supports_description_and_editing():
     main_source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
