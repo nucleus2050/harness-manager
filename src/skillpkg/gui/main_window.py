@@ -73,6 +73,17 @@ class MainWindow(QMainWindow):
         self.uninstall_claude_button = self._button("卸载", "DeployUninstallButton")
         self.install_opencode_button = self._button("安装", "DeployInstallButton")
         self.uninstall_opencode_button = self._button("卸载", "DeployUninstallButton")
+        for button in [
+            self.export_archive_button,
+            self.install_codex_button,
+            self.uninstall_codex_button,
+            self.install_claude_button,
+            self.uninstall_claude_button,
+            self.install_opencode_button,
+            self.uninstall_opencode_button,
+        ]:
+            button.setEnabled(False)
+            button.setToolTip("任务套件部署将在组件安装语义确定后接入。")
 
         self._build_layout()
         self._connect_actions()
@@ -249,7 +260,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(asset_actions)
         layout.addWidget(self.skill_list, 1)
 
-        layout.addWidget(self._label("部署套件", "SectionTitle"))
+        layout.addWidget(self._label("部署套件（待接入）", "SectionTitle"))
         layout.addWidget(
             self._deploy_row("Codex", "C", self.install_codex_button, self.uninstall_codex_button)
         )
