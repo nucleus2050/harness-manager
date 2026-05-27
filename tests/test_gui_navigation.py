@@ -99,6 +99,8 @@ def test_main_window_uses_qt_system_move_resize_fallbacks():
     for token in [
         "startSystemResize",
         "startSystemMove",
+        "RESIZE_GRIP_WIDTH",
+        "CORNER_GRIP_WIDTH",
         "_resize_edges_at_position",
         "_start_system_resize",
         "_start_system_move",

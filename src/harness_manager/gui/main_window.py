@@ -45,6 +45,8 @@ HTBOTTOMLEFT = 16
 HTBOTTOMRIGHT = 17
 
 RESIZE_BORDER_WIDTH = 8
+RESIZE_GRIP_WIDTH = 18
+CORNER_GRIP_WIDTH = 34
 WINDOW_SHADOW_MARGIN = 10
 TITLE_BAR_HEIGHT = 42
 
@@ -918,13 +920,20 @@ class MainWindow(QMainWindow):
         if self.isMaximized():
             return Qt.Edge(0)
         local = self.mapFromGlobal(global_pos)
-        border = RESIZE_BORDER_WIDTH + WINDOW_SHADOW_MARGIN
+        border = RESIZE_GRIP_WIDTH + WINDOW_SHADOW_MARGIN
+        corner = CORNER_GRIP_WIDTH + WINDOW_SHADOW_MARGIN
         edges = Qt.Edge(0)
         if local.x() <= border:
             edges |= Qt.Edge.LeftEdge
         elif local.x() >= self.width() - border:
             edges |= Qt.Edge.RightEdge
-        if local.y() <= border:
+        if local.y() <= corner and (local.x() <= corner or local.x() >= self.width() - corner):
+            edges |= Qt.Edge.TopEdge
+        elif local.y() >= self.height() - corner and (
+            local.x() <= corner or local.x() >= self.width() - corner
+        ):
+            edges |= Qt.Edge.BottomEdge
+        elif local.y() <= border:
             edges |= Qt.Edge.TopEdge
         elif local.y() >= self.height() - border:
             edges |= Qt.Edge.BottomEdge
