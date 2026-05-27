@@ -68,6 +68,9 @@ class MainController:
     def save_language(self, language: str):
         return self.settings.save_language(language)
 
+    def save_theme(self, theme: str):
+        return self.settings.save_theme(theme)
+
     def export_full_config(self, destination: Path | str | None = None):
         return self.settings.export_full_config(destination)
 

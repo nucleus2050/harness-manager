@@ -39,3 +39,19 @@ def test_stylesheet_has_client_cards_and_deploy_buttons():
     assert "QLabel#ClientPath" in stylesheet
     assert "QPushButton#DeployInstallButton" in stylesheet
     assert "QPushButton#DeployUninstallButton" in stylesheet
+
+
+def test_stylesheet_supports_light_and_dark_theme_tokens():
+    light = build_stylesheet("light")
+    dark = build_stylesheet("dark")
+
+    assert "background: #eef2f7" in light
+    assert "background: #020617" in dark
+    assert "QFrame#Card" in dark
+    assert light != dark
+
+
+def test_stylesheet_system_defaults_to_light_tokens():
+    stylesheet = build_stylesheet("system")
+
+    assert "background: #eef2f7" in stylesheet

@@ -18,8 +18,53 @@ def test_settings_default_and_save_language(app_root):
 
     assert saved.language == "en-US"
     assert json.loads((paths.config_dir / "settings.json").read_text(encoding="utf-8")) == {
-        "language": "en-US"
+        "language": "en-US",
+        "theme": "system",
     }
+
+
+def test_settings_default_and_save_theme(app_root):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    service = SettingsService(paths)
+
+    assert service.load().theme == "system"
+
+    saved = service.save_theme("dark")
+
+    assert saved.theme == "dark"
+    assert saved.language == "zh-CN"
+    assert json.loads((paths.config_dir / "settings.json").read_text(encoding="utf-8")) == {
+        "language": "zh-CN",
+        "theme": "dark",
+    }
+
+
+def test_settings_preserves_theme_and_language(app_root):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    service = SettingsService(paths)
+
+    service.save_language("en-US")
+    settings = service.save_theme("light")
+    settings = service.save_language("zh-CN")
+
+    assert settings.language == "zh-CN"
+    assert settings.theme == "light"
+
+
+def test_settings_invalid_theme_falls_back_to_system(app_root):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    (paths.config_dir / "settings.json").write_text(
+        json.dumps({"language": "en-US", "theme": "sepia"}),
+        encoding="utf-8",
+    )
+
+    settings = SettingsService(paths).load()
+
+    assert settings.language == "en-US"
+    assert settings.theme == "system"
 
 
 def test_export_full_config_includes_runtime_directories(app_root):

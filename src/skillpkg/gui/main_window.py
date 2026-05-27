@@ -5,7 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -47,12 +47,13 @@ class MainWindow(QMainWindow):
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
         self.current_view = "harnesses"
+        self.current_theme = self.controller.get_settings().theme
 
         self.setWindowTitle("Harness Manager（任务套件管理器）")
         self.setWindowIcon(QIcon(str(_app_icon_path())))
         self.resize(1240, 760)
         self.setMinimumSize(980, 620)
-        self.setStyleSheet(build_stylesheet())
+        self._apply_theme(self.current_theme)
 
         self.harness_list = QListWidget()
         self.skill_list = QListWidget()
@@ -87,6 +88,9 @@ class MainWindow(QMainWindow):
         self.uninstall_opencode_button = self._button("卸载", "DeployUninstallButton")
         self.language_zh_button = self._button("中文", "PrimaryButton")
         self.language_en_button = self._button("English", "CompactButton")
+        self.theme_light_button = self._button("浅色", "CompactButton")
+        self.theme_dark_button = self._button("深色", "CompactButton")
+        self.theme_system_button = self._button("跟随系统", "PrimaryButton")
         self.export_config_button = self._button("导出全部配置", "PrimaryButton")
         self.import_config_button = self._button("导入全部配置", "CompactButton")
         for button in [
@@ -222,6 +226,19 @@ class MainWindow(QMainWindow):
         language_row.addStretch(1)
         language_layout.addLayout(language_row)
         layout.addWidget(language_card)
+
+        theme_card = self._card()
+        theme_layout = QVBoxLayout(theme_card)
+        theme_layout.setContentsMargins(18, 16, 18, 18)
+        theme_layout.setSpacing(12)
+        theme_layout.addWidget(self._label("外观主题", "SectionTitle"))
+        theme_row = QHBoxLayout()
+        theme_row.addWidget(self.theme_light_button)
+        theme_row.addWidget(self.theme_dark_button)
+        theme_row.addWidget(self.theme_system_button)
+        theme_row.addStretch(1)
+        theme_layout.addLayout(theme_row)
+        layout.addWidget(theme_card)
 
         backup_card = self._card()
         backup_layout = QVBoxLayout(backup_card)
@@ -570,6 +587,9 @@ class MainWindow(QMainWindow):
         )
         self.language_zh_button.clicked.connect(self._guard(lambda: self._save_language("zh-CN")))
         self.language_en_button.clicked.connect(self._guard(lambda: self._save_language("en-US")))
+        self.theme_light_button.clicked.connect(self._guard(lambda: self._save_theme("light")))
+        self.theme_dark_button.clicked.connect(self._guard(lambda: self._save_theme("dark")))
+        self.theme_system_button.clicked.connect(self._guard(lambda: self._save_theme("system")))
         self.export_config_button.clicked.connect(self._guard(self._export_full_config))
         self.import_config_button.clicked.connect(self._guard(self._import_full_config))
 
@@ -584,6 +604,7 @@ class MainWindow(QMainWindow):
 
     def refresh(self) -> None:
         selected_row = self.harness_list.currentRow()
+        self._refresh_settings_buttons(self.controller.get_settings())
         self.clients = self.controller.list_clients()
         self.harnesses = self.controller.list_harnesses()
 
@@ -904,18 +925,52 @@ class MainWindow(QMainWindow):
         self.refresh()
         dialogs.show_info(self, "保存完成", f"已更新 MCP 配置 {title}。")
 
-    def _save_language(self, language: str) -> None:
-        settings = self.controller.save_language(language)
+    def _apply_theme(self, theme: str) -> None:
+        self.current_theme = theme
+        self.setStyleSheet(build_stylesheet(self._resolved_theme(theme)))
+
+    def _resolved_theme(self, theme: str) -> str:
+        if theme != "system":
+            return theme
+        window_color = QApplication.palette().color(QPalette.ColorRole.Window)
+        return "dark" if window_color.lightness() < 128 else "light"
+
+    def _refresh_settings_buttons(self, settings) -> None:
         self.language_zh_button.setObjectName(
             "PrimaryButton" if settings.language == "zh-CN" else "CompactButton"
         )
         self.language_en_button.setObjectName(
             "PrimaryButton" if settings.language == "en-US" else "CompactButton"
         )
-        for button in [self.language_zh_button, self.language_en_button]:
+        self.theme_light_button.setObjectName(
+            "PrimaryButton" if settings.theme == "light" else "CompactButton"
+        )
+        self.theme_dark_button.setObjectName(
+            "PrimaryButton" if settings.theme == "dark" else "CompactButton"
+        )
+        self.theme_system_button.setObjectName(
+            "PrimaryButton" if settings.theme == "system" else "CompactButton"
+        )
+        for button in [
+            self.language_zh_button,
+            self.language_en_button,
+            self.theme_light_button,
+            self.theme_dark_button,
+            self.theme_system_button,
+        ]:
             button.style().unpolish(button)
             button.style().polish(button)
+
+    def _save_language(self, language: str) -> None:
+        settings = self.controller.save_language(language)
+        self._refresh_settings_buttons(settings)
         dialogs.show_info(self, "保存完成", "语言设置已保存。")
+
+    def _save_theme(self, theme: str) -> None:
+        settings = self.controller.save_theme(theme)
+        self._apply_theme(settings.theme)
+        self._refresh_settings_buttons(settings)
+        dialogs.show_info(self, "保存完成", "外观主题已保存。")
 
     def _export_full_config(self) -> None:
         destination = dialogs.choose_export_zip(self)

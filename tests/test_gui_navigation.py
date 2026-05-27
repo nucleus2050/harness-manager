@@ -36,10 +36,23 @@ def test_settings_page_text_and_actions_exist():
     source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
 
-    for text in ["设置", "界面语言", "中文", "English", "配置备份", "导出全部配置", "导入全部配置"]:
+    for text in [
+        "设置",
+        "界面语言",
+        "中文",
+        "English",
+        "外观主题",
+        "浅色",
+        "深色",
+        "跟随系统",
+        "配置备份",
+        "导出全部配置",
+        "导入全部配置",
+    ]:
         assert text in source
     assert "_show_settings_view" in source
     assert "save_language" in source
+    assert "save_theme" in source
     assert "export_full_config" in source
     assert "import_full_config" in source
     assert "choose_export_zip" in dialog_source

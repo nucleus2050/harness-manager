@@ -29,6 +29,18 @@ def test_controller_saves_language_setting(app_root):
     assert controller.get_settings().language == "en-US"
 
 
+def test_controller_saves_theme_setting(app_root):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+
+    settings = controller.save_theme("dark")
+
+    assert settings.theme == "dark"
+    assert controller.get_settings().theme == "dark"
+
+
 def test_controller_exports_full_config(app_root):
     paths = AppPaths(app_root)
     paths.ensure()

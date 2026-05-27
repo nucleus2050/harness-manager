@@ -15,6 +15,7 @@ from skillpkg.file_ops import extract_zip, make_zip, safe_remove_directory
 @dataclass(frozen=True)
 class AppSettings:
     language: str = "zh-CN"
+    theme: str = "system"
 
 
 class SettingsService:
@@ -33,16 +34,36 @@ class SettingsService:
         language = data.get("language", "zh-CN")
         if language not in {"zh-CN", "en-US"}:
             language = "zh-CN"
-        return AppSettings(language=language)
+        theme = data.get("theme", "system")
+        if theme not in {"light", "dark", "system"}:
+            theme = "system"
+        return AppSettings(language=language, theme=theme)
 
     def save_language(self, language: str) -> AppSettings:
         if language not in {"zh-CN", "en-US"}:
             raise ValueError(f"Unsupported language: {language}")
+        current = self.load()
+        settings = AppSettings(language=language, theme=current.theme)
+        self._write(settings)
+        return settings
+
+    def save_theme(self, theme: str) -> AppSettings:
+        if theme not in {"light", "dark", "system"}:
+            raise ValueError(f"Unsupported theme: {theme}")
+        current = self.load()
+        settings = AppSettings(language=current.language, theme=theme)
+        self._write(settings)
+        return settings
+
+    def _write(self, settings: AppSettings) -> None:
         self.settings_path.write_text(
-            json.dumps({"language": language}, ensure_ascii=False, indent=2),
+            json.dumps(
+                {"language": settings.language, "theme": settings.theme},
+                ensure_ascii=False,
+                indent=2,
+            ),
             encoding="utf-8",
         )
-        return AppSettings(language=language)
 
     def export_full_config(self, destination: Path | str | None = None) -> Path:
         staging = Path(tempfile.mkdtemp(prefix="harness-config-export-"))
