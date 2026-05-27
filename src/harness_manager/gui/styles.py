@@ -391,6 +391,32 @@ def build_stylesheet(theme: str = "light") -> str:
         padding: 5px 11px;
     }}
 
+    QPushButton#IconButton,
+    QPushButton#IconButtonChecked {{
+        min-width: 40px;
+        max-width: 40px;
+        min-height: 40px;
+        max-height: 40px;
+        padding: 0;
+        border-radius: 14px;
+        background: {tokens['button_bg']};
+        border: 1px solid {tokens['compact_border']};
+        color: {tokens['compact_text']};
+        font-size: 17px;
+        font-weight: 800;
+    }}
+
+    QPushButton#IconButton:hover {{
+        background: {tokens['soft_card']};
+        border-color: {tokens['hover_border']};
+    }}
+
+    QPushButton#IconButtonChecked {{
+        background: {tokens['primary']};
+        border: 1px solid {tokens['primary']};
+        color: #ffffff;
+    }}
+
     QPushButton#SegmentButton {{
         min-width: 92px;
         background: transparent;

@@ -58,6 +58,21 @@ def test_settings_page_text_and_actions_exist():
     assert "choose_export_zip" in dialog_source
 
 
+def test_settings_uses_compact_gear_and_can_return_to_business_view():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        'self.settings_button = self._button("⚙", "IconButton")',
+        'self.back_to_business_button = self._button("返回", "CompactButton")',
+        "last_business_view",
+        "_show_previous_business_view",
+        "settings_header.addWidget(self.back_to_business_button)",
+        "self.back_to_business_button.clicked.connect(self._show_previous_business_view)",
+    ]:
+        assert token in source
+    assert 'self.current_view = "settings"' in source
+
+
 def test_main_window_uses_custom_frameless_title_bar():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 

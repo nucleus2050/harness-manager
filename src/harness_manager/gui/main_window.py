@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
         self.current_view = "harnesses"
+        self.last_business_view = "harnesses"
         self.current_theme = self.controller.get_settings().theme
         self.title_bar: QFrame | None = None
         self.app_shell: QFrame | None = None
@@ -111,7 +112,8 @@ class MainWindow(QMainWindow):
 
         self.import_skill_button = self._button("选择客户端", "PrimaryButton")
         self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
-        self.settings_button = self._button("设置", "CompactButton")
+        self.settings_button = self._button("⚙", "IconButton")
+        self.settings_button.setToolTip("设置")
         self.harnesses_view_button = self._button("任务套件", "SegmentButtonChecked")
         self.agents_view_button = self._button("AGENTS.md", "SegmentButton")
         self.mcp_view_button = self._button("MCP", "SegmentButton")
@@ -135,6 +137,7 @@ class MainWindow(QMainWindow):
         self.theme_light_button = self._button("浅色", "CompactButton")
         self.theme_dark_button = self._button("深色", "CompactButton")
         self.theme_system_button = self._button("跟随系统", "PrimaryButton")
+        self.back_to_business_button = self._button("返回", "CompactButton")
         self.export_config_button = self._button("导出全部配置", "PrimaryButton")
         self.import_config_button = self._button("导入全部配置", "CompactButton")
         for button in [
@@ -268,8 +271,11 @@ class MainWindow(QMainWindow):
 
         self.import_skill_button.setObjectName("SidebarButton")
         layout.addWidget(self.import_skill_button)
-        layout.addWidget(self.add_custom_source_button)
-        layout.addWidget(self.settings_button)
+        bottom_actions = QHBoxLayout()
+        bottom_actions.setSpacing(10)
+        bottom_actions.addWidget(self.add_custom_source_button, 1)
+        bottom_actions.addWidget(self.settings_button, 0)
+        layout.addLayout(bottom_actions)
         layout.addStretch(1)
         return sidebar
 
@@ -327,7 +333,11 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(22, 20, 22, 22)
         layout.setSpacing(18)
-        layout.addLayout(self._section_header("设置", "管理界面语言和全量配置备份。"))
+        settings_header = QHBoxLayout()
+        settings_copy = self._section_header("设置", "管理界面语言和全量配置备份。")
+        settings_header.addLayout(settings_copy, 1)
+        settings_header.addWidget(self.back_to_business_button)
+        layout.addLayout(settings_header)
 
         language_card = self._card()
         language_layout = QVBoxLayout(language_card)
@@ -687,6 +697,7 @@ class MainWindow(QMainWindow):
         self.import_skill_button.clicked.connect(self._guard(self._import_skill))
         self.add_custom_source_button.clicked.connect(self._guard(self._add_custom_source))
         self.settings_button.clicked.connect(self._show_settings_view)
+        self.back_to_business_button.clicked.connect(self._show_previous_business_view)
         self.harnesses_view_button.clicked.connect(self._show_harnesses_view)
         self.agents_view_button.clicked.connect(lambda: self._show_asset_view("agents_md"))
         self.mcp_view_button.clicked.connect(lambda: self._show_asset_view("mcp"))
@@ -793,7 +804,7 @@ class MainWindow(QMainWindow):
         self.mcp_view_button.style().polish(self.mcp_view_button)
         self.new_mcp_config_button.setVisible(self.current_view == "mcp")
         self.settings_button.setObjectName(
-            "SidebarButton" if settings_active else "CompactButton"
+            "IconButtonChecked" if settings_active else "IconButton"
         )
         self.settings_button.style().unpolish(self.settings_button)
         self.settings_button.style().polish(self.settings_button)
@@ -832,21 +843,35 @@ class MainWindow(QMainWindow):
 
     def _show_harnesses_view(self) -> None:
         self.current_view = "harnesses"
+        self.last_business_view = self.current_view
         self._refresh_view_state()
 
     def _show_asset_view(self, asset_type: str) -> None:
         self.current_view = asset_type
         self._refresh_current_asset_library()
+        self.last_business_view = self.current_view
         self._refresh_view_state()
 
     def _show_skills_view(self) -> None:
         self.current_view = "skills"
         self._refresh_current_asset_library()
+        self.last_business_view = self.current_view
         self._refresh_view_state()
 
     def _show_settings_view(self) -> None:
+        if self.current_view != "settings":
+            self.last_business_view = self.current_view
         self.current_view = "settings"
         self._refresh_view_state()
+
+    def _show_previous_business_view(self) -> None:
+        previous = self.last_business_view if self.last_business_view != "settings" else "harnesses"
+        if previous in {"agents_md", "mcp"}:
+            self._show_asset_view(previous)
+        elif previous == "skills":
+            self._show_skills_view()
+        else:
+            self._show_harnesses_view()
 
     def _toggle_maximized(self) -> None:
         if self.isMaximized():
