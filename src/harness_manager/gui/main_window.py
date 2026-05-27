@@ -845,6 +845,33 @@ class MainWindow(QMainWindow):
             self._toggle_maximized()
             event.accept()
 
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            global_pos = event.globalPosition().toPoint()
+            edges = self._resize_edges_at_position(global_pos)
+            if edges:
+                if self._start_system_resize(edges):
+                    event.accept()
+                    return
+            if self._is_title_bar_drag_area(global_pos):
+                if self._start_system_move():
+                    event.accept()
+                    return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:
+        if self.isMaximized():
+            self.unsetCursor()
+        else:
+            self.setCursor(self._cursor_for_edges(
+                self._resize_edges_at_position(event.globalPosition().toPoint())
+            ))
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event) -> None:
+        self.unsetCursor()
+        super().leaveEvent(event)
+
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
         if event.type() == QEvent.Type.WindowStateChange:
@@ -878,6 +905,47 @@ class MainWindow(QMainWindow):
         if y & 0x8000:
             y -= 0x10000
         return x, y
+
+    def _start_system_resize(self, edges: Qt.Edge) -> bool:
+        handle = self.windowHandle()
+        return bool(handle and handle.startSystemResize(edges))
+
+    def _start_system_move(self) -> bool:
+        handle = self.windowHandle()
+        return bool(handle and handle.startSystemMove())
+
+    def _resize_edges_at_position(self, global_pos: QPoint) -> Qt.Edge:
+        if self.isMaximized():
+            return Qt.Edge(0)
+        local = self.mapFromGlobal(global_pos)
+        border = RESIZE_BORDER_WIDTH + WINDOW_SHADOW_MARGIN
+        edges = Qt.Edge(0)
+        if local.x() <= border:
+            edges |= Qt.Edge.LeftEdge
+        elif local.x() >= self.width() - border:
+            edges |= Qt.Edge.RightEdge
+        if local.y() <= border:
+            edges |= Qt.Edge.TopEdge
+        elif local.y() >= self.height() - border:
+            edges |= Qt.Edge.BottomEdge
+        return edges
+
+    def _cursor_for_edges(self, edges: Qt.Edge) -> Qt.CursorShape:
+        if edges in (
+            Qt.Edge.TopEdge | Qt.Edge.LeftEdge,
+            Qt.Edge.BottomEdge | Qt.Edge.RightEdge,
+        ):
+            return Qt.CursorShape.SizeFDiagCursor
+        if edges in (
+            Qt.Edge.TopEdge | Qt.Edge.RightEdge,
+            Qt.Edge.BottomEdge | Qt.Edge.LeftEdge,
+        ):
+            return Qt.CursorShape.SizeBDiagCursor
+        if edges & (Qt.Edge.LeftEdge | Qt.Edge.RightEdge):
+            return Qt.CursorShape.SizeHorCursor
+        if edges & (Qt.Edge.TopEdge | Qt.Edge.BottomEdge):
+            return Qt.CursorShape.SizeVerCursor
+        return Qt.CursorShape.ArrowCursor
 
     def _hit_test_result(self, global_pos: QPoint) -> int:
         if self.isMaximized():

@@ -93,6 +93,25 @@ def test_main_window_supports_native_resize_snap_and_shadow():
         assert token in source
 
 
+def test_main_window_uses_qt_system_move_resize_fallbacks():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "startSystemResize",
+        "startSystemMove",
+        "_resize_edges_at_position",
+        "_start_system_resize",
+        "_start_system_move",
+        "mousePressEvent",
+        "mouseMoveEvent",
+        "SizeFDiagCursor",
+        "SizeBDiagCursor",
+        "SizeHorCursor",
+        "SizeVerCursor",
+    ]:
+        assert token in source
+
+
 def test_mcp_config_management_text_is_present():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
