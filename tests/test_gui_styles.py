@@ -37,6 +37,7 @@ def test_stylesheet_has_client_cards_and_deploy_buttons():
     stylesheet = build_stylesheet()
 
     assert "QFrame#ClientCard" in stylesheet
+    assert "QFrame#AssetLibraryItem" in stylesheet
     assert "QLabel#ClientName" in stylesheet
     assert "QLabel#ClientPath" in stylesheet
     assert "QLabel#SkillDescription" in stylesheet
@@ -45,6 +46,7 @@ def test_stylesheet_has_client_cards_and_deploy_buttons():
     assert "QPushButton#SourceImportButton" in stylesheet
     assert "font-size: 11px" in stylesheet
     assert "background: transparent" in stylesheet
+    assert "margin: 8px 0" in stylesheet
     assert "QPushButton#DeployInstallButton" in stylesheet
     assert "QPushButton#DeployUninstallButton" in stylesheet
 

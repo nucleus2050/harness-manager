@@ -331,11 +331,17 @@ def build_stylesheet(theme: str = "light") -> str:
         border-radius: 16px;
     }}
 
+    QFrame#AssetLibraryItem {{
+        background: {tokens['soft_card']};
+        border: 1px solid {tokens['soft_border']};
+        border-radius: 16px;
+    }}
+
     QListWidget {{
         background: transparent;
         border: none;
         outline: 0;
-        padding: 4px;
+        padding: 6px;
     }}
 
     QScrollArea#ClientSourceScroll {{
@@ -351,8 +357,8 @@ def build_stylesheet(theme: str = "light") -> str:
         background: {tokens['soft_card']};
         border: 1px solid {tokens['soft_border']};
         border-radius: 14px;
-        margin: 5px 0;
-        padding: 8px;
+        margin: 8px 0;
+        padding: 10px;
         color: {tokens['list_text']};
     }}
 
