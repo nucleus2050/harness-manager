@@ -433,6 +433,26 @@ def choose_archive(parent: QWidget) -> Path | None:
     return Path(value) if value else None
 
 
+def choose_export_zip(parent: QWidget, title: str = "导出全部配置") -> Path | None:
+    value, _ = QFileDialog.getSaveFileName(
+        parent,
+        title,
+        "harness-manager-config.zip",
+        "Zip 压缩包 (*.zip);;所有文件 (*)",
+    )
+    return Path(value) if value else None
+
+
+def choose_config_archive(parent: QWidget) -> Path | None:
+    value, _ = QFileDialog.getOpenFileName(
+        parent,
+        "导入全部配置",
+        "",
+        "Zip 压缩包 (*.zip);;所有文件 (*)",
+    )
+    return Path(value) if value else None
+
+
 def choose_asset_file(parent: QWidget, title: str, filter_text: str) -> Path | None:
     value, _ = QFileDialog.getOpenFileName(parent, title, "", filter_text)
     return Path(value) if value else None

@@ -23,6 +23,28 @@ def test_main_window_has_skill_library_and_client_selection_text():
     assert "软件包" not in source
 
 
+def test_sidebar_stats_include_mcp_and_agents_counts():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "mcp_count_value" in source
+    assert "agents_count_value" in source
+    assert 'list_assets_by_type("mcp")' in source
+    assert 'list_assets_by_type("agents_md")' in source
+
+
+def test_settings_page_text_and_actions_exist():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+
+    for text in ["设置", "界面语言", "中文", "English", "配置备份", "导出全部配置", "导入全部配置"]:
+        assert text in source
+    assert "_show_settings_view" in source
+    assert "save_language" in source
+    assert "export_full_config" in source
+    assert "import_full_config" in source
+    assert "choose_export_zip" in dialog_source
+
+
 def test_mcp_config_management_text_is_present():
     source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")

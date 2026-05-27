@@ -59,11 +59,14 @@ class MainWindow(QMainWindow):
         self.library_skill_list = QListWidget()
         self.harness_count_value = self._label("0", "StatValue")
         self.skill_count_value = self._label("0", "StatValue")
+        self.mcp_count_value = self._label("0", "StatValue")
+        self.agents_count_value = self._label("0", "StatValue")
         self.current_harness_title = self._label("选择一个任务套件", "SectionTitle")
         self.current_harness_meta = self._label("任务套件详情会显示在这里。", "MutedText")
 
         self.import_skill_button = self._button("选择客户端", "PrimaryButton")
         self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
+        self.settings_button = self._button("设置", "CompactButton")
         self.harnesses_view_button = self._button("任务套件", "SegmentButtonChecked")
         self.agents_view_button = self._button("AGENTS.md", "SegmentButton")
         self.mcp_view_button = self._button("MCP", "SegmentButton")
@@ -82,6 +85,10 @@ class MainWindow(QMainWindow):
         self.uninstall_claude_button = self._button("卸载", "DeployUninstallButton")
         self.install_opencode_button = self._button("安装", "DeployInstallButton")
         self.uninstall_opencode_button = self._button("卸载", "DeployUninstallButton")
+        self.language_zh_button = self._button("中文", "PrimaryButton")
+        self.language_en_button = self._button("English", "CompactButton")
+        self.export_config_button = self._button("导出全部配置", "PrimaryButton")
+        self.import_config_button = self._button("导入全部配置", "CompactButton")
         for button in [
             self.export_archive_button,
             self.install_codex_button,
@@ -144,6 +151,7 @@ class MainWindow(QMainWindow):
         self.import_skill_button.setObjectName("SidebarButton")
         layout.addWidget(self.import_skill_button)
         layout.addWidget(self.add_custom_source_button)
+        layout.addWidget(self.settings_button)
         layout.addStretch(1)
         return sidebar
 
@@ -152,17 +160,25 @@ class MainWindow(QMainWindow):
         card.setObjectName("SidebarCard")
         layout = QGridLayout(card)
         layout.setContentsMargins(16, 14, 16, 14)
-        layout.setHorizontalSpacing(18)
-        layout.setVerticalSpacing(4)
+        layout.setHorizontalSpacing(14)
+        layout.setVerticalSpacing(6)
 
         harness_label = self._label("任务套件", "SidebarSubtitle")
         skill_label = self._label("技能", "SidebarSubtitle")
+        mcp_label = self._label("MCP", "SidebarSubtitle")
+        agents_label = self._label("AGENTS.md", "SidebarSubtitle")
         self.harness_count_value.setStyleSheet("color: #f8fafc;")
         self.skill_count_value.setStyleSheet("color: #f8fafc;")
+        self.mcp_count_value.setStyleSheet("color: #f8fafc;")
+        self.agents_count_value.setStyleSheet("color: #f8fafc;")
         layout.addWidget(self.harness_count_value, 0, 0)
         layout.addWidget(self.skill_count_value, 0, 1)
         layout.addWidget(harness_label, 1, 0)
         layout.addWidget(skill_label, 1, 1)
+        layout.addWidget(self.mcp_count_value, 2, 0)
+        layout.addWidget(self.agents_count_value, 2, 1)
+        layout.addWidget(mcp_label, 3, 0)
+        layout.addWidget(agents_label, 3, 1)
         return card
 
     def _build_workspace(self) -> QWidget:
@@ -184,7 +200,42 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.harnesses_body, 1)
         self.skills_body = self._build_skills_library_card()
         layout.addWidget(self.skills_body, 1)
+        self.settings_body = self._build_settings_card()
+        layout.addWidget(self.settings_body, 1)
         return workspace
+
+    def _build_settings_card(self) -> QFrame:
+        card = self._card()
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(22, 20, 22, 22)
+        layout.setSpacing(18)
+        layout.addLayout(self._section_header("设置", "管理界面语言和全量配置备份。"))
+
+        language_card = self._card()
+        language_layout = QVBoxLayout(language_card)
+        language_layout.setContentsMargins(18, 16, 18, 18)
+        language_layout.setSpacing(12)
+        language_layout.addWidget(self._label("界面语言", "SectionTitle"))
+        language_row = QHBoxLayout()
+        language_row.addWidget(self.language_zh_button)
+        language_row.addWidget(self.language_en_button)
+        language_row.addStretch(1)
+        language_layout.addLayout(language_row)
+        layout.addWidget(language_card)
+
+        backup_card = self._card()
+        backup_layout = QVBoxLayout(backup_card)
+        backup_layout.setContentsMargins(18, 16, 18, 18)
+        backup_layout.setSpacing(12)
+        backup_layout.addWidget(self._label("配置备份", "SectionTitle"))
+        backup_row = QHBoxLayout()
+        backup_row.addWidget(self.export_config_button)
+        backup_row.addWidget(self.import_config_button)
+        backup_row.addStretch(1)
+        backup_layout.addLayout(backup_row)
+        layout.addWidget(backup_card)
+        layout.addStretch(1)
+        return card
 
     def _build_view_switch(self) -> QFrame:
         switch = QFrame()
@@ -490,6 +541,7 @@ class MainWindow(QMainWindow):
         self.harness_list.currentRowChanged.connect(self._refresh_harness_assets)
         self.import_skill_button.clicked.connect(self._guard(self._import_skill))
         self.add_custom_source_button.clicked.connect(self._guard(self._add_custom_source))
+        self.settings_button.clicked.connect(self._show_settings_view)
         self.harnesses_view_button.clicked.connect(self._show_harnesses_view)
         self.agents_view_button.clicked.connect(lambda: self._show_asset_view("agents_md"))
         self.mcp_view_button.clicked.connect(lambda: self._show_asset_view("mcp"))
@@ -516,6 +568,10 @@ class MainWindow(QMainWindow):
         self.uninstall_opencode_button.clicked.connect(
             self._guard(lambda: self._uninstall("opencode"))
         )
+        self.language_zh_button.clicked.connect(self._guard(lambda: self._save_language("zh-CN")))
+        self.language_en_button.clicked.connect(self._guard(lambda: self._save_language("en-US")))
+        self.export_config_button.clicked.connect(self._guard(self._export_full_config))
+        self.import_config_button.clicked.connect(self._guard(self._import_full_config))
 
     def _guard(self, callback: Callable[[], None]) -> Callable[[], None]:
         def wrapped() -> None:
@@ -532,8 +588,12 @@ class MainWindow(QMainWindow):
         self.harnesses = self.controller.list_harnesses()
 
         all_skills = self.controller.list_skills()
+        mcp_assets = self.controller.list_assets_by_type("mcp")
+        agents_assets = self.controller.list_assets_by_type("agents_md")
         self.harness_count_value.setText(str(len(self.harnesses)))
         self.skill_count_value.setText(str(len(all_skills)))
+        self.mcp_count_value.setText(str(len(mcp_assets)))
+        self.agents_count_value.setText(str(len(agents_assets)))
         self._refresh_view_state()
 
         self._clear_client_cards()
@@ -559,7 +619,9 @@ class MainWindow(QMainWindow):
     def _refresh_view_state(self) -> None:
         harness_active = self.current_view == "harnesses"
         self.harnesses_body.setVisible(harness_active)
-        self.skills_body.setVisible(not harness_active)
+        settings_active = self.current_view == "settings"
+        self.settings_body.setVisible(settings_active)
+        self.skills_body.setVisible(not harness_active and not settings_active)
         self.harnesses_view_button.setObjectName(
             "SegmentButtonChecked" if harness_active else "SegmentButton"
         )
@@ -581,6 +643,11 @@ class MainWindow(QMainWindow):
         self.mcp_view_button.style().unpolish(self.mcp_view_button)
         self.mcp_view_button.style().polish(self.mcp_view_button)
         self.new_mcp_config_button.setVisible(self.current_view == "mcp")
+        self.settings_button.setObjectName(
+            "SidebarButton" if settings_active else "CompactButton"
+        )
+        self.settings_button.style().unpolish(self.settings_button)
+        self.settings_button.style().polish(self.settings_button)
 
     def _refresh_asset_library(self, skills: list[Skill]) -> None:
         self.library_skill_list.clear()
@@ -626,6 +693,10 @@ class MainWindow(QMainWindow):
     def _show_skills_view(self) -> None:
         self.current_view = "skills"
         self._refresh_current_asset_library()
+        self._refresh_view_state()
+
+    def _show_settings_view(self) -> None:
+        self.current_view = "settings"
         self._refresh_view_state()
 
     def _select_client(self, client_type: ClientType) -> None:
@@ -832,6 +903,34 @@ class MainWindow(QMainWindow):
         self.controller.update_mcp_config_asset(asset.id, title, display_name, config_json)
         self.refresh()
         dialogs.show_info(self, "保存完成", f"已更新 MCP 配置 {title}。")
+
+    def _save_language(self, language: str) -> None:
+        settings = self.controller.save_language(language)
+        self.language_zh_button.setObjectName(
+            "PrimaryButton" if settings.language == "zh-CN" else "CompactButton"
+        )
+        self.language_en_button.setObjectName(
+            "PrimaryButton" if settings.language == "en-US" else "CompactButton"
+        )
+        for button in [self.language_zh_button, self.language_en_button]:
+            button.style().unpolish(button)
+            button.style().polish(button)
+        dialogs.show_info(self, "保存完成", "语言设置已保存。")
+
+    def _export_full_config(self) -> None:
+        destination = dialogs.choose_export_zip(self)
+        if destination is None:
+            return
+        archive = self.controller.export_full_config(destination)
+        dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
+
+    def _import_full_config(self) -> None:
+        archive = dialogs.choose_config_archive(self)
+        if archive is None:
+            return
+        backup = self.controller.import_full_config(archive)
+        self.refresh()
+        dialogs.show_info(self, "导入完成", f"已导入配置，原配置已备份到 {backup}。")
 
     def _add_first_skill_to_harness(self) -> None:
         skills = self.controller.list_assets_by_type("skill")
