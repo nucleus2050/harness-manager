@@ -118,7 +118,7 @@ git commit -m "feat: expose mcp config controller"
 
 - [ ] **Step 1: Write failing GUI contract tests**
 
-Assert the GUI source contains `新建 MCP 配置`, `编辑`, `完整 JSON 配置`, `格式化`, `MCP 标题（唯一）`, and `启用到应用`.
+Assert the GUI source contains `新建 MCP 配置`, `编辑`, `完整 JSON 配置`, `格式化`, and `MCP 标题（唯一）`.
 
 - [ ] **Step 2: Verify RED**
 

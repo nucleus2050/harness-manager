@@ -45,7 +45,6 @@ MCP 资产字段约定：
 {
   "mcp_kind": "custom",
   "display_name": "Fetch Server",
-  "enabled_clients": ["claude_code", "codex"],
   "config_filename": "mcp.json"
 }
 ```
@@ -71,7 +70,7 @@ MCP tab 改为配置管理页。
 页面包含：
 
 - 顶部操作：`新建 MCP 配置`
-- MCP 配置列表：展示每个 MCP 的标题、类型、启用应用、JSON 摘要。
+- MCP 配置列表：展示每个 MCP 的标题、类型、JSON 摘要。
 - 每个 MCP 卡片操作：
   - `编辑`
   - `加入套件`
@@ -82,7 +81,6 @@ MCP tab 改为配置管理页。
 - MCP 类型按钮：`自定义`、`fetch`、`time`、`memory`、`sequential-thinking`、`context7`
 - `MCP 标题（唯一）`
 - `显示名称`
-- 启用到应用：`Claude Code`、`Codex`、`OpenCode`
 - `完整 JSON 配置` 多行编辑区
 - `格式化`
 - `取消`

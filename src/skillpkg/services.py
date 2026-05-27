@@ -508,7 +508,98 @@ def _import_mcp_asset(self: SkillPkgService, source_file: Path | str, name: str,
     return _copy_file_asset(self, source_path, "mcp", name, source_type, source_path.name)
 
 
+def _normalized_mcp_json(config_json: str) -> str:
+    try:
+        parsed = json.loads(config_json)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"MCP JSON 配置无效: {exc.msg}") from exc
+    return json.dumps(parsed, ensure_ascii=False, indent=2)
+
+
+def _mcp_metadata(mcp_kind: str, display_name: str) -> str:
+    return json.dumps(
+        {
+            "mcp_kind": mcp_kind,
+            "display_name": display_name,
+            "config_filename": "mcp.json",
+        },
+        ensure_ascii=False,
+    )
+
+
+def _create_mcp_config_asset(
+    self: SkillPkgService,
+    title: str,
+    display_name: str,
+    mcp_kind: str,
+    config_json: str,
+) -> Asset:
+    title = title.strip()
+    if not title:
+        raise ValueError("MCP 标题不能为空。")
+    if self.assets.find_by_type_and_name("mcp", title) is not None:
+        raise ValueError(f"MCP 标题已存在: {title}")
+
+    normalized_json = _normalized_mcp_json(config_json)
+    asset_id = uuid.uuid4().hex
+    destination_dir = asset_dir(self.paths, "mcp", asset_id)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination = destination_dir / "mcp.json"
+    try:
+        destination.write_text(normalized_json, encoding="utf-8")
+        fingerprint = fingerprint_directory(destination_dir)
+        with transaction(self.conn):
+            return self.assets.upsert(
+                asset_id,
+                "mcp",
+                title,
+                "custom",
+                destination.relative_to(self.paths.root).as_posix(),
+                fingerprint,
+                _mcp_metadata(mcp_kind, display_name),
+            )
+    except Exception:
+        safe_remove_directory(destination_dir)
+        raise
+
+
+def _update_mcp_config_asset(
+    self: SkillPkgService,
+    asset_id: str,
+    title: str,
+    display_name: str,
+    mcp_kind: str,
+    config_json: str,
+) -> Asset:
+    title = title.strip()
+    if not title:
+        raise ValueError("MCP 标题不能为空。")
+    existing = self.assets.get(asset_id)
+    duplicate = self.assets.find_by_type_and_name("mcp", title)
+    if duplicate is not None and duplicate.id != asset_id:
+        raise ValueError(f"MCP 标题已存在: {title}")
+
+    normalized_json = _normalized_mcp_json(config_json)
+    destination = self.paths.root / existing.relative_path
+    destination_dir = destination.parent
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination.write_text(normalized_json, encoding="utf-8")
+    fingerprint = fingerprint_directory(destination_dir)
+    with transaction(self.conn):
+        return self.assets.upsert(
+            asset_id,
+            "mcp",
+            title,
+            "custom",
+            destination.relative_to(self.paths.root).as_posix(),
+            fingerprint,
+            _mcp_metadata(mcp_kind, display_name),
+        )
+
+
 SkillPkgService.import_agents_md_asset = _import_agents_md_asset
 SkillPkgService.import_mcp_asset = _import_mcp_asset
+SkillPkgService.create_mcp_config_asset = _create_mcp_config_asset
+SkillPkgService.update_mcp_config_asset = _update_mcp_config_asset
 
 

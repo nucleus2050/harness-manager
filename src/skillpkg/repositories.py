@@ -368,6 +368,17 @@ class AssetRepository:
             raise KeyError(asset_id)
         return _asset_from_row(row)
 
+    def find_by_type_and_name(self, asset_type: str, name: str) -> Asset | None:
+        row = self.conn.execute(
+            """
+            SELECT id, type, name, source_type, relative_path, fingerprint, metadata_json
+            FROM assets
+            WHERE type = ? AND name = ?
+            """,
+            (asset_type, name),
+        ).fetchone()
+        return _asset_from_row(row) if row else None
+
     def list_by_type(self, asset_type: str) -> list[Asset]:
         rows = self.conn.execute(
             """
