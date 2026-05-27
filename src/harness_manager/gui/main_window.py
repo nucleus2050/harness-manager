@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         self.current_harness_title = self._label("选择一个任务套件", "SectionTitle")
         self.current_harness_meta = self._label("任务套件详情会显示在这里。", "MutedText")
 
-        self.import_skill_button = self._button("选择客户端", "PrimaryButton")
+        self.import_skill_button = self._button("选择 Skill 来源", "PrimaryButton")
         self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
         self.settings_button = self._button("⚙", "IconButton")
         self.settings_button.setToolTip("设置")
@@ -276,7 +276,7 @@ class MainWindow(QMainWindow):
         self.client_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.client_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.client_scroll.setWidget(clients_container)
-        layout.addWidget(self.client_scroll, 0)
+        layout.addWidget(self.client_scroll, 1)
 
         self.import_skill_button.setObjectName("SidebarButton")
         layout.addWidget(self.import_skill_button)
@@ -651,7 +651,17 @@ class MainWindow(QMainWindow):
         status = self._label("自定义", "ClientStatusReady")
         status.setMinimumWidth(48)
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        delete_button = self._button("删除", "CompactButton")
+        delete_button.setMaximumWidth(54)
+        delete_button.clicked.connect(
+            self._guard(
+                lambda _checked=False, current_id=source_id: self._remove_custom_source(
+                    current_id
+                )
+            )
+        )
         header.addWidget(status)
+        header.addWidget(delete_button)
         layout.addLayout(header)
         path_label = self._label(str(source["path"]), "ClientPath")
         path_label.setWordWrap(True)
@@ -822,7 +832,7 @@ class MainWindow(QMainWindow):
             empty_text = "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。"
         else:
             self.library_assets = self.controller.list_assets_by_type("skill")
-            empty_text = "暂无技能\n请从左侧选择客户端并导入技能。"
+            empty_text = "暂无技能\n请从左侧选择 Skill 来源并导入技能。"
             if not self.library_assets:
                 self.library_assets = [
                     Asset(skill.id, "skill", skill.name, skill.source_client, skill.relative_path, skill.fingerprint, "{}")
@@ -1067,7 +1077,7 @@ class MainWindow(QMainWindow):
         self.selected_client_type = client_type
         self.selected_custom_source_id = None
         client_name = self._selected_client_name()
-        self.import_skill_button.setText(f"从 {client_name} 导入" if client_name else "从选中来源导入")
+        self.import_skill_button.setText(f"从 {client_name} 导入" if client_name else "选择 Skill 来源")
         self._clear_client_cards()
         for client in self.clients:
             self._add_client_card(client)
@@ -1107,7 +1117,7 @@ class MainWindow(QMainWindow):
         source_count = len(self.clients) + len(self.controller.list_custom_import_sources())
         visible_rows = max(1, min(source_count, CLIENT_SOURCE_VISIBLE_ROWS))
         height = visible_rows * (CLIENT_CARD_MIN_HEIGHT + 10) + 4
-        self.client_scroll.setMinimumHeight(height)
+        self.client_scroll.setMinimumHeight(min(height, CLIENT_CARD_MIN_HEIGHT + 14))
         self.client_scroll.setMaximumHeight(height)
 
     def _add_client_card(self, client: ClientConfig) -> None:
@@ -1207,6 +1217,14 @@ class MainWindow(QMainWindow):
         self.refresh()
         self._select_custom_source(source_id)
         dialogs.show_info(self, "添加完成", f"已添加自定义目录 {name}。")
+
+    def _remove_custom_source(self, source_id: str) -> None:
+        removed = self.controller.remove_custom_import_source(source_id)
+        if self.selected_custom_source_id == source_id:
+            self.selected_custom_source_id = None
+            self.import_skill_button.setText("选择 Skill 来源")
+        self.refresh()
+        dialogs.show_info(self, "删除完成", f"已删除自定义来源，并移除 {removed} 个关联技能。")
 
     def _new_harness(self) -> None:
         details = dialogs.ask_harness_details(self, "新建任务套件")

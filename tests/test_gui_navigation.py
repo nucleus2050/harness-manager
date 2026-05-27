@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def test_main_window_has_skill_library_and_client_selection_text():
+def test_main_window_has_skill_library_and_source_selection_text():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for text in [
@@ -13,8 +13,8 @@ def test_main_window_has_skill_library_and_client_selection_text():
         "添加 AGENTS.md",
         "添加 MCP",
         "添加技能",
-        "从选中来源导入",
-        "选择导入来源",
+        "从自定义目录导入",
+        "选择 Skill 来源",
         "全部技能",
         "来源",
     ]:
@@ -189,7 +189,7 @@ def test_import_sources_use_scroll_area_with_fixed_actions():
         'self.client_scroll.setObjectName("ClientSourceScroll")',
         "self.client_scroll.setWidgetResizable(True)",
         "self.client_scroll.setWidget(clients_container)",
-        "layout.addWidget(self.client_scroll, 0)",
+        "layout.addWidget(self.client_scroll, 1)",
         "self.import_skill_button.setObjectName(\"SidebarButton\")",
         "layout.addWidget(self.import_skill_button)",
         "layout.addWidget(self.add_custom_source_button)",

@@ -28,6 +28,10 @@ def _slug(value: str) -> str:
     return slug or "skill"
 
 
+def is_skill_directory(path: Path | str) -> bool:
+    return (Path(path) / "SKILL.md").is_file()
+
+
 def _resolve_under(path: Path, root: Path, description: str) -> Path:
     resolved_path = path.resolve()
     resolved_root = root.resolve()
@@ -72,6 +76,8 @@ class HarnessService:
 
     def import_skill(self, source_dir: Path | str, source_client: ClientType | None) -> Skill:
         source_path = Path(source_dir)
+        if not is_skill_directory(source_path):
+            raise ValueError(f"不是有效的 Skill 目录: {source_path}")
         skill: Skill | None = None
         created_new = False
         try:
