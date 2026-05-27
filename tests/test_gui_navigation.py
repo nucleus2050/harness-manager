@@ -246,6 +246,9 @@ def test_asset_library_adds_harness_action_on_each_item():
     assert "setItemWidget" in source
     assert "加入套件" in source
     assert "移出套件" in source
+    assert "删除" in source
+    assert "delete_skill_asset" in source
+    assert "asset.type == \"skill\"" in source
     assert "join_harness_button" not in source
 
 

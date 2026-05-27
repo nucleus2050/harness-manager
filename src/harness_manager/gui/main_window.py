@@ -572,6 +572,13 @@ class MainWindow(QMainWindow):
             self._guard(lambda asset=asset: self._remove_asset_from_chosen_harness(asset))
         )
         layout.addWidget(remove_button)
+        if asset.type == "skill":
+            delete_button = self._button("删除", "CompactButton")
+            delete_button.setMinimumWidth(76)
+            delete_button.clicked.connect(
+                self._guard(lambda asset=asset: self._delete_skill_asset(asset))
+            )
+            layout.addWidget(delete_button)
         return row
 
     def _deploy_row(
@@ -1398,6 +1405,11 @@ class MainWindow(QMainWindow):
         self.controller.remove_asset_from_harness(harness.id, asset.id)
         self.refresh()
         dialogs.show_info(self, "移出完成", f"已将 {asset.name} 从 {harness.name} 移出。")
+
+    def _delete_skill_asset(self, asset: Asset) -> None:
+        self.controller.delete_skill_asset(asset.id)
+        self.refresh()
+        dialogs.show_info(self, "删除完成", f"已从技能库删除 {asset.name}。")
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)

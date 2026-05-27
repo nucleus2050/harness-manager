@@ -91,3 +91,20 @@ def test_controller_removes_only_custom_source(app_root, tmp_path):
     assert controller.list_custom_import_sources() == []
     assert [skill.id for skill in controller.list_skills()] == [imported[0].id]
     assert (paths.skills_dir / imported[0].id).exists()
+
+
+def test_controller_deletes_skill_from_library(app_root, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("技能套件", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+
+    controller.delete_skill_asset(skill.id)
+
+    assert controller.list_assets_by_type("skill") == []
+    assert controller.list_skills() == []
+    assert controller.list_harness_assets(harness.id) == []
+    assert not (paths.skills_dir / skill.id).exists()

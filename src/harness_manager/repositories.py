@@ -130,6 +130,14 @@ class SkillRepository:
         ).fetchall()
         return [_skill_from_row(row) for row in rows]
 
+    def delete(self, skill_id: str) -> None:
+        self.conn.execute("DELETE FROM install_records WHERE skill_id = ?", (skill_id,))
+        self.conn.execute("DELETE FROM package_skills WHERE skill_id = ?", (skill_id,))
+        self.conn.execute("DELETE FROM harness_assets WHERE asset_id = ?", (skill_id,))
+        self.conn.execute("DELETE FROM assets WHERE id = ? AND type = 'skill'", (skill_id,))
+        self.conn.execute("DELETE FROM skills WHERE id = ?", (skill_id,))
+
+
 class PackageRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn

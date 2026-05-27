@@ -174,6 +174,9 @@ class MainController:
         with transaction(self.conn):
             self.import_sources.disable(source_id)
 
+    def delete_skill_asset(self, skill_id: str) -> None:
+        self.service.delete_skill(skill_id)
+
     def create_package(self, name: str, description: str = "") -> Package:
         return self.service.create_package(name, description, [])
 

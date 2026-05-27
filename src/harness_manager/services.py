@@ -93,6 +93,20 @@ class HarnessService:
             raise
         return skill
 
+    def delete_skill(self, skill_id: str) -> None:
+        skill = self.skills.get(skill_id)
+        destination = self.paths.skill_path(skill.id)
+        with transaction(self.conn):
+            self.skills.delete(skill.id)
+            self.logs.add(
+                "delete_skill",
+                f"Deleted skill {skill.id}",
+                skill.source_client,
+                skill_id=skill.id,
+            )
+        if destination.exists():
+            self._remove_owned_directory(destination, self.paths.skills_dir)
+
     def _import_skill_without_transaction(
         self, source_path: Path, source_client: ClientType | None
     ) -> tuple[Skill, bool]:
