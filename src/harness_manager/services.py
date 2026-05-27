@@ -32,6 +32,25 @@ def is_skill_directory(path: Path | str) -> bool:
     return (Path(path) / "SKILL.md").is_file()
 
 
+def skill_description(path: Path | str) -> str:
+    skill_md = Path(path) / "SKILL.md"
+    if not skill_md.is_file():
+        return "暂无描述。"
+    text = skill_md.read_text(encoding="utf-8", errors="replace")
+    if text.startswith("---"):
+        end = text.find("\n---", 3)
+        if end != -1:
+            for line in text[3:end].splitlines():
+                key, separator, value = line.partition(":")
+                if separator and key.strip() == "description":
+                    return value.strip().strip("\"'") or "暂无描述。"
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and stripped != "---":
+            return stripped
+    return "暂无描述。"
+
+
 def _resolve_under(path: Path, root: Path, description: str) -> Path:
     resolved_path = path.resolve()
     resolved_root = root.resolve()

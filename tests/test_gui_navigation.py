@@ -267,9 +267,21 @@ def test_asset_library_item_has_safe_height_and_layout():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert "QSize" in source
-    assert "row.setMinimumHeight(78)" in source
-    assert "item.setSizeHint(QSize(0, 86))" in source
+    assert "_asset_library_item_height(asset)" in source
+    assert "return 86" in source
     assert "add_button.setMinimumWidth(92)" in source
+
+
+def test_skill_library_item_expands_selected_skill_description():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    services_source = Path("src/harness_manager/services.py").read_text(encoding="utf-8")
+
+    assert "self.selected_library_asset_id" in source
+    assert "itemClicked.connect" in source
+    assert "_asset_library_item_height" in source
+    assert "_skill_description" in source
+    assert "技能描述" in source
+    assert "SKILL.md" in services_source
 
 
 def test_client_source_cards_have_safe_height_and_wrapping():

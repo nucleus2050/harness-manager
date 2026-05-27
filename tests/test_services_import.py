@@ -7,6 +7,7 @@ from harness_manager.db import connect, initialize_database
 from harness_manager.fingerprint import fingerprint_directory
 from harness_manager.repositories import PackageRepository
 from harness_manager.services import HarnessService, _slug
+from harness_manager.services import skill_description
 
 
 def _service(app_root: Path) -> HarnessService:
@@ -64,3 +65,14 @@ def test_create_package_with_imported_skill(app_root, sample_skill):
     ).fetchall()
     assert ("import_skill", None, skill.id) in [tuple(row) for row in log_rows]
     assert ("create_package", package.id, None) in [tuple(row) for row in log_rows]
+
+
+def test_skill_description_reads_frontmatter_description(tmp_path):
+    skill = tmp_path / "described-skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text(
+        "---\ndescription: 用于长文总结\n---\n# Skill\n\nBody\n",
+        encoding="utf-8",
+    )
+
+    assert skill_description(skill) == "用于长文总结"
