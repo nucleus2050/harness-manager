@@ -43,6 +43,14 @@ def test_main_window_tracks_selected_client():
     assert "_show_skills_view" in source
 
 
+def test_asset_tab_switch_refreshes_visible_library():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "_refresh_current_asset_library()" in source
+    assert "self.current_view = asset_type\n        self._refresh_current_asset_library()" in source
+    assert "self.current_view = \"skills\"\n        self._refresh_current_asset_library()" in source
+
+
 def test_join_harness_prompts_for_target_harness():
     main_source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")

@@ -560,16 +560,21 @@ class MainWindow(QMainWindow):
             self.library_skill_list.addItem(item)
             self.library_skill_list.setItemWidget(item, widget)
 
+    def _refresh_current_asset_library(self) -> None:
+        self._refresh_asset_library(self.controller.list_skills())
+
     def _show_harnesses_view(self) -> None:
         self.current_view = "harnesses"
         self._refresh_view_state()
 
     def _show_asset_view(self, asset_type: str) -> None:
         self.current_view = asset_type
+        self._refresh_current_asset_library()
         self._refresh_view_state()
 
     def _show_skills_view(self) -> None:
         self.current_view = "skills"
+        self._refresh_current_asset_library()
         self._refresh_view_state()
 
     def _select_client(self, client_type: ClientType) -> None:
