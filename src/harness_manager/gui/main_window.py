@@ -1439,7 +1439,6 @@ class MainWindow(QMainWindow):
     def _delete_skill_asset(self, asset: Asset) -> None:
         self.controller.delete_skill_asset(asset.id)
         self.refresh()
-        dialogs.show_info(self, "删除完成", f"已从技能库删除 {asset.name}。")
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)

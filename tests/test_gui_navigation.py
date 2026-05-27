@@ -252,6 +252,16 @@ def test_asset_library_adds_harness_action_on_each_item():
     assert "join_harness_button" not in source
 
 
+def test_skill_library_delete_is_direct_without_confirmation():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    method = source.split("def _delete_skill_asset", 1)[1].split("\n    def ", 1)[0]
+
+    assert "delete_skill_asset(asset.id)" in method
+    assert "self.refresh()" in method
+    assert "dialogs.show_info" not in method
+    assert "confirm_text" not in method
+
+
 def test_asset_library_removes_component_from_selected_harness():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
