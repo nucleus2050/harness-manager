@@ -44,7 +44,7 @@ def test_settings_page_text_and_actions_exist():
         "外观主题",
         "浅色",
         "深色",
-        "跟随系统",
+        "黑曜",
         "矩阵",
         "霓虹",
         "日落",
@@ -60,6 +60,7 @@ def test_settings_page_text_and_actions_exist():
     assert "export_full_config" in source
     assert "import_full_config" in source
     assert "choose_export_zip" in dialog_source
+    assert "跟随系统" not in source
 
 
 def test_settings_uses_compact_gear_and_can_return_to_business_view():

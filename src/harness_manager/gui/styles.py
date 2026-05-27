@@ -112,6 +112,48 @@ _THEME_TOKENS = {
 
 _THEME_TOKENS.update(
     {
+        "obsidian": {
+            **_THEME_TOKENS["dark"],
+            "app_bg": "#000000",
+            "text": "#e7e5e4",
+            "main_bg": "#000000",
+            "shell_bg": "#000000",
+            "titlebar_bg": "#050505",
+            "titlebar_border": "#27272a",
+            "titlebar_text": "#fafaf9",
+            "titlebar_icon_bg": "#111111",
+            "titlebar_button_hover": "#18181b",
+            "title": "#fafaf9",
+            "muted": "#a8a29e",
+            "sidebar": "#050505",
+            "sidebar_card": "#0a0a0a",
+            "sidebar_card_border": "#27272a",
+            "card": "#050505",
+            "card_border": "#27272a",
+            "hero_start": "#050505",
+            "hero_end": "#111111",
+            "hero_border": "#27272a",
+            "pill_bg": "#0a0a0a",
+            "pill_border": "#27272a",
+            "soft_card": "#0a0a0a",
+            "soft_border": "#27272a",
+            "client_border": "#3f3f46",
+            "selected_bg": "#18181b",
+            "selected_border": "#f5f5f4",
+            "client_path": "#d6d3d1",
+            "list_text": "#f5f5f4",
+            "hover_bg": "#18181b",
+            "hover_border": "#52525b",
+            "primary": "#f5f5f4",
+            "primary_hover": "#d6d3d1",
+            "secondary_bg": "#111111",
+            "button_bg": "#111111",
+            "button_border": "#3f3f46",
+            "button_text": "#fafaf9",
+            "compact_border": "#3f3f46",
+            "compact_text": "#e7e5e4",
+            "scroll": "#52525b",
+        },
         "matrix": {
             **_THEME_TOKENS["dark"],
             "app_bg": "#020403",
@@ -236,8 +278,6 @@ _THEME_TOKENS.update(
 
 
 def build_stylesheet(theme: str = "light") -> str:
-    if theme == "system":
-        theme = "light"
     tokens = _THEME_TOKENS.get(theme, _THEME_TOKENS["light"])
     return f"""
     QWidget {{

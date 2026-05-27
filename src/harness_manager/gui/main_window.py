@@ -6,7 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QSize, Qt
-from PySide6.QtGui import QColor, QCursor, QIcon, QPalette, QPixmap
+from PySide6.QtGui import QColor, QCursor, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -139,7 +139,7 @@ class MainWindow(QMainWindow):
         self.language_en_button = self._button("English", "CompactButton")
         self.theme_light_button = self._button("浅色", "CompactButton")
         self.theme_dark_button = self._button("深色", "CompactButton")
-        self.theme_system_button = self._button("跟随系统", "PrimaryButton")
+        self.theme_obsidian_button = self._button("黑曜", "PrimaryButton")
         self.theme_matrix_button = self._button("矩阵", "CompactButton")
         self.theme_neon_button = self._button("霓虹", "CompactButton")
         self.theme_sunset_button = self._button("日落", "CompactButton")
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         theme_row = QHBoxLayout()
         theme_row.addWidget(self.theme_light_button)
         theme_row.addWidget(self.theme_dark_button)
-        theme_row.addWidget(self.theme_system_button)
+        theme_row.addWidget(self.theme_obsidian_button)
         theme_row.addWidget(self.theme_matrix_button)
         theme_row.addWidget(self.theme_neon_button)
         theme_row.addWidget(self.theme_sunset_button)
@@ -801,7 +801,7 @@ class MainWindow(QMainWindow):
         self.language_en_button.clicked.connect(self._guard(lambda: self._save_language("en-US")))
         self.theme_light_button.clicked.connect(self._guard(lambda: self._save_theme("light")))
         self.theme_dark_button.clicked.connect(self._guard(lambda: self._save_theme("dark")))
-        self.theme_system_button.clicked.connect(self._guard(lambda: self._save_theme("system")))
+        self.theme_obsidian_button.clicked.connect(self._guard(lambda: self._save_theme("obsidian")))
         self.theme_matrix_button.clicked.connect(self._guard(lambda: self._save_theme("matrix")))
         self.theme_neon_button.clicked.connect(self._guard(lambda: self._save_theme("neon")))
         self.theme_sunset_button.clicked.connect(self._guard(lambda: self._save_theme("sunset")))
@@ -1387,13 +1387,7 @@ class MainWindow(QMainWindow):
 
     def _apply_theme(self, theme: str) -> None:
         self.current_theme = theme
-        self.setStyleSheet(build_stylesheet(self._resolved_theme(theme)))
-
-    def _resolved_theme(self, theme: str) -> str:
-        if theme != "system":
-            return theme
-        window_color = QApplication.palette().color(QPalette.ColorRole.Window)
-        return "dark" if window_color.lightness() < 128 else "light"
+        self.setStyleSheet(build_stylesheet(theme))
 
     def _refresh_settings_buttons(self, settings) -> None:
         self.language_zh_button.setObjectName(
@@ -1408,8 +1402,8 @@ class MainWindow(QMainWindow):
         self.theme_dark_button.setObjectName(
             "PrimaryButton" if settings.theme == "dark" else "CompactButton"
         )
-        self.theme_system_button.setObjectName(
-            "PrimaryButton" if settings.theme == "system" else "CompactButton"
+        self.theme_obsidian_button.setObjectName(
+            "PrimaryButton" if settings.theme == "obsidian" else "CompactButton"
         )
         self.theme_matrix_button.setObjectName(
             "PrimaryButton" if settings.theme == "matrix" else "CompactButton"
@@ -1428,7 +1422,7 @@ class MainWindow(QMainWindow):
             self.language_en_button,
             self.theme_light_button,
             self.theme_dark_button,
-            self.theme_system_button,
+            self.theme_obsidian_button,
             self.theme_matrix_button,
             self.theme_neon_button,
             self.theme_sunset_button,

@@ -64,6 +64,7 @@ def test_stylesheet_supports_light_and_dark_theme_tokens():
 
 def test_stylesheet_supports_additional_visual_themes():
     themes = {
+        "obsidian": "#000000",
         "matrix": "#00ff88",
         "neon": "#ff2bd6",
         "sunset": "#f97316",
@@ -75,13 +76,6 @@ def test_stylesheet_supports_additional_visual_themes():
 
         assert expected_color in stylesheet
         assert stylesheet != build_stylesheet("dark")
-
-
-def test_stylesheet_system_defaults_to_light_tokens():
-    stylesheet = build_stylesheet("system")
-
-    assert "background: #eef2f7" in stylesheet
-
 
 def test_stylesheet_styles_custom_title_bar_and_window_controls():
     light = build_stylesheet("light")

@@ -11,13 +11,13 @@ from pathlib import Path
 from harness_manager.app_paths import AppPaths
 from harness_manager.file_ops import extract_zip, make_zip, safe_remove_directory
 
-SUPPORTED_THEMES = {"light", "dark", "system", "matrix", "neon", "sunset", "forest"}
+SUPPORTED_THEMES = {"obsidian", "light", "dark", "matrix", "neon", "sunset", "forest"}
 
 
 @dataclass(frozen=True)
 class AppSettings:
     language: str = "zh-CN"
-    theme: str = "system"
+    theme: str = "obsidian"
 
 
 class SettingsService:
@@ -36,9 +36,9 @@ class SettingsService:
         language = data.get("language", "zh-CN")
         if language not in {"zh-CN", "en-US"}:
             language = "zh-CN"
-        theme = data.get("theme", "system")
+        theme = data.get("theme", "obsidian")
         if theme not in SUPPORTED_THEMES:
-            theme = "system"
+            theme = "obsidian"
         return AppSettings(language=language, theme=theme)
 
     def save_language(self, language: str) -> AppSettings:
