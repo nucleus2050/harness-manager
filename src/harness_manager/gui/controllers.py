@@ -170,20 +170,9 @@ class MainController:
         source = self.import_sources.get(source_id)
         return self.import_skill_library(Path(source["path"]), f"custom:{source_id}")
 
-    def remove_custom_import_source(self, source_id: str) -> int:
-        source_key = f"custom:{source_id}"
-        skills = self.skills.list_by_source_client(source_key)
+    def remove_custom_import_source(self, source_id: str) -> None:
         with transaction(self.conn):
             self.import_sources.disable(source_id)
-            for skill in skills:
-                self.skills.delete(skill.id)
-        removed = 0
-        for skill in skills:
-            destination = self.paths.skill_path(skill.id)
-            if destination.exists():
-                self.service._remove_owned_directory(destination, self.paths.skills_dir)
-            removed += 1
-        return removed
 
     def create_package(self, name: str, description: str = "") -> Package:
         return self.service.create_package(name, description, [])

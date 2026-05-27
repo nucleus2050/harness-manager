@@ -15,3 +15,5 @@ def test_main_window_has_custom_source_text_and_direct_import_flow():
     assert "import_from_client_source" in source
     assert "import_from_custom_source" in source
     assert "remove_custom_import_source" in source
+    assert '"SourceDeleteButton"' in source
+    assert "已删除自定义来源。" in source

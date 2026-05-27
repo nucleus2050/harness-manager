@@ -76,7 +76,7 @@ def test_controller_rejects_direct_import_of_non_skill_directory(app_root, tmp_p
         raise AssertionError("non-skill directory should fail")
 
 
-def test_controller_removes_custom_source_and_imported_skills(app_root, tmp_path):
+def test_controller_removes_only_custom_source(app_root, tmp_path):
     paths = AppPaths(app_root)
     paths.ensure()
     conn = connect(paths.db_path)
@@ -86,9 +86,8 @@ def test_controller_removes_custom_source_and_imported_skills(app_root, tmp_path
     source_id = controller.add_custom_import_source("我的技能库", source)
     imported = controller.import_from_custom_source(source_id)
 
-    removed = controller.remove_custom_import_source(source_id)
+    controller.remove_custom_import_source(source_id)
 
-    assert removed == 1
     assert controller.list_custom_import_sources() == []
-    assert controller.list_skills() == []
-    assert not (paths.skills_dir / imported[0].id).exists()
+    assert [skill.id for skill in controller.list_skills()] == [imported[0].id]
+    assert (paths.skills_dir / imported[0].id).exists()

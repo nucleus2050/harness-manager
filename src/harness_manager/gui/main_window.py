@@ -651,8 +651,8 @@ class MainWindow(QMainWindow):
         status = self._label("自定义", "ClientStatusReady")
         status.setMinimumWidth(48)
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        delete_button = self._button("删除", "CompactButton")
-        delete_button.setMaximumWidth(54)
+        delete_button = self._button("删除", "SourceDeleteButton")
+        delete_button.setMaximumWidth(48)
         delete_button.clicked.connect(
             self._guard(
                 lambda _checked=False, current_id=source_id: self._remove_custom_source(
@@ -1219,12 +1219,12 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "添加完成", f"已添加自定义目录 {name}。")
 
     def _remove_custom_source(self, source_id: str) -> None:
-        removed = self.controller.remove_custom_import_source(source_id)
+        self.controller.remove_custom_import_source(source_id)
         if self.selected_custom_source_id == source_id:
             self.selected_custom_source_id = None
             self.import_skill_button.setText("选择 Skill 来源")
         self.refresh()
-        dialogs.show_info(self, "删除完成", f"已删除自定义来源，并移除 {removed} 个关联技能。")
+        dialogs.show_info(self, "删除完成", "已删除自定义来源。")
 
     def _new_harness(self) -> None:
         details = dialogs.ask_harness_details(self, "新建任务套件")

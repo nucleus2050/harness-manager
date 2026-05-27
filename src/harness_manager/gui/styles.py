@@ -400,6 +400,20 @@ def build_stylesheet(theme: str = "light") -> str:
         padding: 5px 11px;
     }}
 
+    QPushButton#SourceDeleteButton {{
+        min-height: 26px;
+        background: transparent;
+        border: 1px solid transparent;
+        color: {tokens['danger_text']};
+        padding: 3px 7px;
+        font-weight: 700;
+    }}
+
+    QPushButton#SourceDeleteButton:hover {{
+        background: {tokens['danger_hover']};
+        border-color: {tokens['danger_border']};
+    }}
+
     QPushButton#IconButton,
     QPushButton#IconButtonChecked {{
         min-width: 40px;
