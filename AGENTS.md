@@ -2,7 +2,7 @@
 
 ## 项目概览
 
-本项目正在从 Skill Package Manager 升级为 Harness Manager，中文产品概念统一为“任务套件管理器”。
+本项目已从 Skill Package Manager 迁移为 Harness Manager，中文产品概念统一为“任务套件管理器”。
 
 任务套件管理器是一个本地 Windows 桌面应用，用来管理完成某项任务所需的资源集合。一个任务套件是可复用的任务工具包。当前设计方向中，一个任务套件可以包含：
 
@@ -46,14 +46,14 @@ Hook 支持暂缓实现，因为 Codex、Claude Code、OpenCode 以及其他工�
 
 应用采用分层 Python 架构：
 
-- `src/skillpkg/app_paths.py`：解析应用运行根目录和运行时目录。
-- `src/skillpkg/db.py`：SQLite schema 初始化和事务处理。
-- `src/skillpkg/repositories.py`：数据库 CRUD 访问层。
-- `src/skillpkg/services.py`：核心文件系统和数据库用例。
-- `src/skillpkg/file_ops.py`：安全复制、删除、压缩和解压工具。
-- `src/skillpkg/fingerprint.py`：确定性的资产 fingerprint 计算。
-- `src/skillpkg/client_detection.py`：支持工具的默认路径检测。
-- `src/skillpkg/gui/`：PySide6 用户界面、弹窗、样式和 controller 连接。
+- `src/harness_manager/app_paths.py`：解析应用运行根目录和运行时目录。
+- `src/harness_manager/db.py`：SQLite schema 初始化和事务处理。
+- `src/harness_manager/repositories.py`：数据库 CRUD 访问层。
+- `src/harness_manager/services.py`：核心文件系统和数据库用例。
+- `src/harness_manager/file_ops.py`：安全复制、删除、压缩和解压工具。
+- `src/harness_manager/fingerprint.py`：确定性的资产 fingerprint 计算。
+- `src/harness_manager/client_detection.py`：支持工具的默认路径检测。
+- `src/harness_manager/gui/`：PySide6 用户界面、弹窗、样式和 controller 连接。
 - `tests/`：pytest 测试，覆盖路径、数据库、服务、归档、GUI 文案/样式契约和导入来源行为。
 
 核心服务必须保持独立于 Qt。GUI 代码应通过 controller/service 调用业务能力，不应直接执行数据库或文件系统业务逻辑。
@@ -88,7 +88,7 @@ HarnessManager/
     settings.json
 ```
 
-迁移期间可以保留现有 `skills/` 和 `.skillpkg.zip` 兼容行为，但新的设计和实现应逐步转向 `assets/` 和 `.harness.zip`。
+迁移期间可以保留现有 `skills/` 目录以保护 Skill 流程，但新的导出包名和实现应转向 `assets/` 和 `.harness.zip`。
 
 ## Agent 开发规则
 
@@ -114,7 +114,7 @@ python -m compileall -q src tests
 仅 GUI 变更且不方便实际启动窗口时，还应验证导入，例如：
 
 ```powershell
-python -c "from skillpkg.gui.main_window import MainWindow; print('gui import ok')"
+python -c "from harness_manager.gui.main_window import MainWindow; print('gui import ok')"
 ```
 
 构建相关变更需要验证 `scripts/build.ps1` 语法和 PyInstaller 调用方式。
