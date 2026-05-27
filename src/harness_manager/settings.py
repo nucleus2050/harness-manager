@@ -11,7 +11,18 @@ from pathlib import Path
 from harness_manager.app_paths import AppPaths
 from harness_manager.file_ops import extract_zip, make_zip, safe_remove_directory
 
-SUPPORTED_THEMES = {"obsidian", "light", "dark", "matrix", "neon", "sunset", "forest"}
+SUPPORTED_THEMES = {
+    "obsidian",
+    "light",
+    "dark",
+    "matrix",
+    "neon",
+    "sunset",
+    "forest",
+    "aurora",
+    "ember",
+    "porcelain",
+}
 
 
 @dataclass(frozen=True)

@@ -69,6 +69,9 @@ def test_stylesheet_supports_additional_visual_themes():
         "neon": "#ff2bd6",
         "sunset": "#f97316",
         "forest": "#22c55e",
+        "aurora": "#38bdf8",
+        "ember": "#ef4444",
+        "porcelain": "#0f766e",
     }
 
     for theme, expected_color in themes.items():
@@ -76,6 +79,13 @@ def test_stylesheet_supports_additional_visual_themes():
 
         assert expected_color in stylesheet
         assert stylesheet != build_stylesheet("dark")
+
+
+def test_obsidian_primary_buttons_keep_readable_contrast():
+    stylesheet = build_stylesheet("obsidian")
+
+    assert "background: #27272a" in stylesheet
+    assert "color: #ffffff" in stylesheet
 
 def test_stylesheet_styles_custom_title_bar_and_window_controls():
     light = build_stylesheet("light")

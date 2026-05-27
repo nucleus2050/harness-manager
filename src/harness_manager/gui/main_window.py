@@ -144,6 +144,9 @@ class MainWindow(QMainWindow):
         self.theme_neon_button = self._button("霓虹", "CompactButton")
         self.theme_sunset_button = self._button("日落", "CompactButton")
         self.theme_forest_button = self._button("森林", "CompactButton")
+        self.theme_aurora_button = self._button("极光", "CompactButton")
+        self.theme_ember_button = self._button("余烬", "CompactButton")
+        self.theme_porcelain_button = self._button("瓷白", "CompactButton")
         self.back_to_business_button = self._button("返回", "CompactButton")
         self.export_config_button = self._button("导出全部配置", "PrimaryButton")
         self.import_config_button = self._button("导入全部配置", "CompactButton")
@@ -364,16 +367,25 @@ class MainWindow(QMainWindow):
         theme_layout.setContentsMargins(18, 16, 18, 18)
         theme_layout.setSpacing(12)
         theme_layout.addWidget(self._label("外观主题", "SectionTitle"))
-        theme_row = QHBoxLayout()
-        theme_row.addWidget(self.theme_light_button)
-        theme_row.addWidget(self.theme_dark_button)
-        theme_row.addWidget(self.theme_obsidian_button)
-        theme_row.addWidget(self.theme_matrix_button)
-        theme_row.addWidget(self.theme_neon_button)
-        theme_row.addWidget(self.theme_sunset_button)
-        theme_row.addWidget(self.theme_forest_button)
-        theme_row.addStretch(1)
-        theme_layout.addLayout(theme_row)
+        theme_grid = QGridLayout()
+        theme_grid.setHorizontalSpacing(10)
+        theme_grid.setVerticalSpacing(10)
+        for index, button in enumerate(
+            [
+                self.theme_obsidian_button,
+                self.theme_matrix_button,
+                self.theme_neon_button,
+                self.theme_aurora_button,
+                self.theme_ember_button,
+                self.theme_dark_button,
+                self.theme_light_button,
+                self.theme_sunset_button,
+                self.theme_forest_button,
+                self.theme_porcelain_button,
+            ]
+        ):
+            theme_grid.addWidget(button, index // 5, index % 5)
+        theme_layout.addLayout(theme_grid)
         layout.addWidget(theme_card)
 
         backup_card = self._card()
@@ -806,6 +818,9 @@ class MainWindow(QMainWindow):
         self.theme_neon_button.clicked.connect(self._guard(lambda: self._save_theme("neon")))
         self.theme_sunset_button.clicked.connect(self._guard(lambda: self._save_theme("sunset")))
         self.theme_forest_button.clicked.connect(self._guard(lambda: self._save_theme("forest")))
+        self.theme_aurora_button.clicked.connect(self._guard(lambda: self._save_theme("aurora")))
+        self.theme_ember_button.clicked.connect(self._guard(lambda: self._save_theme("ember")))
+        self.theme_porcelain_button.clicked.connect(self._guard(lambda: self._save_theme("porcelain")))
         self.export_config_button.clicked.connect(self._guard(self._export_full_config))
         self.import_config_button.clicked.connect(self._guard(self._import_full_config))
 
@@ -1417,6 +1432,15 @@ class MainWindow(QMainWindow):
         self.theme_forest_button.setObjectName(
             "PrimaryButton" if settings.theme == "forest" else "CompactButton"
         )
+        self.theme_aurora_button.setObjectName(
+            "PrimaryButton" if settings.theme == "aurora" else "CompactButton"
+        )
+        self.theme_ember_button.setObjectName(
+            "PrimaryButton" if settings.theme == "ember" else "CompactButton"
+        )
+        self.theme_porcelain_button.setObjectName(
+            "PrimaryButton" if settings.theme == "porcelain" else "CompactButton"
+        )
         for button in [
             self.language_zh_button,
             self.language_en_button,
@@ -1427,6 +1451,9 @@ class MainWindow(QMainWindow):
             self.theme_neon_button,
             self.theme_sunset_button,
             self.theme_forest_button,
+            self.theme_aurora_button,
+            self.theme_ember_button,
+            self.theme_porcelain_button,
         ]:
             button.style().unpolish(button)
             button.style().polish(button)

@@ -49,6 +49,9 @@ def test_settings_page_text_and_actions_exist():
         "霓虹",
         "日落",
         "森林",
+        "极光",
+        "余烬",
+        "瓷白",
         "配置备份",
         "导出全部配置",
         "导入全部配置",
@@ -61,6 +64,7 @@ def test_settings_page_text_and_actions_exist():
     assert "import_full_config" in source
     assert "choose_export_zip" in dialog_source
     assert "跟随系统" not in source
+    assert "theme_grid.addWidget" in source
 
 
 def test_settings_uses_compact_gear_and_can_return_to_business_view():

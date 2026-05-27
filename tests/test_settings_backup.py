@@ -45,7 +45,7 @@ def test_settings_accepts_extra_visual_themes(app_root):
     paths.ensure()
     service = SettingsService(paths)
 
-    for theme in ["obsidian", "matrix", "neon", "sunset", "forest"]:
+    for theme in ["obsidian", "matrix", "neon", "sunset", "forest", "aurora", "ember", "porcelain"]:
         assert service.save_theme(theme).theme == theme
 
 
