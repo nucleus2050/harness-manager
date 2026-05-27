@@ -28,3 +28,20 @@ def test_controller_updates_harness_description(app_root):
 
     assert updated.description == "更新后的描述"
     assert controller.list_harnesses()[0].description == "更新后的描述"
+
+
+def test_controller_creates_mcp_config_asset(app_root):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+
+    asset = controller.create_mcp_config_asset(
+        title="fetch",
+        display_name="Fetch Server",
+        mcp_kind="fetch",
+        config_json='{"type":"stdio","command":"uvx"}',
+    )
+
+    assert asset.type == "mcp"
+    assert controller.list_assets_by_type("mcp")[0].id == asset.id
