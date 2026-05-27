@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import json
+import shutil
+import uuid
 import re
 import sqlite3
 import tempfile
 from pathlib import Path
 
 from skillpkg.app_paths import AppPaths
+from skillpkg.asset_paths import asset_dir
 from skillpkg.db import transaction
 from skillpkg.file_ops import copy_directory, extract_zip, make_zip, safe_remove_directory
 from skillpkg.fingerprint import fingerprint_directory
-from skillpkg.models import ClientType, InstallStatus, Package, Skill
+from skillpkg.models import Asset, ClientType, InstallStatus, Package, Skill
 from skillpkg.repositories import (
+    AssetRepository,
     InstallRepository,
     LogRepository,
     PackageRepository,
@@ -61,6 +65,7 @@ class SkillPkgService:
         self.paths = paths
         self.conn = conn
         self.skills = SkillRepository(conn)
+        self.assets = AssetRepository(conn)
         self.packages = PackageRepository(conn)
         self.installs = InstallRepository(conn)
         self.logs = LogRepository(conn)
@@ -446,3 +451,46 @@ class SkillPkgService:
         safe_remove_directory(installed_path)
         self.installs.mark_status(record_id, "uninstalled")
         return "uninstalled"
+
+
+
+def _copy_file_asset(service: SkillPkgService, source_file: Path, asset_type: str, name: str, source_type: str | None, destination_name: str):
+    if not source_file.is_file():
+        raise FileNotFoundError(source_file)
+    asset_id = uuid.uuid4().hex
+    destination_dir = asset_dir(service.paths, asset_type, asset_id)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination = destination_dir / destination_name
+    try:
+        shutil.copy2(source_file, destination)
+        fingerprint = fingerprint_directory(destination_dir)
+        with transaction(service.conn):
+            asset = service.assets.upsert(
+                asset_id,
+                asset_type,
+                name,
+                source_type,
+                destination.relative_to(service.paths.root).as_posix(),
+                fingerprint,
+                "{}",
+            )
+            service.logs.add("import_asset", f"Imported {asset_type} asset {name}")
+        return asset
+    except Exception:
+        safe_remove_directory(destination_dir)
+        raise
+
+
+def _import_agents_md_asset(self: SkillPkgService, source_file: Path | str, name: str, source_type: str | None) -> Asset:
+    return _copy_file_asset(self, Path(source_file), "agents_md", name, source_type, "AGENTS.md")
+
+
+def _import_mcp_asset(self: SkillPkgService, source_file: Path | str, name: str, source_type: str | None) -> Asset:
+    source_path = Path(source_file)
+    return _copy_file_asset(self, source_path, "mcp", name, source_type, source_path.name)
+
+
+SkillPkgService.import_agents_md_asset = _import_agents_md_asset
+SkillPkgService.import_mcp_asset = _import_mcp_asset
+
+
