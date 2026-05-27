@@ -4,7 +4,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from skillpkg.models import ClientConfig, Package, Skill
+from skillpkg.models import Asset, ClientConfig, Harness, Package, Skill
 
 
 def _path_or_none(value: str | None) -> Path | None:
@@ -305,3 +305,130 @@ class ImportSourceRepository:
         if row is None:
             raise KeyError(source_id)
         return row
+
+
+
+def _asset_from_row(row: sqlite3.Row) -> Asset:
+    return Asset(
+        id=row["id"],
+        type=row["type"],
+        name=row["name"],
+        source_type=row["source_type"],
+        relative_path=row["relative_path"],
+        fingerprint=row["fingerprint"],
+        metadata_json=row["metadata_json"],
+    )
+
+
+def _harness_from_row(row: sqlite3.Row) -> Harness:
+    return Harness(id=row["id"], name=row["name"], description=row["description"])
+
+
+class AssetRepository:
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self.conn = conn
+
+    def upsert(
+        self,
+        asset_id: str,
+        asset_type: str,
+        name: str,
+        source_type: str | None,
+        relative_path: str,
+        fingerprint: str,
+        metadata_json: str = "{}",
+    ) -> Asset:
+        self.conn.execute(
+            """
+            INSERT INTO assets(id, type, name, source_type, relative_path, fingerprint, metadata_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              type = excluded.type,
+              name = excluded.name,
+              source_type = excluded.source_type,
+              relative_path = excluded.relative_path,
+              fingerprint = excluded.fingerprint,
+              metadata_json = excluded.metadata_json,
+              updated_at = CURRENT_TIMESTAMP
+            """,
+            (asset_id, asset_type, name, source_type, relative_path, fingerprint, metadata_json),
+        )
+        return self.get(asset_id)
+
+    def get(self, asset_id: str) -> Asset:
+        row = self.conn.execute(
+            """
+            SELECT id, type, name, source_type, relative_path, fingerprint, metadata_json
+            FROM assets
+            WHERE id = ?
+            """,
+            (asset_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(asset_id)
+        return _asset_from_row(row)
+
+    def list_by_type(self, asset_type: str) -> list[Asset]:
+        rows = self.conn.execute(
+            """
+            SELECT id, type, name, source_type, relative_path, fingerprint, metadata_json
+            FROM assets
+            WHERE type = ?
+            ORDER BY name
+            """,
+            (asset_type,),
+        ).fetchall()
+        return [_asset_from_row(row) for row in rows]
+
+
+class HarnessRepository:
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self.conn = conn
+
+    def create(self, name: str, description: str) -> Harness:
+        harness_id = uuid.uuid4().hex
+        self.conn.execute(
+            "INSERT INTO harnesses(id, name, description) VALUES (?, ?, ?)",
+            (harness_id, name, description),
+        )
+        return self.get(harness_id)
+
+    def get(self, harness_id: str) -> Harness:
+        row = self.conn.execute(
+            "SELECT id, name, description FROM harnesses WHERE id = ?",
+            (harness_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(harness_id)
+        return _harness_from_row(row)
+
+    def list_harnesses(self) -> list[Harness]:
+        rows = self.conn.execute(
+            "SELECT id, name, description FROM harnesses ORDER BY name"
+        ).fetchall()
+        return [_harness_from_row(row) for row in rows]
+
+    def add_asset(self, harness_id: str, asset_id: str, asset_type: str, sort_order: int) -> None:
+        self.conn.execute(
+            """
+            INSERT INTO harness_assets(harness_id, asset_id, asset_type, sort_order)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(harness_id, asset_id) DO UPDATE SET
+              asset_type = excluded.asset_type,
+              sort_order = excluded.sort_order
+            """,
+            (harness_id, asset_id, asset_type, sort_order),
+        )
+
+    def list_assets(self, harness_id: str) -> list[Asset]:
+        rows = self.conn.execute(
+            """
+            SELECT a.id, a.type, a.name, a.source_type, a.relative_path, a.fingerprint, a.metadata_json
+            FROM harness_assets ha
+            JOIN assets a ON a.id = ha.asset_id
+            WHERE ha.harness_id = ?
+            ORDER BY ha.sort_order, a.name
+            """,
+            (harness_id,),
+        ).fetchall()
+        return [_asset_from_row(row) for row in rows]
