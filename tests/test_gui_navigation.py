@@ -66,11 +66,12 @@ def test_settings_uses_compact_gear_and_can_return_to_business_view():
         'self.back_to_business_button = self._button("返回", "CompactButton")',
         "last_business_view",
         "_show_previous_business_view",
-        "layout.addWidget(self.settings_button)",
+        "hero_actions.addWidget(self.settings_button)",
         "settings_header.addWidget(self.back_to_business_button)",
         "self.back_to_business_button.clicked.connect(self._show_previous_business_view)",
     ]:
         assert token in source
+    assert "layout.addWidget(self.settings_button)" not in source
     assert "bottom_actions.addWidget(self.settings_button" not in source
     assert 'self.current_view = "settings"' in source
 

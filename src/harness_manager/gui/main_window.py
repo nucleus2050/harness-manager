@@ -230,7 +230,6 @@ class MainWindow(QMainWindow):
         self.minimize_button = self._window_button("—", "MinimizeButton")
         self.maximize_button = self._window_button("□", "MaximizeButton")
         self.close_button = self._window_button("×", "CloseButton")
-        layout.addWidget(self.settings_button)
         layout.addWidget(self.minimize_button)
         layout.addWidget(self.maximize_button)
         layout.addWidget(self.close_button)
@@ -413,7 +412,11 @@ class MainWindow(QMainWindow):
         stat_layout.setSpacing(2)
         stat_layout.addWidget(self._label("本地工作流", "StatLabel"))
         stat_layout.addWidget(self._label("任务套件管理中心", "MutedText"))
-        layout.addWidget(hero_stat, 0)
+        hero_actions = QHBoxLayout()
+        hero_actions.setSpacing(10)
+        hero_actions.addWidget(self.settings_button)
+        hero_actions.addWidget(hero_stat, 0)
+        layout.addLayout(hero_actions, 0)
         return hero
 
     def _build_harnesses_card(self) -> QFrame:
