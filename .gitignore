@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Build artifacts
+build/
+dist/
+*.spec
+
+# Runtime data
+data/
+assets/
+skills/
+exports/
+config/
+
+# Superpowers temporary visual companion files
+.superpowers/
