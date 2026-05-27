@@ -44,6 +44,10 @@ class MainController:
         with transaction(self.conn):
             return self.harnesses.create(name, description)
 
+    def update_harness(self, harness_id: str, name: str, description: str = ""):
+        with transaction(self.conn):
+            return self.harnesses.update(harness_id, name, description)
+
     def list_harnesses(self):
         return self.harnesses.list_harnesses()
 

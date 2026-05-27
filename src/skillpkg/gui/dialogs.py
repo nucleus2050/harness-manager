@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QPlainTextEdit,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -50,6 +51,14 @@ def _dialog_stylesheet() -> str:
         font-size: 18px;
     }
     QLineEdit {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 9px 11px;
+        color: #0f172a;
+        font-size: 13px;
+    }
+    QPlainTextEdit {
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 12px;
@@ -204,6 +213,57 @@ class _HarnessDialog(QDialog):
         return self.harnesses[row]
 
 
+class _HarnessDetailsDialog(QDialog):
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str,
+        name: str = "",
+        description: str = "",
+    ) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setMinimumWidth(520)
+        self.setStyleSheet(_dialog_stylesheet())
+
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("套件名称")
+        self.name_input.setText(name)
+        self.description_input = QPlainTextEdit()
+        self.description_input.setPlaceholderText("套件描述")
+        self.description_input.setPlainText(description)
+        self.description_input.setMinimumHeight(92)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 20, 22, 18)
+        layout.setSpacing(14)
+        title_label = QLabel(title)
+        title_label.setObjectName("DialogTitle")
+        layout.addWidget(title_label)
+        layout.addWidget(QLabel("套件名称"))
+        layout.addWidget(self.name_input)
+        layout.addWidget(QLabel("套件描述"))
+        layout.addWidget(self.description_input)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton("取消")
+        confirm = QPushButton("保存")
+        confirm.setObjectName("PrimaryDialogButton")
+        cancel.clicked.connect(self.reject)
+        confirm.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(confirm)
+        layout.addLayout(buttons)
+
+    def value(self) -> tuple[str, str] | None:
+        name = self.name_input.text().strip()
+        if not name:
+            return None
+        return name, self.description_input.toPlainText().strip()
+
+
 def choose_directory(parent: QWidget, title: str) -> Path | None:
     value = QFileDialog.getExistingDirectory(parent, title)
     return Path(value) if value else None
@@ -236,6 +296,18 @@ def choose_harness(parent: QWidget, harnesses: list["Harness"]) -> "Harness | No
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.selected_harness()
+
+
+def ask_harness_details(
+    parent: QWidget,
+    title: str,
+    name: str = "",
+    description: str = "",
+) -> tuple[str, str] | None:
+    dialog = _HarnessDetailsDialog(parent, title, name, description)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.value()
 
 
 def show_error(parent: QWidget, title: str, message: str) -> None:

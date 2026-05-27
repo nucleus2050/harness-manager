@@ -402,6 +402,17 @@ class HarnessRepository:
             raise KeyError(harness_id)
         return _harness_from_row(row)
 
+    def update(self, harness_id: str, name: str, description: str) -> Harness:
+        self.conn.execute(
+            """
+            UPDATE harnesses
+            SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (name, description, harness_id),
+        )
+        return self.get(harness_id)
+
     def list_harnesses(self) -> list[Harness]:
         rows = self.conn.execute(
             "SELECT id, name, description FROM harnesses ORDER BY name"

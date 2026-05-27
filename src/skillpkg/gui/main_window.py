@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
         self.mcp_view_button = self._button("MCP", "SegmentButton")
         self.skills_view_button = self._button("技能库 Skills", "SegmentButton")
         self.new_package_button = self._button("新建套件", "PrimaryButton")
+        self.edit_harness_button = self._button("编辑套件", "CompactButton")
         self.import_archive_button = self._button("导入套件", "CompactButton")
         self.export_archive_button = self._button("导出套件", "CompactButton")
         self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
@@ -236,6 +237,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
         layout.addWidget(self.new_package_button)
+        layout.addWidget(self.edit_harness_button)
         layout.addWidget(self.import_archive_button)
         layout.addWidget(self.export_archive_button)
         layout.addStretch(1)
@@ -402,6 +404,7 @@ class MainWindow(QMainWindow):
         self.mcp_view_button.clicked.connect(lambda: self._show_asset_view("mcp"))
         self.skills_view_button.clicked.connect(self._show_skills_view)
         self.new_package_button.clicked.connect(self._guard(self._new_harness))
+        self.edit_harness_button.clicked.connect(self._guard(self._edit_harness))
         self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
         self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
         self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
@@ -591,11 +594,29 @@ class MainWindow(QMainWindow):
             f"包含 {len(self.harness_assets)} 个组件"
             + (f" - {harness.description}" if harness.description else "")
         )
-        if not self.harness_assets:
-            self.skill_list.addItem("此任务套件暂无组件\n可以添加 AGENTS.md、MCP 或技能。")
+        self._add_asset_group(
+            "已加入的技能",
+            self.controller.list_harness_assets_by_type(harness.id, "skill"),
+            "暂无技能",
+        )
+        self._add_asset_group(
+            "已加入的 AGENTS.md",
+            self.controller.list_harness_assets_by_type(harness.id, "agents_md"),
+            "暂无 AGENTS.md",
+        )
+        self._add_asset_group(
+            "已加入的 MCP",
+            self.controller.list_harness_assets_by_type(harness.id, "mcp"),
+            "暂无 MCP",
+        )
+
+    def _add_asset_group(self, title: str, assets: list[Asset], empty_text: str) -> None:
+        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件")
+        if not assets:
+            self.skill_list.addItem(empty_text)
             return
-        for asset in self.harness_assets:
-            self.skill_list.addItem(f"{self._asset_type_label(asset.type)}：{asset.name}\nID：{asset.id}")
+        for asset in assets:
+            self.skill_list.addItem(f"{asset.name}\nID：{asset.id}")
 
     def _asset_type_label(self, asset_type: str) -> str:
         return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
@@ -643,12 +664,25 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "添加完成", f"已添加自定义目录 {name}。")
 
     def _new_harness(self) -> None:
-        name = dialogs.ask_text(self, "新建任务套件", "任务套件名称")
-        if not name:
+        details = dialogs.ask_harness_details(self, "新建任务套件")
+        if details is None:
             return
-        self.controller.create_harness(name, "")
+        name, description = details
+        self.controller.create_harness(name, description)
         self.refresh()
         dialogs.show_info(self, "创建完成", f"已创建任务套件 {name}。")
+
+    def _edit_harness(self) -> None:
+        harness = self._selected_harness()
+        details = dialogs.ask_harness_details(
+            self, "编辑任务套件", harness.name, harness.description
+        )
+        if details is None:
+            return
+        name, description = details
+        self.controller.update_harness(harness.id, name, description)
+        self.refresh()
+        dialogs.show_info(self, "保存完成", f"已更新任务套件 {name}。")
 
     def _selected_harness(self) -> Harness:
         row = self._require_harness_row()
