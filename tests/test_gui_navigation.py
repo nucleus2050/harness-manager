@@ -76,6 +76,14 @@ def test_settings_uses_compact_gear_and_can_return_to_business_view():
     assert 'self.current_view = "settings"' in source
 
 
+def test_hero_removes_local_workflow_badge():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "本地工作流" not in source
+    assert "任务套件管理中心" not in source
+    assert "hero_actions.addWidget(self.settings_button)" in source
+
+
 def test_main_window_uses_custom_frameless_title_bar():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 

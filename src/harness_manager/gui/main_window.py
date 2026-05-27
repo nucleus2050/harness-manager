@@ -414,17 +414,9 @@ class MainWindow(QMainWindow):
         copy.addWidget(subtitle)
         layout.addLayout(copy, 1)
 
-        hero_stat = QFrame()
-        hero_stat.setObjectName("StatCard")
-        stat_layout = QVBoxLayout(hero_stat)
-        stat_layout.setContentsMargins(16, 12, 16, 12)
-        stat_layout.setSpacing(2)
-        stat_layout.addWidget(self._label("本地工作流", "StatLabel"))
-        stat_layout.addWidget(self._label("任务套件管理中心", "MutedText"))
         hero_actions = QHBoxLayout()
         hero_actions.setSpacing(10)
         hero_actions.addWidget(self.settings_button)
-        hero_actions.addWidget(hero_stat, 0)
         layout.addLayout(hero_actions, 0)
         return hero
 
