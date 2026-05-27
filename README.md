@@ -1,6 +1,6 @@
-# Skill Package Manager
+# Harness Manager
 
-Windows desktop GUI for managing local skills across Codex, Claude Code, and OpenCode.
+Windows desktop GUI for managing task harnesses. A harness can include AGENTS.md instructions, MCP configuration assets, and skills. Hook support is deferred.
 
 ## Development
 
@@ -24,10 +24,11 @@ The app stores runtime data under the directory where it is launched:
 
 - `data/skillpkg.db`
 - `skills/`
+- `assets/`
 - `exports/`
 - `config/`
 
-Use a writable directory such as `D:\Tools\SkillPkgManager` for normal use.
+Use a writable directory such as `D:\Tools\HarnessManager` for normal use.
 
 ## Safety
 
