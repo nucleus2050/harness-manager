@@ -5,6 +5,7 @@ python -m PyInstaller `
   --noconfirm `
   --windowed `
   --name SkillPkgManager `
+  --icon src/skillpkg/resources/app.ico `
   --paths src `
   src/skillpkg/__main__.py
 

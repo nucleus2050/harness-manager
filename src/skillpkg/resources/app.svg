@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Harness Manager icon">
+  <defs>
+    <linearGradient id="bg" x1="34" y1="18" x2="222" y2="238" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#071226"/>
+      <stop offset="1" stop-color="#123d72"/>
+    </linearGradient>
+    <linearGradient id="card" x1="70" y1="66" x2="190" y2="184" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#020617" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="16" y="16" width="224" height="224" rx="52" fill="url(#bg)"/>
+  <path d="M66 85c0-13 10-23 23-23h78c13 0 23 10 23 23v18H66V85Z" fill="#e0f2fe" opacity="0.96" filter="url(#shadow)"/>
+  <path d="M66 104h124v67c0 13-10 23-23 23H89c-13 0-23-10-23-23v-67Z" fill="url(#card)"/>
+  <path d="M94 131h68M94 158h42" stroke="#f8fafc" stroke-width="13" stroke-linecap="round" opacity="0.95"/>
+  <circle cx="82" cy="82" r="14" fill="#10b981" stroke="#f8fafc" stroke-width="7"/>
+  <circle cx="188" cy="174" r="19" fill="#14f1c2" stroke="#082f49" stroke-width="8"/>
+  <path d="M188 142v-24c0-15-12-27-27-27h-16" stroke="#14f1c2" stroke-width="11" stroke-linecap="round" fill="none"/>
+</svg>

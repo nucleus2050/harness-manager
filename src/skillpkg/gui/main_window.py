@@ -5,6 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -29,6 +30,10 @@ from skillpkg.gui.styles import build_stylesheet
 from skillpkg.models import Asset, ClientConfig, ClientType, Harness, Skill
 
 
+def _app_icon_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "resources" / "app.ico"
+
+
 class MainWindow(QMainWindow):
     def __init__(self, controller: MainController) -> None:
         super().__init__()
@@ -43,6 +48,7 @@ class MainWindow(QMainWindow):
         self.current_view = "harnesses"
 
         self.setWindowTitle("Harness Manager（任务套件管理器）")
+        self.setWindowIcon(QIcon(str(_app_icon_path())))
         self.resize(1240, 760)
         self.setMinimumSize(980, 620)
         self.setStyleSheet(build_stylesheet())

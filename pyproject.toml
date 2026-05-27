@@ -18,6 +18,9 @@ skillpkg = "skillpkg.__main__:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+skillpkg = ["resources/*.ico", "resources/*.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
