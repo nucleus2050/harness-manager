@@ -13,7 +13,7 @@ def test_main_window_has_skill_library_and_source_selection_text():
         "添加 AGENTS.md",
         "添加 MCP",
         "添加技能",
-        "从自定义目录导入",
+        "导入来源",
         "选择 Skill 来源",
         "全部技能",
         "来源",
@@ -190,11 +190,13 @@ def test_import_sources_use_scroll_area_with_fixed_actions():
         "self.client_scroll.setWidgetResizable(True)",
         "self.client_scroll.setWidget(clients_container)",
         "layout.addWidget(self.client_scroll, 1)",
-        "self.import_skill_button.setObjectName(\"SidebarButton\")",
-        "layout.addWidget(self.import_skill_button)",
         "layout.addWidget(self.add_custom_source_button)",
+        '"SourceImportButton"',
+        "_import_from_client_source",
+        "_import_from_custom_source",
     ]:
         assert token in source
+    assert "layout.addWidget(self.import_skill_button)" not in source
 
 
 def test_import_source_scroll_height_adapts_to_content():

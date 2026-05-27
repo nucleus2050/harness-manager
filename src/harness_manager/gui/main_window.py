@@ -114,7 +114,6 @@ class MainWindow(QMainWindow):
         self.current_harness_title = self._label("选择一个任务套件", "SectionTitle")
         self.current_harness_meta = self._label("任务套件详情会显示在这里。", "MutedText")
 
-        self.import_skill_button = self._button("选择 Skill 来源", "PrimaryButton")
         self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
         self.settings_button = self._button("⚙", "IconButton")
         self.settings_button.setToolTip("设置")
@@ -280,8 +279,6 @@ class MainWindow(QMainWindow):
         self.client_scroll.setWidget(clients_container)
         layout.addWidget(self.client_scroll, 1)
 
-        self.import_skill_button.setObjectName("SidebarButton")
-        layout.addWidget(self.import_skill_button)
         layout.addWidget(self.add_custom_source_button)
         layout.addStretch(1)
         return sidebar
@@ -648,6 +645,16 @@ class MainWindow(QMainWindow):
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         header.addWidget(name, 1)
         header.addWidget(status)
+        import_button = self._button("导入", "SourceImportButton")
+        import_button.setMaximumWidth(48)
+        import_button.clicked.connect(
+            self._guard(
+                lambda _checked=False, client_type=client.type: self._import_from_client_source(
+                    client_type
+                )
+            )
+        )
+        header.addWidget(import_button)
         layout.addLayout(header)
 
         path_label = self._label(str(path) if path else "未配置路径", "ClientPath")
@@ -680,6 +687,15 @@ class MainWindow(QMainWindow):
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         delete_button = self._button("删除", "SourceDeleteButton")
         delete_button.setMaximumWidth(48)
+        import_button = self._button("导入", "SourceImportButton")
+        import_button.setMaximumWidth(48)
+        import_button.clicked.connect(
+            self._guard(
+                lambda _checked=False, current_id=source_id: self._import_from_custom_source(
+                    current_id
+                )
+            )
+        )
         delete_button.clicked.connect(
             self._guard(
                 lambda _checked=False, current_id=source_id: self._remove_custom_source(
@@ -688,6 +704,7 @@ class MainWindow(QMainWindow):
             )
         )
         header.addWidget(status)
+        header.addWidget(import_button)
         header.addWidget(delete_button)
         layout.addLayout(header)
         path_label = self._label(str(source["path"]), "ClientPath")
@@ -732,7 +749,6 @@ class MainWindow(QMainWindow):
         self.maximize_button.clicked.connect(self._toggle_maximized)
         self.close_button.clicked.connect(self.close)
         self.harness_list.currentRowChanged.connect(self._refresh_harness_assets)
-        self.import_skill_button.clicked.connect(self._guard(self._import_skill))
         self.add_custom_source_button.clicked.connect(self._guard(self._add_custom_source))
         self.settings_button.clicked.connect(self._show_settings_view)
         self.back_to_business_button.clicked.connect(self._show_previous_business_view)
@@ -1114,8 +1130,6 @@ class MainWindow(QMainWindow):
     def _select_client(self, client_type: ClientType) -> None:
         self.selected_client_type = client_type
         self.selected_custom_source_id = None
-        client_name = self._selected_client_name()
-        self.import_skill_button.setText(f"从 {client_name} 导入" if client_name else "选择 Skill 来源")
         self._clear_client_cards()
         for client in self.clients:
             self._add_client_card(client)
@@ -1126,16 +1140,17 @@ class MainWindow(QMainWindow):
     def _select_custom_source(self, source_id: str) -> None:
         self.selected_client_type = None
         self.selected_custom_source_id = source_id
-        self.import_skill_button.setText("从自定义目录导入")
         self._clear_client_cards()
         for client in self.clients:
             self._add_client_card(client)
         for source in self.controller.list_custom_import_sources():
             self._add_custom_source_card(source)
+        self._refresh_client_source_scroll_height()
 
-    def _selected_client_name(self) -> str | None:
+    def _selected_client_name(self, client_type: ClientType | None = None) -> str | None:
+        target_type = client_type or self.selected_client_type
         for client in self.clients:
-            if client.type == self.selected_client_type:
+            if client.type == target_type:
                 return client.name
         return None
 
@@ -1224,23 +1239,25 @@ class MainWindow(QMainWindow):
             raise ValueError("请先选择一个任务套件。")
         return row
 
-    def _import_skill(self) -> None:
-        if self.selected_custom_source_id is not None:
-            imported = self.controller.import_from_custom_source(self.selected_custom_source_id)
-            self.refresh()
-            dialogs.show_info(self, "导入完成", f"已导入 {len(imported)} 个技能。")
-            return
-        if self.selected_client_type is None:
-            raise ValueError("请先选择导入来源。")
+    def _import_from_client_source(self, client_type: ClientType) -> None:
+        self.selected_client_type = client_type
+        self.selected_custom_source_id = None
         try:
-            imported = self.controller.import_from_client_source(self.selected_client_type)
+            imported = self.controller.import_from_client_source(client_type)
         except (ValueError, NotADirectoryError):
-            client_name = self._selected_client_name() or "当前应用"
+            client_name = self._selected_client_name(client_type) or "当前应用"
             source = dialogs.choose_directory(self, f"配置目录：{client_name}")
             if source is None:
                 return
-            self.controller.set_client_custom_path(self.selected_client_type, source)
-            imported = self.controller.import_from_client_source(self.selected_client_type)
+            self.controller.set_client_custom_path(client_type, source)
+            imported = self.controller.import_from_client_source(client_type)
+        self.refresh()
+        dialogs.show_info(self, "导入完成", f"已导入 {len(imported)} 个技能。")
+
+    def _import_from_custom_source(self, source_id: str) -> None:
+        self.selected_client_type = None
+        self.selected_custom_source_id = source_id
+        imported = self.controller.import_from_custom_source(source_id)
         self.refresh()
         dialogs.show_info(self, "导入完成", f"已导入 {len(imported)} 个技能。")
 
@@ -1260,7 +1277,6 @@ class MainWindow(QMainWindow):
         self.controller.remove_custom_import_source(source_id)
         if self.selected_custom_source_id == source_id:
             self.selected_custom_source_id = None
-            self.import_skill_button.setText("选择 Skill 来源")
         self.refresh()
         dialogs.show_info(self, "删除完成", "已删除自定义来源。")
 

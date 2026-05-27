@@ -421,6 +421,21 @@ def build_stylesheet(theme: str = "light") -> str:
         border-color: {tokens['danger_border']};
     }}
 
+    QPushButton#SourceImportButton {{
+        min-height: 26px;
+        background: transparent;
+        border: 1px solid transparent;
+        color: {tokens['primary_hover']};
+        font-size: 11px;
+        padding: 3px 7px;
+        font-weight: 700;
+    }}
+
+    QPushButton#SourceImportButton:hover {{
+        background: {tokens['hover_bg']};
+        border-color: {tokens['hover_border']};
+    }}
+
     QPushButton#IconButton,
     QPushButton#IconButtonChecked {{
         min-width: 40px;
