@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):
         self.harness_assets: list[Asset] = []
         self.library_assets: list[Asset] = []
         self.client_cards_layout: QVBoxLayout | None = None
+        self.asset_library_header_layout: QVBoxLayout | None = None
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
         self.current_view = "harnesses"
@@ -73,7 +74,7 @@ class MainWindow(QMainWindow):
         self.export_archive_button = self._button("导出套件", "CompactButton")
         self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
         self.add_mcp_button = self._button("添加 MCP", "CompactButton")
-        self.new_mcp_config_button = self._button("新建 MCP 配置", "PrimaryButton")
+        self.new_mcp_config_button = self._button("+ 新增 MCP", "PrimaryButton")
         self.add_skill_asset_button = self._button("添加技能", "CompactButton")
         self.install_codex_button = self._button("安装", "DeployInstallButton")
         self.uninstall_codex_button = self._button("卸载", "DeployUninstallButton")
@@ -290,12 +291,54 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 18, 20, 20)
         layout.setSpacing(12)
-        layout.addLayout(
-            self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
-        )
-        layout.addWidget(self.new_mcp_config_button)
+        self.asset_library_header = QWidget()
+        self.asset_library_header_layout = QVBoxLayout(self.asset_library_header)
+        self.asset_library_header_layout.setContentsMargins(0, 0, 0, 0)
+        self.asset_library_header_layout.setSpacing(12)
+        layout.addWidget(self.asset_library_header)
         layout.addWidget(self.library_skill_list, 1)
         return card
+
+    def _build_mcp_toolbar(self) -> QWidget:
+        toolbar = QFrame()
+        toolbar.setObjectName("McpToolbar")
+        layout = QHBoxLayout(toolbar)
+        layout.setContentsMargins(4, 0, 4, 0)
+        layout.setSpacing(12)
+        title = self._label("MCP 服务器管理", "SectionTitle")
+        subtitle = self._label("维护任务套件可复用的 MCP JSON 配置。", "MutedText")
+        copy = QVBoxLayout()
+        copy.setSpacing(4)
+        copy.addWidget(title)
+        copy.addWidget(subtitle)
+        layout.addLayout(copy, 1)
+        layout.addWidget(self.new_mcp_config_button)
+        return toolbar
+
+    def _build_mcp_summary(self) -> QWidget:
+        summary = QFrame()
+        summary.setObjectName("McpSummary")
+        layout = QHBoxLayout(summary)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.addWidget(self._label(f"已配置 {len(self.library_assets)} 个 MCP", "MutedText"))
+        layout.addStretch(1)
+        return summary
+
+    def _refresh_asset_library_header(self) -> None:
+        if self.asset_library_header_layout is None:
+            return
+        while self.asset_library_header_layout.count():
+            item = self.asset_library_header_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        if self.current_view == "mcp":
+            self.asset_library_header_layout.addWidget(self._build_mcp_toolbar())
+            self.asset_library_header_layout.addWidget(self._build_mcp_summary())
+        else:
+            self.asset_library_header_layout.addLayout(
+                self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
+            )
 
     def _asset_library_item(self, asset: Asset) -> QWidget:
         row = QFrame()
@@ -558,6 +601,7 @@ class MainWindow(QMainWindow):
 
         if not self.library_assets:
             self.library_skill_list.addItem(empty_text)
+            self._refresh_asset_library_header()
             return
         for asset in self.library_assets:
             item = QListWidgetItem()
@@ -565,6 +609,7 @@ class MainWindow(QMainWindow):
             item.setSizeHint(QSize(0, 86))
             self.library_skill_list.addItem(item)
             self.library_skill_list.setItemWidget(item, widget)
+        self._refresh_asset_library_header()
 
     def _refresh_current_asset_library(self) -> None:
         self._refresh_asset_library(self.controller.list_skills())

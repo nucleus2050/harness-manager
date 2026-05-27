@@ -27,11 +27,21 @@ def test_mcp_config_management_text_is_present():
     source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
 
-    for text in ["新建 MCP 配置", "编辑", "完整 JSON 配置", "格式化", "MCP 标题（唯一）"]:
+    for text in ["新增 MCP", "MCP 服务器管理", "已配置", "编辑", "完整 JSON 配置", "格式化", "MCP 标题（唯一）"]:
         assert text in source + dialog_source
 
     assert "ask_mcp_config" in source
     assert "McpConfigDialog" in dialog_source
+
+
+def test_mcp_page_uses_management_layout_not_full_width_button():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "_build_mcp_toolbar" in source
+    assert "_build_mcp_summary" in source
+    assert "McpToolbar" in source
+    assert "McpSummary" in source
+    assert "self.asset_library_header_layout.addWidget(self._build_mcp_toolbar())" in source
 
 
 def test_mcp_config_dialog_has_no_builtin_type_buttons():
