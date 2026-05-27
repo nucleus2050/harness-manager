@@ -54,6 +54,9 @@ class MainController:
     def list_harnesses_without_asset(self, asset_id: str):
         return self.harnesses.list_harnesses_without_asset(asset_id)
 
+    def list_harnesses_with_asset(self, asset_id: str):
+        return self.harnesses.list_harnesses_with_asset(asset_id)
+
     def list_assets_by_type(self, asset_type: str):
         return self.assets.list_by_type(asset_type)
     def list_clients(self) -> list[ClientConfig]:
@@ -81,6 +84,10 @@ class MainController:
             raise ValueError("该组件已在任务套件中。")
         with transaction(self.conn):
             self.harnesses.add_asset(harness_id, asset_id, asset_type, len(current) + 1)
+
+    def remove_asset_from_harness(self, harness_id: str, asset_id: str) -> None:
+        with transaction(self.conn):
+            self.harnesses.remove_asset(harness_id, asset_id)
 
     def list_harness_assets(self, harness_id: str):
         return self.harnesses.list_assets(harness_id)

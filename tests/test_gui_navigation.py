@@ -58,7 +58,19 @@ def test_asset_library_adds_harness_action_on_each_item():
     assert "_asset_library_item" in source
     assert "setItemWidget" in source
     assert "加入套件" in source
+    assert "移出套件" in source
     assert "join_harness_button" not in source
+
+
+def test_asset_library_removes_component_from_selected_harness():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+
+    assert "_remove_asset_from_chosen_harness" in source
+    assert "list_harnesses_with_asset(asset.id)" in source
+    assert "remove_asset_from_harness" in source
+    assert "选择要移出的任务套件" in source
+    assert "confirm_text" in dialog_source
 
 
 def test_asset_library_item_has_safe_height_and_layout():

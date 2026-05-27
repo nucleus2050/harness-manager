@@ -315,6 +315,13 @@ class MainWindow(QMainWindow):
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
         layout.addWidget(add_button)
+
+        remove_button = self._button("移出套件", "CompactButton")
+        remove_button.setMinimumWidth(92)
+        remove_button.clicked.connect(
+            self._guard(lambda asset=asset: self._remove_asset_from_chosen_harness(asset))
+        )
+        layout.addWidget(remove_button)
         return row
 
     def _deploy_row(
@@ -757,6 +764,24 @@ class MainWindow(QMainWindow):
         self.controller.add_asset_to_harness(harness.id, asset.id, asset.type)
         self.refresh()
         dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入 {harness.name}。")
+
+    def _remove_asset_from_chosen_harness(self, asset: Asset) -> None:
+        joined_harnesses = self.controller.list_harnesses_with_asset(asset.id)
+        if not joined_harnesses:
+            dialogs.show_info(self, "无需移出", f"{asset.name} 尚未加入任何任务套件。")
+            return
+        harness = dialogs.choose_harness(
+            self,
+            joined_harnesses,
+            title="选择要移出的任务套件",
+            message="请选择要移出该组件的任务套件",
+            confirm_text="移出",
+        )
+        if harness is None:
+            return
+        self.controller.remove_asset_from_harness(harness.id, asset.id)
+        self.refresh()
+        dialogs.show_info(self, "移出完成", f"已将 {asset.name} 从 {harness.name} 移出。")
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)

@@ -59,3 +59,22 @@ def test_controller_lists_only_harnesses_without_asset(app_root, tmp_path):
     available = controller.list_harnesses_without_asset(asset.id)
 
     assert [harness.id for harness in available] == [second.id]
+
+
+def test_controller_lists_harnesses_with_asset_and_removes_membership(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    first = controller.create_harness("已有组件", "")
+    controller.create_harness("未加入", "")
+    source = tmp_path / "AGENTS.md"
+    source.write_text("# Rules\n", encoding="utf-8")
+    asset = controller.import_agents_md_asset(source, "规则")
+    controller.add_asset_to_harness(first.id, asset.id, asset.type)
+
+    joined = controller.list_harnesses_with_asset(asset.id)
+    controller.remove_asset_from_harness(first.id, asset.id)
+
+    assert [harness.id for harness in joined] == [first.id]
+    assert controller.list_harness_assets(first.id) == []

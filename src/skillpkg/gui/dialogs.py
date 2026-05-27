@@ -192,11 +192,18 @@ class _TextDialog(QDialog):
 
 
 class _HarnessDialog(QDialog):
-    def __init__(self, parent: QWidget, harnesses: list["Harness"]) -> None:
+    def __init__(
+        self,
+        parent: QWidget,
+        harnesses: list["Harness"],
+        title: str = "选择任务套件",
+        message: str = "请选择要加入的任务套件",
+        confirm_text: str = "加入",
+    ) -> None:
         super().__init__(parent)
         self.harnesses = harnesses
         self.setObjectName("HarnessPickerDialog")
-        self.setWindowTitle("选择任务套件")
+        self.setWindowTitle(title)
         self.setModal(True)
         self.setMinimumSize(560, 460)
         self.setStyleSheet(_dialog_stylesheet())
@@ -205,12 +212,12 @@ class _HarnessDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 20)
         layout.setSpacing(16)
 
-        title_label = QLabel("选择任务套件")
+        title_label = QLabel(title)
         title_label.setObjectName("DialogTitle")
-        message = QLabel("请选择要加入的任务套件")
-        message.setObjectName("DialogMessage")
+        message_label = QLabel(message)
+        message_label.setObjectName("DialogMessage")
         layout.addWidget(title_label)
-        layout.addWidget(message)
+        layout.addWidget(message_label)
 
         self.list_widget = QListWidget()
         self.list_widget.setObjectName("HarnessPickerList")
@@ -225,7 +232,7 @@ class _HarnessDialog(QDialog):
         buttons.addStretch(1)
         cancel = QPushButton("取消")
         cancel.setObjectName("GhostDialogButton")
-        confirm = QPushButton("加入")
+        confirm = QPushButton(confirm_text)
         confirm.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)
         confirm.clicked.connect(self.accept)
@@ -363,8 +370,14 @@ def ask_text(parent: QWidget, title: str, label: str) -> str | None:
     return dialog.value()
 
 
-def choose_harness(parent: QWidget, harnesses: list["Harness"]) -> "Harness | None":
-    dialog = _HarnessDialog(parent, harnesses)
+def choose_harness(
+    parent: QWidget,
+    harnesses: list["Harness"],
+    title: str = "选择任务套件",
+    message: str = "请选择要加入的任务套件",
+    confirm_text: str = "加入",
+) -> "Harness | None":
+    dialog = _HarnessDialog(parent, harnesses, title, message, confirm_text)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.selected_harness()

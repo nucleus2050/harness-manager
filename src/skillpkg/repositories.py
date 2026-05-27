@@ -435,6 +435,19 @@ class HarnessRepository:
         ).fetchall()
         return [_harness_from_row(row) for row in rows]
 
+    def list_harnesses_with_asset(self, asset_id: str) -> list[Harness]:
+        rows = self.conn.execute(
+            """
+            SELECT h.id, h.name, h.description
+            FROM harnesses h
+            JOIN harness_assets ha ON ha.harness_id = h.id
+            WHERE ha.asset_id = ?
+            ORDER BY h.name
+            """,
+            (asset_id,),
+        ).fetchall()
+        return [_harness_from_row(row) for row in rows]
+
     def add_asset(self, harness_id: str, asset_id: str, asset_type: str, sort_order: int) -> None:
         self.conn.execute(
             """
@@ -445,6 +458,12 @@ class HarnessRepository:
               sort_order = excluded.sort_order
             """,
             (harness_id, asset_id, asset_type, sort_order),
+        )
+
+    def remove_asset(self, harness_id: str, asset_id: str) -> None:
+        self.conn.execute(
+            "DELETE FROM harness_assets WHERE harness_id = ? AND asset_id = ?",
+            (harness_id, asset_id),
         )
 
     def list_assets(self, harness_id: str) -> list[Asset]:
