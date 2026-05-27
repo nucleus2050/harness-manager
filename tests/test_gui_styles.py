@@ -38,6 +38,7 @@ def test_stylesheet_has_client_cards_and_deploy_buttons():
 
     assert "QFrame#ClientCard" in stylesheet
     assert "QFrame#AssetLibraryItem" in stylesheet
+    assert "border: none" in stylesheet
     assert "QLabel#ClientName" in stylesheet
     assert "QLabel#ClientPath" in stylesheet
     assert "QLabel#SkillDescription" in stylesheet

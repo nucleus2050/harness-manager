@@ -332,9 +332,9 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QFrame#AssetLibraryItem {{
-        background: {tokens['soft_card']};
-        border: 1px solid {tokens['soft_border']};
-        border-radius: 16px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
     }}
 
     QListWidget {{
