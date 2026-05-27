@@ -230,6 +230,7 @@ class MainWindow(QMainWindow):
         self.minimize_button = self._window_button("—", "MinimizeButton")
         self.maximize_button = self._window_button("□", "MaximizeButton")
         self.close_button = self._window_button("×", "CloseButton")
+        layout.addWidget(self.settings_button)
         layout.addWidget(self.minimize_button)
         layout.addWidget(self.maximize_button)
         layout.addWidget(self.close_button)
@@ -271,11 +272,7 @@ class MainWindow(QMainWindow):
 
         self.import_skill_button.setObjectName("SidebarButton")
         layout.addWidget(self.import_skill_button)
-        bottom_actions = QHBoxLayout()
-        bottom_actions.setSpacing(10)
-        bottom_actions.addWidget(self.add_custom_source_button, 1)
-        bottom_actions.addWidget(self.settings_button, 0)
-        layout.addLayout(bottom_actions)
+        layout.addWidget(self.add_custom_source_button)
         layout.addStretch(1)
         return sidebar
 
