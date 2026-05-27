@@ -76,3 +76,14 @@ def test_skill_description_reads_frontmatter_description(tmp_path):
     )
 
     assert skill_description(skill) == "用于长文总结"
+
+
+def test_skill_description_collapses_long_whitespace(tmp_path):
+    skill = tmp_path / "described-skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text(
+        "---\ndescription: 第一行\n  第二行\n---\n# Skill\n",
+        encoding="utf-8",
+    )
+
+    assert skill_description(skill) == "第一行 第二行"

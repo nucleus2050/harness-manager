@@ -40,15 +40,25 @@ def skill_description(path: Path | str) -> str:
     if text.startswith("---"):
         end = text.find("\n---", 3)
         if end != -1:
-            for line in text[3:end].splitlines():
+            lines = text[3:end].splitlines()
+            for index, line in enumerate(lines):
                 key, separator, value = line.partition(":")
                 if separator and key.strip() == "description":
-                    return value.strip().strip("\"'") or "暂无描述。"
+                    parts = [value.strip().strip("\"'")]
+                    for next_line in lines[index + 1 :]:
+                        if not next_line.startswith((" ", "\t")):
+                            break
+                        parts.append(next_line.strip().strip("\"'"))
+                    return _compact_text(" ".join(parts)) or "暂无描述。"
     for line in text.splitlines():
         stripped = line.strip()
         if stripped and not stripped.startswith("#") and stripped != "---":
-            return stripped
+            return _compact_text(stripped)
     return "暂无描述。"
+
+
+def _compact_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def _resolve_under(path: Path, root: Path, description: str) -> Path:

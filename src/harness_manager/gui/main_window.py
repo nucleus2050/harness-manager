@@ -52,6 +52,7 @@ WINDOW_SHADOW_MARGIN = 10
 TITLE_BAR_HEIGHT = 42
 CLIENT_CARD_MIN_HEIGHT = 92
 CLIENT_SOURCE_VISIBLE_ROWS = 3
+SKILL_DESCRIPTION_MAX_LENGTH = 180
 
 
 class _WindowsMSG(ctypes.Structure):
@@ -89,7 +90,6 @@ class MainWindow(QMainWindow):
         self.asset_library_header_layout: QVBoxLayout | None = None
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
-        self.selected_library_asset_id: str | None = None
         self.current_view = "harnesses"
         self.last_business_view = "harnesses"
         self.current_theme = self.controller.get_settings().theme
@@ -533,7 +533,6 @@ class MainWindow(QMainWindow):
             )
 
     def _asset_library_item(self, asset: Asset) -> QWidget:
-        selected = asset.id == self.selected_library_asset_id
         row = QFrame()
         row.setObjectName("AssetLibraryItem")
         row.setMinimumHeight(self._asset_library_item_height(asset))
@@ -551,9 +550,9 @@ class MainWindow(QMainWindow):
         meta.setWordWrap(True)
         copy.addWidget(title)
         copy.addWidget(meta)
-        if selected and asset.type == "skill":
+        if asset.type == "skill":
             description = self._label(
-                f"技能描述：{self._skill_description(asset)}",
+                f"技能描述：{self._truncate_description(self._skill_description(asset))}",
                 "SkillDescription",
             )
             description.setWordWrap(True)
@@ -590,13 +589,18 @@ class MainWindow(QMainWindow):
         return row
 
     def _asset_library_item_height(self, asset: Asset) -> int:
-        if asset.id == self.selected_library_asset_id and asset.type == "skill":
-            return 148
+        if asset.type == "skill":
+            return 150
         return 86
 
     def _skill_description(self, asset: Asset) -> str:
         skill_root = self.controller.paths.root / asset.relative_path
         return skill_description(skill_root)
+
+    def _truncate_description(self, description: str) -> str:
+        if len(description) <= SKILL_DESCRIPTION_MAX_LENGTH:
+            return description
+        return description[:SKILL_DESCRIPTION_MAX_LENGTH].rstrip() + "..."
 
     def _deploy_row(
         self, title: str, badge: str, install_button: QPushButton, uninstall_button: QPushButton
@@ -785,7 +789,6 @@ class MainWindow(QMainWindow):
         self.theme_system_button.clicked.connect(self._guard(lambda: self._save_theme("system")))
         self.export_config_button.clicked.connect(self._guard(self._export_full_config))
         self.import_config_button.clicked.connect(self._guard(self._import_full_config))
-        self.library_skill_list.itemClicked.connect(self._select_library_asset)
 
     def _guard(self, callback: Callable[[], None]) -> Callable[[], None]:
         def wrapped() -> None:
@@ -894,16 +897,6 @@ class MainWindow(QMainWindow):
             self.library_skill_list.addItem(item)
             self.library_skill_list.setItemWidget(item, widget)
         self._refresh_asset_library_header()
-
-    def _select_library_asset(self, item: QListWidgetItem) -> None:
-        row = self.library_skill_list.row(item)
-        if row < 0 or row >= len(self.library_assets):
-            return
-        asset = self.library_assets[row]
-        self.selected_library_asset_id = (
-            None if self.selected_library_asset_id == asset.id else asset.id
-        )
-        self._refresh_current_asset_library()
 
     def _refresh_current_asset_library(self) -> None:
         self._refresh_asset_library(self.controller.list_skills())

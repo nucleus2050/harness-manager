@@ -284,17 +284,18 @@ def test_asset_library_item_has_safe_height_and_layout():
     assert "add_button.setMinimumWidth(92)" in source
 
 
-def test_skill_library_item_expands_selected_skill_description():
+def test_skill_library_item_shows_truncated_description_by_default():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     services_source = Path("src/harness_manager/services.py").read_text(encoding="utf-8")
 
-    assert "self.selected_library_asset_id" in source
-    assert "itemClicked.connect" in source
     assert "_asset_library_item_height" in source
     assert "_skill_description" in source
+    assert "SKILL_DESCRIPTION_MAX_LENGTH" in source
+    assert "_truncate_description" in source
     assert '"SkillDescription"' in source
     assert "技能描述" in source
     assert "SKILL.md" in services_source
+    assert "itemClicked.connect" not in source
 
 
 def test_client_source_cards_have_safe_height_and_wrapping():
