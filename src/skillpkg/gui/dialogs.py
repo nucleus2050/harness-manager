@@ -86,6 +86,30 @@ def _dialog_stylesheet() -> str:
         border-color: #ef4444;
         color: #ffffff;
     }
+    QPushButton#GhostDialogButton {
+        background: #ffffff;
+        border-color: #d8e1ee;
+        color: #172033;
+    }
+    QListWidget#HarnessPickerList {
+        background: #f8fafc;
+        border: 1px solid #dbe4f0;
+        border-radius: 16px;
+        padding: 8px;
+    }
+    QListWidget#HarnessPickerList::item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        margin: 6px 0;
+        padding: 14px;
+        min-height: 54px;
+        color: #172033;
+    }
+    QListWidget#HarnessPickerList::item:selected {
+        background: #dbeafe;
+        border: 1px solid #2563eb;
+    }
     """
 
 
@@ -171,14 +195,15 @@ class _HarnessDialog(QDialog):
     def __init__(self, parent: QWidget, harnesses: list["Harness"]) -> None:
         super().__init__(parent)
         self.harnesses = harnesses
+        self.setObjectName("HarnessPickerDialog")
         self.setWindowTitle("选择任务套件")
         self.setModal(True)
-        self.setMinimumWidth(500)
+        self.setMinimumSize(560, 460)
         self.setStyleSheet(_dialog_stylesheet())
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(22, 20, 22, 18)
-        layout.setSpacing(14)
+        layout.setContentsMargins(24, 24, 24, 20)
+        layout.setSpacing(16)
 
         title_label = QLabel("选择任务套件")
         title_label.setObjectName("DialogTitle")
@@ -188,6 +213,7 @@ class _HarnessDialog(QDialog):
         layout.addWidget(message)
 
         self.list_widget = QListWidget()
+        self.list_widget.setObjectName("HarnessPickerList")
         for harness in harnesses:
             description = harness.description or "暂无描述"
             self.list_widget.addItem(f"{harness.name}\n{description}")
@@ -198,6 +224,7 @@ class _HarnessDialog(QDialog):
         buttons = QHBoxLayout()
         buttons.addStretch(1)
         cancel = QPushButton("取消")
+        cancel.setObjectName("GhostDialogButton")
         confirm = QPushButton("加入")
         confirm.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)

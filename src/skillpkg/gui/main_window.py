@@ -745,9 +745,13 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "添加完成", f"已将技能 {asset.name} 加入任务套件。")
 
     def _add_asset_to_chosen_harness(self, asset: Asset) -> None:
-        if not self.harnesses:
+        available_harnesses = self.controller.list_harnesses_without_asset(asset.id)
+        if not available_harnesses:
+            if self.harnesses:
+                dialogs.show_info(self, "无需重复加入", f"{asset.name} 已经加入所有任务套件。")
+                return
             raise ValueError("当前没有任务套件，请先新建任务套件。")
-        harness = dialogs.choose_harness(self, self.harnesses)
+        harness = dialogs.choose_harness(self, available_harnesses)
         if harness is None:
             return
         self.controller.add_asset_to_harness(harness.id, asset.id, asset.type)

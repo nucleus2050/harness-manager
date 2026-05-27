@@ -419,6 +419,22 @@ class HarnessRepository:
         ).fetchall()
         return [_harness_from_row(row) for row in rows]
 
+    def list_harnesses_without_asset(self, asset_id: str) -> list[Harness]:
+        rows = self.conn.execute(
+            """
+            SELECT h.id, h.name, h.description
+            FROM harnesses h
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM harness_assets ha
+              WHERE ha.harness_id = h.id AND ha.asset_id = ?
+            )
+            ORDER BY h.name
+            """,
+            (asset_id,),
+        ).fetchall()
+        return [_harness_from_row(row) for row in rows]
+
     def add_asset(self, harness_id: str, asset_id: str, asset_type: str, sort_order: int) -> None:
         self.conn.execute(
             """

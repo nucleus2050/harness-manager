@@ -42,3 +42,20 @@ def test_controller_lists_harness_assets_by_type(app_root, tmp_path, sample_skil
     assert [asset.id for asset in controller.list_harness_assets_by_type(harness.id, "skill")] == [
         skill_asset.id
     ]
+
+
+def test_controller_lists_only_harnesses_without_asset(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    first = controller.create_harness("已有组件", "")
+    second = controller.create_harness("可加入", "")
+    source = tmp_path / "AGENTS.md"
+    source.write_text("# Rules\n", encoding="utf-8")
+    asset = controller.import_agents_md_asset(source, "规则")
+    controller.add_asset_to_harness(first.id, asset.id, asset.type)
+
+    available = controller.list_harnesses_without_asset(asset.id)
+
+    assert [harness.id for harness in available] == [second.id]

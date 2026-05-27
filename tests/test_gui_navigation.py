@@ -37,8 +37,19 @@ def test_join_harness_prompts_for_target_harness():
     dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "choose_harness" in main_source
+    assert "list_harnesses_without_asset(asset.id)" in main_source
+    assert "已经加入所有任务套件" in main_source
     assert "选择任务套件" in dialog_source
     assert "请选择要加入的任务套件" in dialog_source
+
+
+def test_harness_picker_uses_refined_card_style():
+    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+
+    assert "HarnessPickerDialog" in dialog_source
+    assert "QListWidget#HarnessPickerList" in dialog_source
+    assert "QPushButton#GhostDialogButton" in dialog_source
+    assert "setMinimumSize(560, 460)" in dialog_source
 
 
 def test_asset_library_adds_harness_action_on_each_item():
