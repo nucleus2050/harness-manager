@@ -640,9 +640,8 @@ class MainWindow(QMainWindow):
         if not assets:
             self.skill_list.addItem(f"{title}\n0 个组件 - {empty_text}")
             return
-        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件")
-        for asset in assets:
-            self.skill_list.addItem(f"{asset.name}\nID：{asset.id}")
+        names = "、".join(asset.name for asset in assets)
+        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件：{names}")
 
     def _asset_type_label(self, asset_type: str) -> str:
         return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
