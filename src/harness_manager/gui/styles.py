@@ -332,6 +332,15 @@ def build_stylesheet(theme: str = "light") -> str:
         padding: 4px;
     }}
 
+    QScrollArea#ClientSourceScroll {{
+        background: transparent;
+        border: none;
+    }}
+
+    QScrollArea#ClientSourceScroll > QWidget > QWidget {{
+        background: transparent;
+    }}
+
     QListWidget::item {{
         background: {tokens['soft_card']};
         border: 1px solid {tokens['soft_border']};

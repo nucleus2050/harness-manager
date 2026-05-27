@@ -18,6 +18,7 @@ def test_stylesheet_styles_list_items_and_danger_buttons():
 
     assert "QListWidget::item:selected" in stylesheet
     assert "QPushButton#DangerButton" in stylesheet
+    assert "QScrollArea#ClientSourceScroll" in stylesheet
     assert "border-radius" in stylesheet
 
 

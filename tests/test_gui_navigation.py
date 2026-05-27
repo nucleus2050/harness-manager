@@ -173,6 +173,22 @@ def test_main_window_tracks_selected_client():
     assert "_show_skills_view" in source
 
 
+def test_import_sources_use_scroll_area_with_fixed_actions():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "client_scroll = QScrollArea()",
+        'client_scroll.setObjectName("ClientSourceScroll")',
+        "client_scroll.setWidgetResizable(True)",
+        "client_scroll.setWidget(clients_container)",
+        "layout.addWidget(client_scroll, 1)",
+        "self.import_skill_button.setObjectName(\"SidebarButton\")",
+        "layout.addWidget(self.import_skill_button)",
+        "layout.addWidget(self.add_custom_source_button)",
+    ]:
+        assert token in source
+
+
 def test_asset_tab_switch_refreshes_visible_library():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
