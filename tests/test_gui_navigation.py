@@ -177,14 +177,28 @@ def test_import_sources_use_scroll_area_with_fixed_actions():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     for token in [
-        "client_scroll = QScrollArea()",
-        'client_scroll.setObjectName("ClientSourceScroll")',
-        "client_scroll.setWidgetResizable(True)",
-        "client_scroll.setWidget(clients_container)",
-        "layout.addWidget(client_scroll, 1)",
+        "self.client_scroll = QScrollArea()",
+        'self.client_scroll.setObjectName("ClientSourceScroll")',
+        "self.client_scroll.setWidgetResizable(True)",
+        "self.client_scroll.setWidget(clients_container)",
+        "layout.addWidget(self.client_scroll, 0)",
         "self.import_skill_button.setObjectName(\"SidebarButton\")",
         "layout.addWidget(self.import_skill_button)",
         "layout.addWidget(self.add_custom_source_button)",
+    ]:
+        assert token in source
+
+
+def test_import_source_scroll_height_adapts_to_content():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "self.client_scroll",
+        "CLIENT_SOURCE_VISIBLE_ROWS",
+        "_refresh_client_source_scroll_height",
+        "self.client_scroll.setMaximumHeight",
+        "self.client_scroll.setMinimumHeight",
+        "source_count = len(self.clients) + len(self.controller.list_custom_import_sources())",
     ]:
         assert token in source
 

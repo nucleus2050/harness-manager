@@ -50,6 +50,7 @@ CORNER_GRIP_WIDTH = 34
 WINDOW_SHADOW_MARGIN = 10
 TITLE_BAR_HEIGHT = 42
 CLIENT_CARD_MIN_HEIGHT = 92
+CLIENT_SOURCE_VISIBLE_ROWS = 3
 
 
 class _WindowsMSG(ctypes.Structure):
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
         self.harness_assets: list[Asset] = []
         self.library_assets: list[Asset] = []
         self.client_cards_layout: QVBoxLayout | None = None
+        self.client_scroll: QScrollArea | None = None
         self.asset_library_header_layout: QVBoxLayout | None = None
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
@@ -267,14 +269,14 @@ class MainWindow(QMainWindow):
         self.client_cards_layout.setContentsMargins(0, 0, 0, 0)
         self.client_cards_layout.setSpacing(10)
         self.client_cards_layout.addStretch(1)
-        client_scroll = QScrollArea()
-        client_scroll.setObjectName("ClientSourceScroll")
-        client_scroll.setWidgetResizable(True)
-        client_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        client_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        client_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        client_scroll.setWidget(clients_container)
-        layout.addWidget(client_scroll, 1)
+        self.client_scroll = QScrollArea()
+        self.client_scroll.setObjectName("ClientSourceScroll")
+        self.client_scroll.setWidgetResizable(True)
+        self.client_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.client_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.client_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.client_scroll.setWidget(clients_container)
+        layout.addWidget(self.client_scroll, 0)
 
         self.import_skill_button.setObjectName("SidebarButton")
         layout.addWidget(self.import_skill_button)
@@ -768,6 +770,8 @@ class MainWindow(QMainWindow):
             self._add_client_card(client)
         for source in self.controller.list_custom_import_sources():
             self._add_custom_source_card(source)
+        self._refresh_client_source_scroll_height()
+        self._refresh_client_source_scroll_height()
 
         self.harness_list.clear()
         if self.harnesses:
@@ -1077,6 +1081,7 @@ class MainWindow(QMainWindow):
             self._add_client_card(client)
         for source in self.controller.list_custom_import_sources():
             self._add_custom_source_card(source)
+        self._refresh_client_source_scroll_height()
 
     def _select_custom_source(self, source_id: str) -> None:
         self.selected_client_type = None
@@ -1103,6 +1108,15 @@ class MainWindow(QMainWindow):
             if widget is not None:
                 widget.deleteLater()
         self.client_cards_layout.addStretch(1)
+
+    def _refresh_client_source_scroll_height(self) -> None:
+        if self.client_scroll is None:
+            return
+        source_count = len(self.clients) + len(self.controller.list_custom_import_sources())
+        visible_rows = max(1, min(source_count, CLIENT_SOURCE_VISIBLE_ROWS))
+        height = visible_rows * (CLIENT_CARD_MIN_HEIGHT + 10) + 4
+        self.client_scroll.setMinimumHeight(height)
+        self.client_scroll.setMaximumHeight(height)
 
     def _add_client_card(self, client: ClientConfig) -> None:
         if self.client_cards_layout is None:
