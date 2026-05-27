@@ -30,3 +30,12 @@ def test_main_window_tracks_selected_client():
     assert "_select_client" in source
     assert "_show_harnesses_view" in source
     assert "_show_skills_view" in source
+
+
+def test_join_harness_prompts_for_target_harness():
+    main_source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+
+    assert "choose_harness" in main_source
+    assert "选择任务套件" in dialog_source
+    assert "请选择要加入的任务套件" in dialog_source

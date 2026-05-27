@@ -687,10 +687,15 @@ class MainWindow(QMainWindow):
         row = self.library_skill_list.currentRow()
         if row < 0 or row >= len(self.library_assets):
             raise ValueError("请先选择一个组件。")
+        if not self.harnesses:
+            raise ValueError("当前没有任务套件，请先新建任务套件。")
+        harness = dialogs.choose_harness(self, self.harnesses)
+        if harness is None:
+            return
         asset = self.library_assets[row]
-        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
+        self.controller.add_asset_to_harness(harness.id, asset.id, asset.type)
         self.refresh()
-        dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入任务套件。")
+        dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入 {harness.name}。")
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)

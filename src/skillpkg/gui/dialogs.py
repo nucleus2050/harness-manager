@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -9,10 +10,14 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
+
+if TYPE_CHECKING:
+    from skillpkg.models import Harness
 
 
 def _dialog_stylesheet() -> str:
@@ -153,6 +158,52 @@ class _TextDialog(QDialog):
         return text or None
 
 
+class _HarnessDialog(QDialog):
+    def __init__(self, parent: QWidget, harnesses: list["Harness"]) -> None:
+        super().__init__(parent)
+        self.harnesses = harnesses
+        self.setWindowTitle("选择任务套件")
+        self.setModal(True)
+        self.setMinimumWidth(500)
+        self.setStyleSheet(_dialog_stylesheet())
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 20, 22, 18)
+        layout.setSpacing(14)
+
+        title_label = QLabel("选择任务套件")
+        title_label.setObjectName("DialogTitle")
+        message = QLabel("请选择要加入的任务套件")
+        message.setObjectName("DialogMessage")
+        layout.addWidget(title_label)
+        layout.addWidget(message)
+
+        self.list_widget = QListWidget()
+        for harness in harnesses:
+            description = harness.description or "暂无描述"
+            self.list_widget.addItem(f"{harness.name}\n{description}")
+        if harnesses:
+            self.list_widget.setCurrentRow(0)
+        layout.addWidget(self.list_widget)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton("取消")
+        confirm = QPushButton("加入")
+        confirm.setObjectName("PrimaryDialogButton")
+        cancel.clicked.connect(self.reject)
+        confirm.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(confirm)
+        layout.addLayout(buttons)
+
+    def selected_harness(self) -> "Harness | None":
+        row = self.list_widget.currentRow()
+        if row < 0 or row >= len(self.harnesses):
+            return None
+        return self.harnesses[row]
+
+
 def choose_directory(parent: QWidget, title: str) -> Path | None:
     value = QFileDialog.getExistingDirectory(parent, title)
     return Path(value) if value else None
@@ -178,6 +229,13 @@ def ask_text(parent: QWidget, title: str, label: str) -> str | None:
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.value()
+
+
+def choose_harness(parent: QWidget, harnesses: list["Harness"]) -> "Harness | None":
+    dialog = _HarnessDialog(parent, harnesses)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.selected_harness()
 
 
 def show_error(parent: QWidget, title: str, message: str) -> None:
