@@ -48,3 +48,31 @@ class InstallRecord:
     installed_path: Path
     fingerprint: str
     status: InstallStatus
+
+AssetType = Literal["agents_md", "mcp", "skill"]
+
+
+@dataclass(frozen=True)
+class Asset:
+    id: str
+    type: AssetType
+    name: str
+    source_type: str | None
+    relative_path: str
+    fingerprint: str
+    metadata_json: str
+
+
+@dataclass(frozen=True)
+class Harness:
+    id: str
+    name: str
+    description: str
+
+
+@dataclass(frozen=True)
+class HarnessAsset:
+    harness_id: str
+    asset_id: str
+    asset_type: AssetType
+    sort_order: int
