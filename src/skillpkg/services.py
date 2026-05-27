@@ -516,10 +516,9 @@ def _normalized_mcp_json(config_json: str) -> str:
     return json.dumps(parsed, ensure_ascii=False, indent=2)
 
 
-def _mcp_metadata(mcp_kind: str, display_name: str) -> str:
+def _mcp_metadata(display_name: str) -> str:
     return json.dumps(
         {
-            "mcp_kind": mcp_kind,
             "display_name": display_name,
             "config_filename": "mcp.json",
         },
@@ -531,7 +530,6 @@ def _create_mcp_config_asset(
     self: SkillPkgService,
     title: str,
     display_name: str,
-    mcp_kind: str,
     config_json: str,
 ) -> Asset:
     title = title.strip()
@@ -556,7 +554,7 @@ def _create_mcp_config_asset(
                 "custom",
                 destination.relative_to(self.paths.root).as_posix(),
                 fingerprint,
-                _mcp_metadata(mcp_kind, display_name),
+                _mcp_metadata(display_name),
             )
     except Exception:
         safe_remove_directory(destination_dir)
@@ -568,7 +566,6 @@ def _update_mcp_config_asset(
     asset_id: str,
     title: str,
     display_name: str,
-    mcp_kind: str,
     config_json: str,
 ) -> Asset:
     title = title.strip()
@@ -593,7 +590,7 @@ def _update_mcp_config_asset(
             "custom",
             destination.relative_to(self.paths.root).as_posix(),
             fingerprint,
-            _mcp_metadata(mcp_kind, display_name),
+            _mcp_metadata(display_name),
         )
 
 

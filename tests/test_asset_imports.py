@@ -43,7 +43,6 @@ def test_create_mcp_config_asset_writes_json_and_metadata(app_root):
     asset = service.create_mcp_config_asset(
         title="fetch",
         display_name="Fetch Server",
-        mcp_kind="fetch",
         config_json='{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
     )
 
@@ -51,6 +50,7 @@ def test_create_mcp_config_asset_writes_json_and_metadata(app_root):
     assert asset.name == "fetch"
     assert asset.source_type == "custom"
     assert '"display_name": "Fetch Server"' in asset.metadata_json
+    assert "mcp_kind" not in asset.metadata_json
     assert "enabled_clients" not in asset.metadata_json
     assert (paths.root / asset.relative_path).read_text(encoding="utf-8").startswith("{\n")
 
@@ -62,7 +62,6 @@ def test_create_mcp_config_asset_rejects_invalid_json(app_root):
         service.create_mcp_config_asset(
             title="broken",
             display_name="Broken",
-            mcp_kind="custom",
             config_json="{not json}",
         )
     except ValueError as exc:
@@ -76,7 +75,6 @@ def test_update_mcp_config_asset_rewrites_json_and_metadata(app_root):
     asset = service.create_mcp_config_asset(
         title="fetch",
         display_name="Fetch Server",
-        mcp_kind="fetch",
         config_json='{"type":"stdio","command":"uvx"}',
     )
 
@@ -84,7 +82,6 @@ def test_update_mcp_config_asset_rewrites_json_and_metadata(app_root):
         asset_id=asset.id,
         title="fetch-v2",
         display_name="Fetch Server V2",
-        mcp_kind="custom",
         config_json='{"type":"stdio","command":"node"}',
     )
 

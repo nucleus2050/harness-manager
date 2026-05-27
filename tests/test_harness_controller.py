@@ -39,7 +39,6 @@ def test_controller_creates_mcp_config_asset(app_root):
     asset = controller.create_mcp_config_asset(
         title="fetch",
         display_name="Fetch Server",
-        mcp_kind="fetch",
         config_json='{"type":"stdio","command":"uvx"}',
     )
 

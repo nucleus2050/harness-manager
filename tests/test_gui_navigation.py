@@ -34,6 +34,13 @@ def test_mcp_config_management_text_is_present():
     assert "McpConfigDialog" in dialog_source
 
 
+def test_mcp_config_dialog_has_no_builtin_type_buttons():
+    dialog_source = Path("src/skillpkg/gui/dialogs.py").read_text(encoding="utf-8")
+
+    for text in ["sequential-thinking", "context7", "mcp_kind", "setCheckable"]:
+        assert text not in dialog_source
+
+
 def test_main_window_tracks_selected_client():
     source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
 

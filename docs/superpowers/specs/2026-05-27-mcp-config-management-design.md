@@ -43,7 +43,6 @@ MCP 资产字段约定：
 
 ```json
 {
-  "mcp_kind": "custom",
   "display_name": "Fetch Server",
   "config_filename": "mcp.json"
 }
@@ -78,7 +77,6 @@ MCP tab 改为配置管理页。
 
 新建/编辑弹窗参考 cc-switch 配置页，但保持当前应用浅色视觉系统：
 
-- MCP 类型按钮：`自定义`、`fetch`、`time`、`memory`、`sequential-thinking`、`context7`
 - `MCP 标题（唯一）`
 - `显示名称`
 - `完整 JSON 配置` 多行编辑区

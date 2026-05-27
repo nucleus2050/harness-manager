@@ -352,11 +352,9 @@ class McpConfigDialog(QDialog):
         title: str = "新建 MCP 配置",
         mcp_title: str = "",
         display_name: str = "",
-        mcp_kind: str = "custom",
         config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
     ) -> None:
         super().__init__(parent)
-        self.mcp_kind = mcp_kind
         self.setWindowTitle(title)
         self.setModal(True)
         self.setMinimumSize(720, 620)
@@ -368,16 +366,6 @@ class McpConfigDialog(QDialog):
         title_label = QLabel(title)
         title_label.setObjectName("DialogTitle")
         layout.addWidget(title_label)
-
-        kind_row = QHBoxLayout()
-        for kind in ["custom", "fetch", "time", "memory", "sequential-thinking", "context7"]:
-            button = QPushButton("自定义" if kind == "custom" else kind)
-            button.setCheckable(True)
-            button.setChecked(kind == self.mcp_kind)
-            button.clicked.connect(lambda _checked=False, value=kind: self._select_kind(value))
-            kind_row.addWidget(button)
-        kind_row.addStretch(1)
-        layout.addLayout(kind_row)
 
         layout.addWidget(QLabel("MCP 标题（唯一）"))
         self.title_input = QLineEdit()
@@ -415,21 +403,17 @@ class McpConfigDialog(QDialog):
         buttons.addWidget(save)
         layout.addLayout(buttons)
 
-    def _select_kind(self, value: str) -> None:
-        self.mcp_kind = value
-
     def _format_json(self) -> None:
         parsed = json.loads(self.config_input.toPlainText())
         self.config_input.setPlainText(json.dumps(parsed, ensure_ascii=False, indent=2))
 
-    def value(self) -> tuple[str, str, str, str] | None:
+    def value(self) -> tuple[str, str, str] | None:
         title = self.title_input.text().strip()
         if not title:
             return None
         return (
             title,
             self.display_name_input.text().strip(),
-            self.mcp_kind,
             self.config_input.toPlainText(),
         )
 
@@ -498,10 +482,9 @@ def ask_mcp_config(
     title: str = "新建 MCP 配置",
     mcp_title: str = "",
     display_name: str = "",
-    mcp_kind: str = "custom",
     config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
-) -> tuple[str, str, str, str] | None:
-    dialog = McpConfigDialog(parent, title, mcp_title, display_name, mcp_kind, config_json)
+) -> tuple[str, str, str] | None:
+    dialog = McpConfigDialog(parent, title, mcp_title, display_name, config_json)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.value()

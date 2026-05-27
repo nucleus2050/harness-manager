@@ -78,24 +78,20 @@ class MainController:
     def import_mcp_asset(self, source_file: Path | str, name: str):
         return self.service.import_mcp_asset(Path(source_file), name, "custom")
 
-    def create_mcp_config_asset(
-        self, title: str, display_name: str, mcp_kind: str, config_json: str
-    ):
+    def create_mcp_config_asset(self, title: str, display_name: str, config_json: str):
         return self.service.create_mcp_config_asset(
             title=title,
             display_name=display_name,
-            mcp_kind=mcp_kind,
             config_json=config_json,
         )
 
     def update_mcp_config_asset(
-        self, asset_id: str, title: str, display_name: str, mcp_kind: str, config_json: str
+        self, asset_id: str, title: str, display_name: str, config_json: str
     ):
         return self.service.update_mcp_config_asset(
             asset_id=asset_id,
             title=title,
             display_name=display_name,
-            mcp_kind=mcp_kind,
             config_json=config_json,
         )
 

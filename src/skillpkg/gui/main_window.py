@@ -767,8 +767,8 @@ class MainWindow(QMainWindow):
         details = dialogs.ask_mcp_config(self, "新建 MCP 配置")
         if details is None:
             return
-        title, display_name, mcp_kind, config_json = details
-        self.controller.create_mcp_config_asset(title, display_name, mcp_kind, config_json)
+        title, display_name, config_json = details
+        self.controller.create_mcp_config_asset(title, display_name, config_json)
         self.refresh()
         dialogs.show_info(self, "保存完成", f"已保存 MCP 配置 {title}。")
 
@@ -779,13 +779,12 @@ class MainWindow(QMainWindow):
             "编辑 MCP 配置",
             asset.name,
             asset.name,
-            "custom",
             config_path.read_text(encoding="utf-8"),
         )
         if details is None:
             return
-        title, display_name, mcp_kind, config_json = details
-        self.controller.update_mcp_config_asset(asset.id, title, display_name, mcp_kind, config_json)
+        title, display_name, config_json = details
+        self.controller.update_mcp_config_asset(asset.id, title, display_name, config_json)
         self.refresh()
         dialogs.show_info(self, "保存完成", f"已更新 MCP 配置 {title}。")
 
