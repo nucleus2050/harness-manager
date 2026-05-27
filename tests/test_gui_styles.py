@@ -62,6 +62,21 @@ def test_stylesheet_supports_light_and_dark_theme_tokens():
     assert light != dark
 
 
+def test_stylesheet_supports_additional_visual_themes():
+    themes = {
+        "matrix": "#00ff88",
+        "neon": "#ff2bd6",
+        "sunset": "#f97316",
+        "forest": "#22c55e",
+    }
+
+    for theme, expected_color in themes.items():
+        stylesheet = build_stylesheet(theme)
+
+        assert expected_color in stylesheet
+        assert stylesheet != build_stylesheet("dark")
+
+
 def test_stylesheet_system_defaults_to_light_tokens():
     stylesheet = build_stylesheet("system")
 

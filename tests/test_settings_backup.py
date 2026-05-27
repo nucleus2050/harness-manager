@@ -40,6 +40,15 @@ def test_settings_default_and_save_theme(app_root):
     }
 
 
+def test_settings_accepts_extra_visual_themes(app_root):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    service = SettingsService(paths)
+
+    for theme in ["matrix", "neon", "sunset", "forest"]:
+        assert service.save_theme(theme).theme == theme
+
+
 def test_settings_preserves_theme_and_language(app_root):
     paths = AppPaths(app_root)
     paths.ensure()

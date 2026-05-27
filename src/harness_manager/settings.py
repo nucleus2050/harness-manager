@@ -11,6 +11,8 @@ from pathlib import Path
 from harness_manager.app_paths import AppPaths
 from harness_manager.file_ops import extract_zip, make_zip, safe_remove_directory
 
+SUPPORTED_THEMES = {"light", "dark", "system", "matrix", "neon", "sunset", "forest"}
+
 
 @dataclass(frozen=True)
 class AppSettings:
@@ -35,7 +37,7 @@ class SettingsService:
         if language not in {"zh-CN", "en-US"}:
             language = "zh-CN"
         theme = data.get("theme", "system")
-        if theme not in {"light", "dark", "system"}:
+        if theme not in SUPPORTED_THEMES:
             theme = "system"
         return AppSettings(language=language, theme=theme)
 
@@ -48,7 +50,7 @@ class SettingsService:
         return settings
 
     def save_theme(self, theme: str) -> AppSettings:
-        if theme not in {"light", "dark", "system"}:
+        if theme not in SUPPORTED_THEMES:
             raise ValueError(f"Unsupported theme: {theme}")
         current = self.load()
         settings = AppSettings(language=current.language, theme=theme)

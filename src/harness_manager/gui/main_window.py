@@ -140,6 +140,10 @@ class MainWindow(QMainWindow):
         self.theme_light_button = self._button("浅色", "CompactButton")
         self.theme_dark_button = self._button("深色", "CompactButton")
         self.theme_system_button = self._button("跟随系统", "PrimaryButton")
+        self.theme_matrix_button = self._button("矩阵", "CompactButton")
+        self.theme_neon_button = self._button("霓虹", "CompactButton")
+        self.theme_sunset_button = self._button("日落", "CompactButton")
+        self.theme_forest_button = self._button("森林", "CompactButton")
         self.back_to_business_button = self._button("返回", "CompactButton")
         self.export_config_button = self._button("导出全部配置", "PrimaryButton")
         self.import_config_button = self._button("导入全部配置", "CompactButton")
@@ -364,6 +368,10 @@ class MainWindow(QMainWindow):
         theme_row.addWidget(self.theme_light_button)
         theme_row.addWidget(self.theme_dark_button)
         theme_row.addWidget(self.theme_system_button)
+        theme_row.addWidget(self.theme_matrix_button)
+        theme_row.addWidget(self.theme_neon_button)
+        theme_row.addWidget(self.theme_sunset_button)
+        theme_row.addWidget(self.theme_forest_button)
         theme_row.addStretch(1)
         theme_layout.addLayout(theme_row)
         layout.addWidget(theme_card)
@@ -794,6 +802,10 @@ class MainWindow(QMainWindow):
         self.theme_light_button.clicked.connect(self._guard(lambda: self._save_theme("light")))
         self.theme_dark_button.clicked.connect(self._guard(lambda: self._save_theme("dark")))
         self.theme_system_button.clicked.connect(self._guard(lambda: self._save_theme("system")))
+        self.theme_matrix_button.clicked.connect(self._guard(lambda: self._save_theme("matrix")))
+        self.theme_neon_button.clicked.connect(self._guard(lambda: self._save_theme("neon")))
+        self.theme_sunset_button.clicked.connect(self._guard(lambda: self._save_theme("sunset")))
+        self.theme_forest_button.clicked.connect(self._guard(lambda: self._save_theme("forest")))
         self.export_config_button.clicked.connect(self._guard(self._export_full_config))
         self.import_config_button.clicked.connect(self._guard(self._import_full_config))
 
@@ -1399,12 +1411,28 @@ class MainWindow(QMainWindow):
         self.theme_system_button.setObjectName(
             "PrimaryButton" if settings.theme == "system" else "CompactButton"
         )
+        self.theme_matrix_button.setObjectName(
+            "PrimaryButton" if settings.theme == "matrix" else "CompactButton"
+        )
+        self.theme_neon_button.setObjectName(
+            "PrimaryButton" if settings.theme == "neon" else "CompactButton"
+        )
+        self.theme_sunset_button.setObjectName(
+            "PrimaryButton" if settings.theme == "sunset" else "CompactButton"
+        )
+        self.theme_forest_button.setObjectName(
+            "PrimaryButton" if settings.theme == "forest" else "CompactButton"
+        )
         for button in [
             self.language_zh_button,
             self.language_en_button,
             self.theme_light_button,
             self.theme_dark_button,
             self.theme_system_button,
+            self.theme_matrix_button,
+            self.theme_neon_button,
+            self.theme_sunset_button,
+            self.theme_forest_button,
         ]:
             button.style().unpolish(button)
             button.style().polish(button)
