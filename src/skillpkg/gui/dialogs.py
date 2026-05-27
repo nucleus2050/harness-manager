@@ -163,8 +163,13 @@ def choose_archive(parent: QWidget) -> Path | None:
         parent,
         "导入离线包",
         "",
-        "技能包 (*.skillpkg.zip);;Zip 压缩包 (*.zip);;所有文件 (*)",
+        "任务套件 (*.harness.zip);;兼容技能包 (*.skillpkg.zip);;Zip 压缩包 (*.zip);;所有文件 (*)",
     )
+    return Path(value) if value else None
+
+
+def choose_asset_file(parent: QWidget, title: str, filter_text: str) -> Path | None:
+    value, _ = QFileDialog.getOpenFileName(parent, title, "", filter_text)
     return Path(value) if value else None
 
 

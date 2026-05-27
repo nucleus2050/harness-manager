@@ -75,6 +75,10 @@ class MainController:
 
     def list_harness_assets(self, harness_id: str):
         return self.harnesses.list_assets(harness_id)
+
+    def list_harness_assets_by_type(self, harness_id: str, asset_type: str):
+        return self.harnesses.list_assets_by_type(harness_id, asset_type)
+
     def import_skill_directory(
         self, source_dir: Path | str, source_client: ClientType | None = None
     ) -> Skill:

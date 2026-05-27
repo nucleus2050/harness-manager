@@ -2,9 +2,9 @@
 
 ## 项目概览
 
-本项目正在从 Skill Package Manager 升级为 Harness Manager。
+本项目正在从 Skill Package Manager 升级为 Harness Manager，中文产品概念统一为“任务套件管理器”。
 
-Harness Manager 是一个本地 Windows 桌面应用，用来管理完成某项任务所需的资源集合。一个 Harness 是可复用的任务工具包。当前设计方向中，一个 Harness 可以包含：
+任务套件管理器是一个本地 Windows 桌面应用，用来管理完成某项任务所需的资源集合。一个任务套件是可复用的任务工具包。当前设计方向中，一个任务套件可以包含：
 
 - `AGENTS.md` 指令
 - MCP 配置资产
@@ -14,15 +14,15 @@ Hook 支持暂缓实现，因为 Codex、Claude Code、OpenCode 以及其他工�
 
 ## 核心产品设计
 
-### Harness
+### 任务套件
 
-Harness 表示某个任务或工作流所需的完整上下文和工具集合，例如代码审查、前端开发、写作、数据分析或某个项目专用工作流。
+任务套件表示某个任务或工作流所需的完整上下文和工具集合，例如代码审查、前端开发、写作、数据分析或某个项目专用工作流。
 
-Harness 是早期 Package 概念的升级版。迁移过程中必须保持现有 Skill 管理流程可用，不能破坏已经能工作的导入、安装、卸载和导出能力。
+任务套件是早期 Package 概念的升级版。迁移过程中必须保持现有 Skill 管理流程可用，不能破坏已经能工作的导入、安装、卸载和导出能力。用户界面中不要继续使用“软件包”作为核心名称。
 
 ### Asset
 
-Asset 是工具管理的可复用资源。第一阶段升级包含以下资产类型：
+组件（Asset）是工具管理的可复用资源。第一阶段升级包含以下组件类型：
 
 - `agents_md`：以 AGENTS.md 内容形式保存的项目或任务指令。
 - `mcp`：MCP server 配置片段或配置文件。
@@ -38,7 +38,7 @@ Asset 是工具管理的可复用资源。第一阶段升级包含以下资产�
 - Claude Code 默认目录或自定义目录
 - OpenCode 默认目录或自定义目录
 - 用户添加的自定义目录
-- 离线 Harness 包
+- 离线任务套件包
 
 对于已知工具目录，导入时应直接使用已配置路径。只有自动发现失败、配置缺失或路径无效时，才要求用户选择目录。
 
@@ -83,12 +83,12 @@ HarnessManager/
     skills/
       <asset_id>/...
   exports/
-    <harness-name>.harness.zip
+    <任务套件名称>.harness.zip
   config/
     settings.json
 ```
 
-迁移期间可以保留现有 `skills/` 和 `.skillpkg.zip` 行为，但新的设计和实现应逐步转向 `assets/` 和 `.harness.zip`。
+迁移期间可以保留现有 `skills/` 和 `.skillpkg.zip` 兼容行为，但新的设计和实现应逐步转向 `assets/` 和 `.harness.zip`。
 
 ## Agent 开发规则
 

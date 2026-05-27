@@ -93,6 +93,15 @@ class SkillPkgService:
         fingerprint = fingerprint_directory(source_path)
         existing = self.skills.find_by_fingerprint(fingerprint)
         if existing is not None:
+            self.assets.upsert(
+                existing.id,
+                "skill",
+                existing.name,
+                source_client,
+                existing.relative_path,
+                existing.fingerprint,
+                "{}",
+            )
             self.logs.add(
                 "import_skill",
                 f"Reused existing skill {existing.id} from matching fingerprint",
@@ -121,6 +130,15 @@ class SkillPkgService:
                 skill.source_client,
                 skill.relative_path,
                 skill.fingerprint,
+            )
+            self.assets.upsert(
+                skill.id,
+                "skill",
+                skill.name,
+                skill.source_client,
+                skill.relative_path,
+                skill.fingerprint,
+                "{}",
             )
             self.logs.add(
                 "import_skill",

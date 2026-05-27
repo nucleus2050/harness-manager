@@ -25,7 +25,7 @@ from skillpkg.db import connect
 from skillpkg.gui import dialogs
 from skillpkg.gui.controllers import MainController
 from skillpkg.gui.styles import build_stylesheet
-from skillpkg.models import ClientConfig, ClientType, Package, Skill
+from skillpkg.models import Asset, ClientConfig, ClientType, Harness, Skill
 
 
 class MainWindow(QMainWindow):
@@ -33,35 +33,40 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.controller = controller
         self.clients: list[ClientConfig] = []
-        self.packages: list[Package] = []
-        self.package_skills: list[Skill] = []
+        self.harnesses: list[Harness] = []
+        self.harness_assets: list[Asset] = []
+        self.library_assets: list[Asset] = []
         self.client_cards_layout: QVBoxLayout | None = None
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
-        self.current_view = "packages"
+        self.current_view = "harnesses"
 
-        self.setWindowTitle("Harness Manager（技能包管理器）")
+        self.setWindowTitle("Harness Manager（任务套件管理器）")
         self.resize(1240, 760)
         self.setMinimumSize(980, 620)
         self.setStyleSheet(build_stylesheet())
 
-        self.package_list = QListWidget()
+        self.harness_list = QListWidget()
         self.skill_list = QListWidget()
         self.library_skill_list = QListWidget()
-        self.package_count_value = self._label("0", "StatValue")
+        self.harness_count_value = self._label("0", "StatValue")
         self.skill_count_value = self._label("0", "StatValue")
-        self.current_package_title = self._label("选择一个软件包", "SectionTitle")
-        self.current_package_meta = self._label("软件包详情会显示在这里。", "MutedText")
+        self.current_harness_title = self._label("选择一个任务套件", "SectionTitle")
+        self.current_harness_meta = self._label("任务套件详情会显示在这里。", "MutedText")
 
         self.import_skill_button = self._button("选择客户端", "PrimaryButton")
         self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
-        self.packages_view_button = self._button("软件包", "SegmentButtonChecked")
+        self.harnesses_view_button = self._button("任务套件", "SegmentButtonChecked")
         self.agents_view_button = self._button("AGENTS.md", "SegmentButton")
         self.mcp_view_button = self._button("MCP", "SegmentButton")
         self.skills_view_button = self._button("技能库 Skills", "SegmentButton")
-        self.new_package_button = self._button("新建包", "PrimaryButton")
-        self.import_archive_button = self._button("导入包", "CompactButton")
-        self.export_archive_button = self._button("导出包", "CompactButton")
+        self.new_package_button = self._button("新建套件", "PrimaryButton")
+        self.import_archive_button = self._button("导入套件", "CompactButton")
+        self.export_archive_button = self._button("导出套件", "CompactButton")
+        self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
+        self.add_mcp_button = self._button("添加 MCP", "CompactButton")
+        self.add_skill_asset_button = self._button("添加技能", "CompactButton")
+        self.join_harness_button = self._button("加入任务套件", "PrimaryButton")
         self.install_codex_button = self._button("安装", "DeployInstallButton")
         self.uninstall_codex_button = self._button("卸载", "DeployUninstallButton")
         self.install_claude_button = self._button("安装", "DeployInstallButton")
@@ -97,7 +102,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(22, 24, 22, 24)
         layout.setSpacing(18)
 
-        title = self._label("技能包", "AppTitle")
+        title = self._label("任务套件", "AppTitle")
         subtitle = self._label("整理、打包并部署本地 AI 技能", "SidebarSubtitle")
         subtitle.setWordWrap(True)
         layout.addWidget(title)
@@ -130,13 +135,13 @@ class MainWindow(QMainWindow):
         layout.setHorizontalSpacing(18)
         layout.setVerticalSpacing(4)
 
-        package_label = self._label("软件包", "SidebarSubtitle")
+        harness_label = self._label("任务套件", "SidebarSubtitle")
         skill_label = self._label("技能", "SidebarSubtitle")
-        self.package_count_value.setStyleSheet("color: #f8fafc;")
+        self.harness_count_value.setStyleSheet("color: #f8fafc;")
         self.skill_count_value.setStyleSheet("color: #f8fafc;")
-        layout.addWidget(self.package_count_value, 0, 0)
+        layout.addWidget(self.harness_count_value, 0, 0)
         layout.addWidget(self.skill_count_value, 0, 1)
-        layout.addWidget(package_label, 1, 0)
+        layout.addWidget(harness_label, 1, 0)
         layout.addWidget(skill_label, 1, 1)
         return card
 
@@ -150,13 +155,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._build_hero())
 
         layout.addWidget(self._build_view_switch())
-        self.packages_body = QWidget()
-        packages_body_layout = QHBoxLayout(self.packages_body)
-        packages_body_layout.setContentsMargins(0, 0, 0, 0)
-        packages_body_layout.setSpacing(16)
-        packages_body_layout.addWidget(self._build_packages_card(), 5)
-        packages_body_layout.addWidget(self._build_details_card(), 4)
-        layout.addWidget(self.packages_body, 1)
+        self.harnesses_body = QWidget()
+        harnesses_body_layout = QHBoxLayout(self.harnesses_body)
+        harnesses_body_layout.setContentsMargins(0, 0, 0, 0)
+        harnesses_body_layout.setSpacing(16)
+        harnesses_body_layout.addWidget(self._build_harnesses_card(), 5)
+        harnesses_body_layout.addWidget(self._build_details_card(), 4)
+        layout.addWidget(self.harnesses_body, 1)
         self.skills_body = self._build_skills_library_card()
         layout.addWidget(self.skills_body, 1)
         return workspace
@@ -167,7 +172,7 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(switch)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
-        layout.addWidget(self.packages_view_button)
+        layout.addWidget(self.harnesses_view_button)
         layout.addWidget(self.agents_view_button)
         layout.addWidget(self.mcp_view_button)
         layout.addWidget(self.skills_view_button)
@@ -183,7 +188,7 @@ class MainWindow(QMainWindow):
 
         copy = QVBoxLayout()
         copy.setSpacing(5)
-        copy.addWidget(self._label("Harness Manager（技能包管理器）", "PageTitle"))
+        copy.addWidget(self._label("Harness Manager（任务套件管理器）", "PageTitle"))
         subtitle = self._label(
             "整理可复用技能集合，导出离线包，并部署到 Codex、Claude Code 或 OpenCode。",
             "MutedText",
@@ -198,22 +203,22 @@ class MainWindow(QMainWindow):
         stat_layout.setContentsMargins(16, 12, 16, 12)
         stat_layout.setSpacing(2)
         stat_layout.addWidget(self._label("本地工作流", "StatLabel"))
-        stat_layout.addWidget(self._label("技能包管理中心", "MutedText"))
+        stat_layout.addWidget(self._label("任务套件管理中心", "MutedText"))
         layout.addWidget(hero_stat, 0)
         return hero
 
-    def _build_packages_card(self) -> QFrame:
+    def _build_harnesses_card(self) -> QFrame:
         card = self._card()
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 18, 20, 20)
         layout.setSpacing(12)
-        header = self._section_header("软件包", "把技能整理成可一键安装的工作集合。")
+        header = self._section_header("任务套件", "把 AGENTS.md、MCP 和技能整理成可复用的任务工作台。")
         layout.addLayout(header)
-        layout.addWidget(self._build_package_actions())
-        layout.addWidget(self.package_list, 1)
+        layout.addWidget(self._build_harness_actions())
+        layout.addWidget(self.harness_list, 1)
         return card
 
-    def _build_package_actions(self) -> QFrame:
+    def _build_harness_actions(self) -> QFrame:
         bar = QFrame()
         bar.setObjectName("ActionBar")
         layout = QHBoxLayout(bar)
@@ -230,11 +235,21 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 18, 20, 20)
         layout.setSpacing(14)
-        layout.addWidget(self.current_package_title)
-        layout.addWidget(self.current_package_meta)
+        layout.addWidget(self.current_harness_title)
+        layout.addWidget(self.current_harness_meta)
+        asset_actions = QFrame()
+        asset_actions.setObjectName("ActionBar")
+        asset_layout = QHBoxLayout(asset_actions)
+        asset_layout.setContentsMargins(10, 10, 10, 10)
+        asset_layout.setSpacing(8)
+        asset_layout.addWidget(self.add_agents_button)
+        asset_layout.addWidget(self.add_mcp_button)
+        asset_layout.addWidget(self.add_skill_asset_button)
+        asset_layout.addStretch(1)
+        layout.addWidget(asset_actions)
         layout.addWidget(self.skill_list, 1)
 
-        layout.addWidget(self._label("部署包", "SectionTitle"))
+        layout.addWidget(self._label("部署套件", "SectionTitle"))
         layout.addWidget(
             self._deploy_row("Codex", "C", self.install_codex_button, self.uninstall_codex_button)
         )
@@ -255,7 +270,10 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 18, 20, 20)
         layout.setSpacing(12)
-        layout.addLayout(self._section_header("全部技能 Skills", "当前工具管理的所有技能，包含来源与内部 ID。"))
+        layout.addLayout(
+            self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
+        )
+        layout.addWidget(self.join_harness_button)
         layout.addWidget(self.library_skill_list, 1)
         return card
 
@@ -365,12 +383,18 @@ class MainWindow(QMainWindow):
         return label
 
     def _connect_actions(self) -> None:
-        self.package_list.currentRowChanged.connect(self._refresh_package_skills)
+        self.harness_list.currentRowChanged.connect(self._refresh_harness_assets)
         self.import_skill_button.clicked.connect(self._guard(self._import_skill))
         self.add_custom_source_button.clicked.connect(self._guard(self._add_custom_source))
-        self.packages_view_button.clicked.connect(self._show_packages_view)
+        self.harnesses_view_button.clicked.connect(self._show_harnesses_view)
+        self.agents_view_button.clicked.connect(lambda: self._show_asset_view("agents_md"))
+        self.mcp_view_button.clicked.connect(lambda: self._show_asset_view("mcp"))
         self.skills_view_button.clicked.connect(self._show_skills_view)
-        self.new_package_button.clicked.connect(self._guard(self._new_package))
+        self.new_package_button.clicked.connect(self._guard(self._new_harness))
+        self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
+        self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
+        self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
+        self.join_harness_button.clicked.connect(self._guard(self._add_selected_skill_to_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
         self.install_codex_button.clicked.connect(self._guard(lambda: self._install("codex")))
@@ -398,12 +422,12 @@ class MainWindow(QMainWindow):
         return wrapped
 
     def refresh(self) -> None:
-        selected_row = self.package_list.currentRow()
+        selected_row = self.harness_list.currentRow()
         self.clients = self.controller.list_clients()
-        self.packages = self.controller.list_packages()
+        self.harnesses = self.controller.list_harnesses()
 
         all_skills = self.controller.list_skills()
-        self.package_count_value.setText(str(len(self.packages)))
+        self.harness_count_value.setText(str(len(self.harnesses)))
         self.skill_count_value.setText(str(len(all_skills)))
         self._refresh_view_state()
 
@@ -413,48 +437,76 @@ class MainWindow(QMainWindow):
         for source in self.controller.list_custom_import_sources():
             self._add_custom_source_card(source)
 
-        self.package_list.clear()
-        if self.packages:
-            for index, package in enumerate(self.packages):
-                skills = self.controller.list_skills(index)
-                description = package.description or "暂无描述"
-                self.package_list.addItem(
-                    f"{package.name}\n{len(skills)} 个技能 - {description}"
+        self.harness_list.clear()
+        if self.harnesses:
+            for index, harness in enumerate(self.harnesses):
+                skills = self.controller.list_harness_assets(harness.id)
+                description = harness.description or "暂无描述"
+                self.harness_list.addItem(
+                    f"{harness.name}\n{len(skills)} 个组件 - {description}"
                 )
-            self.package_list.setCurrentRow(min(max(selected_row, 0), len(self.packages) - 1))
+            self.harness_list.setCurrentRow(min(max(selected_row, 0), len(self.harnesses) - 1))
         else:
-            self.package_list.addItem("暂无软件包\n可以先新建空包，再导入或关联技能。")
-            self._refresh_package_skills(-1)
-        self._refresh_skill_library(all_skills)
+            self.harness_list.addItem("暂无任务套件\n可以先新建空套件，再导入或关联组件。")
+            self._refresh_harness_assets(-1)
+        self._refresh_asset_library(all_skills)
 
     def _refresh_view_state(self) -> None:
-        package_active = self.current_view == "packages"
-        self.packages_body.setVisible(package_active)
-        self.skills_body.setVisible(not package_active)
-        self.packages_view_button.setObjectName(
-            "SegmentButtonChecked" if package_active else "SegmentButton"
+        harness_active = self.current_view == "harnesses"
+        self.harnesses_body.setVisible(harness_active)
+        self.skills_body.setVisible(not harness_active)
+        self.harnesses_view_button.setObjectName(
+            "SegmentButtonChecked" if harness_active else "SegmentButton"
         )
         self.skills_view_button.setObjectName(
-            "SegmentButtonChecked" if not package_active else "SegmentButton"
+            "SegmentButtonChecked" if self.current_view == "skills" else "SegmentButton"
         )
-        self.packages_view_button.style().unpolish(self.packages_view_button)
-        self.packages_view_button.style().polish(self.packages_view_button)
+        self.agents_view_button.setObjectName(
+            "SegmentButtonChecked" if self.current_view == "agents_md" else "SegmentButton"
+        )
+        self.mcp_view_button.setObjectName(
+            "SegmentButtonChecked" if self.current_view == "mcp" else "SegmentButton"
+        )
+        self.harnesses_view_button.style().unpolish(self.harnesses_view_button)
+        self.harnesses_view_button.style().polish(self.harnesses_view_button)
         self.skills_view_button.style().unpolish(self.skills_view_button)
         self.skills_view_button.style().polish(self.skills_view_button)
+        self.agents_view_button.style().unpolish(self.agents_view_button)
+        self.agents_view_button.style().polish(self.agents_view_button)
+        self.mcp_view_button.style().unpolish(self.mcp_view_button)
+        self.mcp_view_button.style().polish(self.mcp_view_button)
 
-    def _refresh_skill_library(self, skills: list[Skill]) -> None:
+    def _refresh_asset_library(self, skills: list[Skill]) -> None:
         self.library_skill_list.clear()
-        if not skills:
-            self.library_skill_list.addItem("暂无技能\n请从左侧选择客户端并导入技能。")
+        if self.current_view == "agents_md":
+            self.library_assets = self.controller.list_assets_by_type("agents_md")
+            empty_text = "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。"
+        elif self.current_view == "mcp":
+            self.library_assets = self.controller.list_assets_by_type("mcp")
+            empty_text = "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。"
+        else:
+            self.library_assets = self.controller.list_assets_by_type("skill")
+            empty_text = "暂无技能\n请从左侧选择客户端并导入技能。"
+            if not self.library_assets:
+                self.library_assets = [
+                    Asset(skill.id, "skill", skill.name, skill.source_client, skill.relative_path, skill.fingerprint, "{}")
+                    for skill in skills
+                ]
+
+        if not self.library_assets:
+            self.library_skill_list.addItem(empty_text)
             return
-        for skill in skills:
-            source = skill.source_client or "离线包"
+        for asset in self.library_assets:
             self.library_skill_list.addItem(
-                f"{skill.name}\n来源：{source} - ID：{skill.id}"
+                f"{asset.name}\n类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}"
             )
 
-    def _show_packages_view(self) -> None:
-        self.current_view = "packages"
+    def _show_harnesses_view(self) -> None:
+        self.current_view = "harnesses"
+        self._refresh_view_state()
+
+    def _show_asset_view(self, asset_type: str) -> None:
+        self.current_view = asset_type
         self._refresh_view_state()
 
     def _show_skills_view(self) -> None:
@@ -512,37 +564,39 @@ class MainWindow(QMainWindow):
         self.client_cards_layout.addWidget(self._custom_source_card(source))
         self.client_cards_layout.addItem(stretch)
 
-    def _refresh_package_skills(self, row: int) -> None:
+    def _refresh_harness_assets(self, row: int) -> None:
         self.skill_list.clear()
-        self.package_skills = []
-        if row < 0 or row >= len(self.packages):
-            self.current_package_title.setText("选择一个软件包")
-            self.current_package_meta.setText("软件包详情会显示在这里。")
-            self.skill_list.addItem("未选择软件包\n请从左侧列表选择一个软件包。")
+        self.harness_assets = []
+        if row < 0 or row >= len(self.harnesses):
+            self.current_harness_title.setText("选择一个任务套件")
+            self.current_harness_meta.setText("任务套件详情会显示在这里。")
+            self.skill_list.addItem("未选择任务套件\n请从左侧列表选择一个任务套件。")
             return
 
-        package = self.packages[row]
-        self.package_skills = self.controller.list_skills(row)
-        self.current_package_title.setText(package.name)
-        self.current_package_meta.setText(
-            f"包含 {len(self.package_skills)} 个技能"
-            + (f" - {package.description}" if package.description else "")
+        harness = self.harnesses[row]
+        self.harness_assets = self.controller.list_harness_assets(harness.id)
+        self.current_harness_title.setText(harness.name)
+        self.current_harness_meta.setText(
+            f"包含 {len(self.harness_assets)} 个组件"
+            + (f" - {harness.description}" if harness.description else "")
         )
-        if not self.package_skills:
-            self.skill_list.addItem("此软件包暂无技能\n可以稍后导入并关联技能。")
+        if not self.harness_assets:
+            self.skill_list.addItem("此任务套件暂无组件\n可以添加 AGENTS.md、MCP 或技能。")
             return
-        for skill in self.package_skills:
-            source = skill.source_client or "离线包"
-            self.skill_list.addItem(f"{skill.name}\n{source} - {skill.id}")
+        for asset in self.harness_assets:
+            self.skill_list.addItem(f"{self._asset_type_label(asset.type)}：{asset.name}\nID：{asset.id}")
 
-    def _selected_package_row(self) -> int | None:
-        row = self.package_list.currentRow()
-        return row if 0 <= row < len(self.packages) else None
+    def _asset_type_label(self, asset_type: str) -> str:
+        return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
 
-    def _require_package_row(self) -> int:
-        row = self._selected_package_row()
+    def _selected_harness_row(self) -> int | None:
+        row = self.harness_list.currentRow()
+        return row if 0 <= row < len(self.harnesses) else None
+
+    def _require_harness_row(self) -> int:
+        row = self._selected_harness_row()
         if row is None:
-            raise ValueError("请先选择一个软件包。")
+            raise ValueError("请先选择一个任务套件。")
         return row
 
     def _import_skill(self) -> None:
@@ -577,13 +631,55 @@ class MainWindow(QMainWindow):
         self._select_custom_source(source_id)
         dialogs.show_info(self, "添加完成", f"已添加自定义目录 {name}。")
 
-    def _new_package(self) -> None:
-        name = dialogs.ask_text(self, "新建软件包", "软件包名称")
+    def _new_harness(self) -> None:
+        name = dialogs.ask_text(self, "新建任务套件", "任务套件名称")
         if not name:
             return
-        self.controller.create_package(name, "")
+        self.controller.create_harness(name, "")
         self.refresh()
-        dialogs.show_info(self, "创建完成", f"已创建软件包 {name}。")
+        dialogs.show_info(self, "创建完成", f"已创建任务套件 {name}。")
+
+    def _selected_harness(self) -> Harness:
+        row = self._require_harness_row()
+        return self.harnesses[row]
+
+    def _import_agents_to_harness(self) -> None:
+        source = dialogs.choose_asset_file(self, "导入 AGENTS.md", "AGENTS.md (AGENTS.md);;Markdown (*.md);;所有文件 (*)")
+        if source is None:
+            return
+        name = dialogs.ask_text(self, "添加 AGENTS.md", "组件名称") or source.stem
+        asset = self.controller.import_agents_md_asset(source, name)
+        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
+        self.refresh()
+        dialogs.show_info(self, "添加完成", f"已将 {name} 加入任务套件。")
+
+    def _import_mcp_to_harness(self) -> None:
+        source = dialogs.choose_asset_file(self, "导入 MCP", "JSON 配置 (*.json);;所有文件 (*)")
+        if source is None:
+            return
+        name = dialogs.ask_text(self, "添加 MCP", "组件名称") or source.stem
+        asset = self.controller.import_mcp_asset(source, name)
+        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
+        self.refresh()
+        dialogs.show_info(self, "添加完成", f"已将 {name} 加入任务套件。")
+
+    def _add_first_skill_to_harness(self) -> None:
+        skills = self.controller.list_assets_by_type("skill")
+        if not skills:
+            raise ValueError("当前没有可加入的技能，请先从左侧导入技能。")
+        asset = skills[0]
+        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
+        self.refresh()
+        dialogs.show_info(self, "添加完成", f"已将技能 {asset.name} 加入任务套件。")
+
+    def _add_selected_skill_to_harness(self) -> None:
+        row = self.library_skill_list.currentRow()
+        if row < 0 or row >= len(self.library_assets):
+            raise ValueError("请先选择一个组件。")
+        asset = self.library_assets[row]
+        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
+        self.refresh()
+        dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入任务套件。")
 
     def _import_archive(self) -> None:
         archive = dialogs.choose_archive(self)
@@ -594,18 +690,18 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "导入完成", f"已导入 {archive.name}。")
 
     def _export_archive(self) -> None:
-        archive = self.controller.export_package_by_row(self._require_package_row())
+        archive = self.controller.export_package_by_row(self._require_harness_row())
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
     def _install(self, client_type: ClientType) -> None:
         installed = self.controller.install_package_by_row(
-            self._require_package_row(), client_type
+            self._require_harness_row(), client_type
         )
         dialogs.show_info(self, "安装完成", f"已安装 {len(installed)} 个技能。")
 
     def _uninstall(self, client_type: ClientType) -> None:
         result = self.controller.uninstall_package_by_row(
-            self._require_package_row(), client_type
+            self._require_harness_row(), client_type
         )
         if result:
             message = ", ".join(f"{skill_id}: {status}" for skill_id, status in result.items())

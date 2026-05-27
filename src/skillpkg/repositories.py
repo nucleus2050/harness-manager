@@ -432,3 +432,16 @@ class HarnessRepository:
             (harness_id,),
         ).fetchall()
         return [_asset_from_row(row) for row in rows]
+
+    def list_assets_by_type(self, harness_id: str, asset_type: str) -> list[Asset]:
+        rows = self.conn.execute(
+            """
+            SELECT a.id, a.type, a.name, a.source_type, a.relative_path, a.fingerprint, a.metadata_json
+            FROM harness_assets ha
+            JOIN assets a ON a.id = ha.asset_id
+            WHERE ha.harness_id = ? AND a.type = ?
+            ORDER BY ha.sort_order, a.name
+            """,
+            (harness_id, asset_type),
+        ).fetchall()
+        return [_asset_from_row(row) for row in rows]
