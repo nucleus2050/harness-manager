@@ -16,6 +16,7 @@ from skillpkg.repositories import (
     SkillRepository,
 )
 from skillpkg.services import SkillPkgService
+from skillpkg.settings import SettingsService
 
 
 class MainController:
@@ -31,6 +32,7 @@ class MainController:
         self.skills = SkillRepository(conn)
         self.packages = PackageRepository(conn)
         self.service = SkillPkgService(self.paths, conn)
+        self.settings = SettingsService(self.paths)
         self.refresh_default_paths()
 
     def refresh_default_paths(self) -> None:
@@ -59,6 +61,19 @@ class MainController:
 
     def list_assets_by_type(self, asset_type: str):
         return self.assets.list_by_type(asset_type)
+
+    def get_settings(self):
+        return self.settings.load()
+
+    def save_language(self, language: str):
+        return self.settings.save_language(language)
+
+    def export_full_config(self, destination: Path | str | None = None):
+        return self.settings.export_full_config(destination)
+
+    def import_full_config(self, archive_path: Path | str):
+        return self.settings.import_full_config(archive_path)
+
     def list_clients(self) -> list[ClientConfig]:
         return self.clients.list_clients()
 
