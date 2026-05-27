@@ -1,0 +1,59 @@
+<h2>Skill 管理工具：核心模型对比</h2>
+<p class="subtitle">基于你确认的方向，pkg 是数据库里的集合；skills 是工具目录中的真实文件；导出时才生成离线包。</p>
+
+<div class="cards">
+  <div class="card" data-choice="recommended" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">推荐：统一库 + DB pkg + 离线导出</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Codex / Claude Code / OpenCode 默认目录</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;align-items:stretch;">
+            <div class="placeholder">导入<br>skills/</div>
+            <div class="placeholder">SQLite<br>pkg -> skills</div>
+            <div class="placeholder">安装/卸载<br>目标客户端</div>
+          </div>
+          <div class="placeholder" style="margin-top:12px;">导出离线包：pkg.json + skills 内容</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>统一管理模型</h3>
+      <p>工具目录保存所有 skill 内容，数据库保存 pkg 关系和安装记录；导出时生成可分享包。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="pkg_dirs" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">备选：pkg 目录即真实包</div>
+        <div class="mockup-body">
+          <div class="placeholder">packages/work-a/</div>
+          <div class="placeholder">packages/work-b/</div>
+          <div class="placeholder">每个包复制一份 skills</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>实体包模型</h3>
+      <p>分享直观，但容易重复存储，同一 skill 在多个 pkg 中版本漂移。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="client_first" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">备选：客户端目录优先</div>
+        <div class="mockup-body">
+          <div class="placeholder">直接管理 Codex skills</div>
+          <div class="placeholder">直接管理 Claude skills</div>
+          <div class="placeholder">直接管理 OpenCode skills</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>客户端优先模型</h3>
+      <p>实现简单，但 pkg 抽象弱，迁移和回滚能力差。</p>
+    </div>
+  </div>
+</div>

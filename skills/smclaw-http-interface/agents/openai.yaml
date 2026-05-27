@@ -1,0 +1,4 @@
+interface:
+  display_name: "SMClaw HTTP接口助手"
+  short_description: "HTTP生成类任务分发器：测试命令、单接口示例、需求转HTTP调用代码"
+  default_prompt: "当用户明确要求生成密码产品HTTP/REST接口测试命令、脚本、单接口示例、代码或自动化用例草稿时使用本技能，并按任务类型分发到对应引用文件。若用户只是询问参数怎么传、字段含义、接口说明或错误排查，不要使用本技能，应转为RAG问答。接口事实必须来自本地RAG并引用来源。"
