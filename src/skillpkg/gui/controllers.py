@@ -61,6 +61,20 @@ class MainController:
         package = self._package_by_row(package_row)
         return self.packages.list_package_skills(package.id)
 
+
+    def import_agents_md_asset(self, source_file: Path | str, name: str):
+        return self.service.import_agents_md_asset(Path(source_file), name, "custom")
+
+    def import_mcp_asset(self, source_file: Path | str, name: str):
+        return self.service.import_mcp_asset(Path(source_file), name, "custom")
+
+    def add_asset_to_harness(self, harness_id: str, asset_id: str, asset_type: str) -> None:
+        current = self.harnesses.list_assets(harness_id)
+        with transaction(self.conn):
+            self.harnesses.add_asset(harness_id, asset_id, asset_type, len(current) + 1)
+
+    def list_harness_assets(self, harness_id: str):
+        return self.harnesses.list_assets(harness_id)
     def import_skill_directory(
         self, source_dir: Path | str, source_client: ClientType | None = None
     ) -> Skill:
@@ -142,4 +156,5 @@ class MainController:
                     raise ValueError(f"No target path configured for {client.name}.")
                 return client.effective_path
         raise ValueError(f"Unknown client type: {client_type}")
+
 
