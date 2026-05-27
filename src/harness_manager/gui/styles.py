@@ -6,6 +6,14 @@ _THEME_TOKENS = {
         "app_bg": "#eef2f7",
         "text": "#111827",
         "main_bg": "#eef2f7",
+        "transparent": "transparent",
+        "shell_bg": "#eef2f7",
+        "titlebar_bg": "#ffffff",
+        "titlebar_border": "#dbe3ef",
+        "titlebar_text": "#334155",
+        "titlebar_icon_bg": "#eaf1ff",
+        "titlebar_button_hover": "#eaf1ff",
+        "titlebar_close_hover": "#dc2626",
         "title": "#0f172a",
         "muted": "#64748b",
         "sidebar": "#0f172a",
@@ -51,6 +59,14 @@ _THEME_TOKENS = {
         "app_bg": "#020617",
         "text": "#e5e7eb",
         "main_bg": "#020617",
+        "transparent": "transparent",
+        "shell_bg": "#020617",
+        "titlebar_bg": "#111827",
+        "titlebar_border": "#334155",
+        "titlebar_text": "#e5e7eb",
+        "titlebar_icon_bg": "#172554",
+        "titlebar_button_hover": "#1e293b",
+        "titlebar_close_hover": "#dc2626",
         "title": "#f8fafc",
         "muted": "#94a3b8",
         "sidebar": "#0f172a",
@@ -112,7 +128,71 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QMainWindow {{
-        background: {tokens['main_bg']};
+        background: {tokens['transparent']};
+    }}
+
+    QWidget#RootSurface {{
+        background: {tokens['transparent']};
+    }}
+
+    QFrame#AppShell {{
+        background: {tokens['shell_bg']};
+        border: 1px solid {tokens['titlebar_border']};
+        border-radius: 16px;
+    }}
+
+    QWidget#ContentSurface {{
+        background: {tokens['shell_bg']};
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }}
+
+    QFrame#TitleBar {{
+        background: {tokens['titlebar_bg']};
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        border-bottom: 1px solid {tokens['titlebar_border']};
+    }}
+
+    QLabel#TitleText {{
+        color: {tokens['titlebar_text']};
+        font-size: 12px;
+        font-weight: 650;
+    }}
+
+    QLabel#TitleIcon {{
+        background: {tokens['titlebar_icon_bg']};
+        border-radius: 8px;
+        min-width: 22px;
+        min-height: 22px;
+        max-width: 22px;
+        max-height: 22px;
+    }}
+
+    QPushButton#MinimizeButton,
+    QPushButton#MaximizeButton,
+    QPushButton#CloseButton {{
+        min-width: 44px;
+        max-width: 44px;
+        min-height: 32px;
+        max-height: 32px;
+        padding: 0;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: {tokens['titlebar_text']};
+        font-size: 14px;
+        font-weight: 700;
+    }}
+
+    QPushButton#MinimizeButton:hover,
+    QPushButton#MaximizeButton:hover {{
+        background: {tokens['titlebar_button_hover']};
+    }}
+
+    QPushButton#CloseButton:hover {{
+        background: {tokens['titlebar_close_hover']};
+        color: #ffffff;
     }}
 
     QLabel#AppTitle {{

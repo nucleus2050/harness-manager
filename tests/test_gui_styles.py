@@ -55,3 +55,21 @@ def test_stylesheet_system_defaults_to_light_tokens():
     stylesheet = build_stylesheet("system")
 
     assert "background: #eef2f7" in stylesheet
+
+
+def test_stylesheet_styles_custom_title_bar_and_window_controls():
+    light = build_stylesheet("light")
+    dark = build_stylesheet("dark")
+
+    for selector in [
+        "QFrame#TitleBar",
+        "QLabel#TitleText",
+        "QLabel#TitleIcon",
+        "QPushButton#MinimizeButton",
+        "QPushButton#MaximizeButton",
+        "QPushButton#CloseButton",
+    ]:
+        assert selector in light
+        assert selector in dark
+    assert "#ffffff" in light
+    assert "#111827" in dark

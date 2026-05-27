@@ -58,6 +58,41 @@ def test_settings_page_text_and_actions_exist():
     assert "choose_export_zip" in dialog_source
 
 
+def test_main_window_uses_custom_frameless_title_bar():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "FramelessWindowHint",
+        "WA_TranslucentBackground",
+        "_build_title_bar",
+        "TitleBar",
+        "TitleIcon",
+        "TitleText",
+        "MinimizeButton",
+        "MaximizeButton",
+        "CloseButton",
+        "_toggle_maximized",
+        "_update_window_margins",
+    ]:
+        assert token in source
+
+
+def test_main_window_supports_native_resize_snap_and_shadow():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "WM_NCHITTEST",
+        "HTCAPTION",
+        "HTTOPLEFT",
+        "HTBOTTOMRIGHT",
+        "nativeEvent",
+        "_hit_test_result",
+        "QGraphicsDropShadowEffect",
+        "setBlurRadius",
+    ]:
+        assert token in source
+
+
 def test_mcp_config_management_text_is_present():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")

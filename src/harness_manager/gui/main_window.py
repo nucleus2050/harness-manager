@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import ctypes
 import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QIcon, QPalette
+from PySide6.QtCore import QEvent, QPoint, QSize, Qt
+from PySide6.QtGui import QColor, QIcon, QPalette, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
     QGridLayout,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QListWidget,
@@ -30,6 +32,35 @@ from harness_manager.gui.styles import build_stylesheet
 from harness_manager.models import Asset, ClientConfig, ClientType, Harness, Skill
 
 
+WM_NCHITTEST = 0x0084
+HTCLIENT = 1
+HTCAPTION = 2
+HTLEFT = 10
+HTRIGHT = 11
+HTTOP = 12
+HTTOPLEFT = 13
+HTTOPRIGHT = 14
+HTBOTTOM = 15
+HTBOTTOMLEFT = 16
+HTBOTTOMRIGHT = 17
+
+RESIZE_BORDER_WIDTH = 8
+WINDOW_SHADOW_MARGIN = 10
+TITLE_BAR_HEIGHT = 42
+
+
+class _WindowsMSG(ctypes.Structure):
+    _fields_ = [
+        ("hwnd", ctypes.c_void_p),
+        ("message", ctypes.c_uint),
+        ("wParam", ctypes.c_void_p),
+        ("lParam", ctypes.c_longlong),
+        ("time", ctypes.c_uint),
+        ("pt_x", ctypes.c_long),
+        ("pt_y", ctypes.c_long),
+    ]
+
+
 def _app_icon_path() -> Path:
     return Path(__file__).resolve().parents[1] / "resources" / "app.ico"
 
@@ -37,6 +68,12 @@ def _app_icon_path() -> Path:
 class MainWindow(QMainWindow):
     def __init__(self, controller: MainController) -> None:
         super().__init__()
+        self.setWindowFlags(
+            Qt.WindowType.Window
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowMinMaxButtonsHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.controller = controller
         self.clients: list[ClientConfig] = []
         self.harnesses: list[Harness] = []
@@ -48,6 +85,10 @@ class MainWindow(QMainWindow):
         self.selected_custom_source_id: str | None = None
         self.current_view = "harnesses"
         self.current_theme = self.controller.get_settings().theme
+        self.title_bar: QFrame | None = None
+        self.app_shell: QFrame | None = None
+        self.shell_layout: QVBoxLayout | None = None
+        self.maximize_button: QPushButton | None = None
 
         self.setWindowTitle("Harness Manager（任务套件管理器）")
         self.setWindowIcon(QIcon(str(_app_icon_path())))
@@ -111,8 +152,28 @@ class MainWindow(QMainWindow):
 
     def _build_layout(self) -> None:
         root = QWidget()
-        shell = QHBoxLayout(root)
-        shell.setContentsMargins(18, 18, 18, 18)
+        root.setObjectName("RootSurface")
+        root_layout = QVBoxLayout(root)
+        root_layout.setContentsMargins(
+            WINDOW_SHADOW_MARGIN,
+            WINDOW_SHADOW_MARGIN,
+            WINDOW_SHADOW_MARGIN,
+            WINDOW_SHADOW_MARGIN,
+        )
+        root_layout.setSpacing(0)
+
+        self.app_shell = QFrame()
+        self.app_shell.setObjectName("AppShell")
+        self.app_shell.setGraphicsEffect(self._build_window_shadow())
+        self.shell_layout = QVBoxLayout(self.app_shell)
+        self.shell_layout.setContentsMargins(0, 0, 0, 0)
+        self.shell_layout.setSpacing(0)
+        self.shell_layout.addWidget(self._build_title_bar())
+
+        content = QWidget()
+        content.setObjectName("ContentSurface")
+        shell = QHBoxLayout(content)
+        shell.setContentsMargins(18, 12, 18, 18)
         shell.setSpacing(18)
 
         shell.addWidget(self._build_sidebar(), 0)
@@ -123,7 +184,56 @@ class MainWindow(QMainWindow):
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setWidget(self._build_workspace())
         shell.addWidget(scroll, 1)
+        self.shell_layout.addWidget(content, 1)
+        root_layout.addWidget(self.app_shell)
         self.setCentralWidget(root)
+        self._update_window_margins()
+
+    def _build_window_shadow(self) -> QGraphicsDropShadowEffect:
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(28)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 95))
+        return shadow
+
+    def _build_title_bar(self) -> QFrame:
+        title_bar = QFrame()
+        title_bar.setObjectName("TitleBar")
+        title_bar.setFixedHeight(TITLE_BAR_HEIGHT)
+        title_bar.mouseDoubleClickEvent = self._title_bar_double_click
+        self.title_bar = title_bar
+
+        layout = QHBoxLayout(title_bar)
+        layout.setContentsMargins(14, 0, 8, 0)
+        layout.setSpacing(10)
+
+        icon = QLabel()
+        icon.setObjectName("TitleIcon")
+        icon.setPixmap(QPixmap(str(_app_icon_path())).scaled(
+            16,
+            16,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        ))
+        title = self._label("Harness Manager（任务套件管理器）", "TitleText")
+        layout.addWidget(icon)
+        layout.addWidget(title)
+        layout.addStretch(1)
+
+        self.minimize_button = self._window_button("—", "MinimizeButton")
+        self.maximize_button = self._window_button("□", "MaximizeButton")
+        self.close_button = self._window_button("×", "CloseButton")
+        layout.addWidget(self.minimize_button)
+        layout.addWidget(self.maximize_button)
+        layout.addWidget(self.close_button)
+        return title_bar
+
+    def _window_button(self, text: str, object_name: str) -> QPushButton:
+        button = QPushButton(text)
+        button.setObjectName(object_name)
+        button.setFixedSize(44, 32)
+        button.setCursor(Qt.CursorShape.ArrowCursor)
+        return button
 
     def _build_sidebar(self) -> QWidget:
         sidebar = QFrame()
@@ -555,6 +665,9 @@ class MainWindow(QMainWindow):
         return label
 
     def _connect_actions(self) -> None:
+        self.minimize_button.clicked.connect(self.showMinimized)
+        self.maximize_button.clicked.connect(self._toggle_maximized)
+        self.close_button.clicked.connect(self.close)
         self.harness_list.currentRowChanged.connect(self._refresh_harness_assets)
         self.import_skill_button.clicked.connect(self._guard(self._import_skill))
         self.add_custom_source_button.clicked.connect(self._guard(self._add_custom_source))
@@ -719,6 +832,98 @@ class MainWindow(QMainWindow):
     def _show_settings_view(self) -> None:
         self.current_view = "settings"
         self._refresh_view_state()
+
+    def _toggle_maximized(self) -> None:
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+        self._update_window_margins()
+
+    def _title_bar_double_click(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._toggle_maximized()
+            event.accept()
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.WindowStateChange:
+            self._update_window_margins()
+            if self.maximize_button is not None:
+                self.maximize_button.setText("❐" if self.isMaximized() else "□")
+
+    def _update_window_margins(self) -> None:
+        if self.centralWidget() is None:
+            return
+        margin = 0 if self.isMaximized() else WINDOW_SHADOW_MARGIN
+        self.centralWidget().layout().setContentsMargins(margin, margin, margin, margin)
+        if self.app_shell is not None and self.app_shell.graphicsEffect() is not None:
+            self.app_shell.graphicsEffect().setEnabled(not self.isMaximized())
+
+    def nativeEvent(self, event_type, message):
+        if sys.platform != "win32":
+            return False, 0
+        msg = _WindowsMSG.from_address(int(message))
+        if msg.message != WM_NCHITTEST:
+            return False, 0
+        x, y = self._global_position_from_lparam(msg.lParam)
+        hit = self._hit_test_result(QPoint(x, y))
+        return (hit != HTCLIENT), hit
+
+    def _global_position_from_lparam(self, lparam: int) -> tuple[int, int]:
+        x = lparam & 0xFFFF
+        y = (lparam >> 16) & 0xFFFF
+        if x & 0x8000:
+            x -= 0x10000
+        if y & 0x8000:
+            y -= 0x10000
+        return x, y
+
+    def _hit_test_result(self, global_pos: QPoint) -> int:
+        if self.isMaximized():
+            return HTCAPTION if self._is_title_bar_drag_area(global_pos) else HTCLIENT
+
+        local = self.mapFromGlobal(global_pos)
+        width = self.width()
+        height = self.height()
+        border = RESIZE_BORDER_WIDTH
+        on_left = local.x() <= border
+        on_right = local.x() >= width - border
+        on_top = local.y() <= border
+        on_bottom = local.y() >= height - border
+
+        if on_top and on_left:
+            return HTTOPLEFT
+        if on_top and on_right:
+            return HTTOPRIGHT
+        if on_bottom and on_left:
+            return HTBOTTOMLEFT
+        if on_bottom and on_right:
+            return HTBOTTOMRIGHT
+        if on_left:
+            return HTLEFT
+        if on_right:
+            return HTRIGHT
+        if on_top:
+            return HTTOP
+        if on_bottom:
+            return HTBOTTOM
+        if self._is_title_bar_drag_area(global_pos):
+            return HTCAPTION
+        return HTCLIENT
+
+    def _is_title_bar_drag_area(self, global_pos: QPoint) -> bool:
+        if self.title_bar is None:
+            return False
+        title_pos = self.title_bar.mapFromGlobal(global_pos)
+        if not self.title_bar.rect().contains(title_pos):
+            return False
+        child = self.childAt(self.mapFromGlobal(global_pos))
+        while child is not None:
+            if child.objectName() in {"MinimizeButton", "MaximizeButton", "CloseButton"}:
+                return False
+            child = child.parentWidget()
+        return True
 
     def _select_client(self, client_type: ClientType) -> None:
         self.selected_client_type = client_type
