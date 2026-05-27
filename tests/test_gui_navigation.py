@@ -60,3 +60,10 @@ def test_harness_details_show_components_grouped_by_type():
     assert "list_harness_assets_by_type(harness.id, \"skill\")" in source
     assert "list_harness_assets_by_type(harness.id, \"agents_md\")" in source
     assert "list_harness_assets_by_type(harness.id, \"mcp\")" in source
+
+
+def test_empty_harness_asset_group_uses_single_list_item():
+    source = Path("src/skillpkg/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert 'self.skill_list.addItem(f"{title}\\n0 个组件 - {empty_text}")' in source
+    assert 'self.skill_list.addItem(empty_text)' not in source

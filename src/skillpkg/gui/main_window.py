@@ -611,10 +611,10 @@ class MainWindow(QMainWindow):
         )
 
     def _add_asset_group(self, title: str, assets: list[Asset], empty_text: str) -> None:
-        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件")
         if not assets:
-            self.skill_list.addItem(empty_text)
+            self.skill_list.addItem(f"{title}\n0 个组件 - {empty_text}")
             return
+        self.skill_list.addItem(f"{title}\n{len(assets)} 个组件")
         for asset in assets:
             self.skill_list.addItem(f"{asset.name}\nID：{asset.id}")
 
