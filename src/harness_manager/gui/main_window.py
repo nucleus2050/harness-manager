@@ -55,7 +55,7 @@ CORNER_GRIP_WIDTH = 34
 WINDOW_SHADOW_MARGIN = 10
 TITLE_BAR_HEIGHT = 42
 CLIENT_CARD_MIN_HEIGHT = 92
-CLIENT_SOURCE_VISIBLE_ROWS = 3
+CLIENT_SOURCE_VISIBLE_ROWS = 4
 SKILL_DESCRIPTION_MAX_LENGTH = 180
 AGENTS_SUMMARY_MAX_LENGTH = 96
 MCP_SUMMARY_MAX_LENGTH = 96
@@ -1627,9 +1627,9 @@ class MainWindow(QMainWindow):
         if self.client_scroll is None:
             return
         source_count = len(self.clients) + len(self.controller.list_custom_import_sources())
-        visible_rows = max(1, min(source_count, CLIENT_SOURCE_VISIBLE_ROWS))
+        visible_rows = CLIENT_SOURCE_VISIBLE_ROWS if source_count else 1
         height = visible_rows * (CLIENT_CARD_MIN_HEIGHT + 10) + 4
-        self.client_scroll.setMinimumHeight(min(height, CLIENT_CARD_MIN_HEIGHT + 14))
+        self.client_scroll.setMinimumHeight(height)
         self.client_scroll.setMaximumHeight(height)
 
     def _add_client_card(self, client: ClientConfig) -> None:
