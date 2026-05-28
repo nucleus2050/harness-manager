@@ -319,6 +319,7 @@ def test_harness_delete_action_uses_confirm_and_single_row_actions():
     assert "ask_confirm" in dialog_source
     assert "删除后不会删除技能、MCP、AGENTS.md 本体" in delete_method
     assert "controller.delete_harness" in delete_method
+    assert "dialogs.show_info" not in delete_method
     assert "QHBoxLayout(bar)" in action_builder
     assert "archive_row" not in action_builder
     assert action_builder.index("new_package_button") < action_builder.index("edit_harness_button")

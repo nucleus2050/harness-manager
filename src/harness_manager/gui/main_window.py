@@ -1402,7 +1402,6 @@ class MainWindow(QMainWindow):
             return
         self.controller.delete_harness(harness.id)
         self.refresh()
-        dialogs.show_info(self, "删除完成", f"已删除任务套件 {harness.name}。")
 
     def _selected_harness(self) -> Harness:
         row = self._require_harness_row()
