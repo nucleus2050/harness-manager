@@ -304,7 +304,7 @@ def test_export_harness_button_is_enabled_and_uses_harness_export():
     assert "export_package_by_row(self._require_harness_row())" not in source
 
 
-def test_harness_delete_action_uses_confirm_and_split_actions():
+def test_harness_delete_action_uses_confirm_and_single_row_actions():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
@@ -319,8 +319,10 @@ def test_harness_delete_action_uses_confirm_and_split_actions():
     assert "ask_confirm" in dialog_source
     assert "删除后不会删除技能、MCP、AGENTS.md 本体" in delete_method
     assert "controller.delete_harness" in delete_method
-    assert action_builder.count("QHBoxLayout()") >= 2
-    assert "archive_row" in action_builder
+    assert "QHBoxLayout(bar)" in action_builder
+    assert "archive_row" not in action_builder
+    assert action_builder.index("new_package_button") < action_builder.index("edit_harness_button")
+    assert action_builder.index("delete_harness_button") < action_builder.index("import_archive_button")
 
 
 def test_asset_library_adds_harness_action_on_each_item():
