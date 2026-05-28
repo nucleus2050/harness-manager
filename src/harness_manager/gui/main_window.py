@@ -563,14 +563,15 @@ class MainWindow(QMainWindow):
 
         actions = QFrame()
         actions.setObjectName("AssetLibraryActions")
-        actions.setMaximumWidth(286)
+        actions.setFixedWidth(312)
         actions.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         actions_layout = QHBoxLayout(actions)
-        actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(8)
+        actions_layout.setContentsMargins(12, 0, 12, 0)
+        actions_layout.setSpacing(14)
+        actions_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         add_button = self._button("加入套件", "CompactButton")
-        add_button.setFixedWidth(82)
+        add_button.setFixedWidth(88)
         add_button.clicked.connect(
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
@@ -578,19 +579,19 @@ class MainWindow(QMainWindow):
 
         if asset.type == "mcp":
             edit_button = self._button("编辑", "CompactButton")
-            edit_button.setFixedWidth(82)
+            edit_button.setFixedWidth(88)
             edit_button.clicked.connect(self._guard(lambda asset=asset: self._edit_mcp_config(asset)))
             actions_layout.addWidget(edit_button)
 
         remove_button = self._button("移出套件", "CompactButton")
-        remove_button.setFixedWidth(82)
+        remove_button.setFixedWidth(88)
         remove_button.clicked.connect(
             self._guard(lambda asset=asset: self._remove_asset_from_chosen_harness(asset))
         )
         actions_layout.addWidget(remove_button)
         if asset.type == "skill":
             delete_button = self._button("删除", "CompactButton")
-            delete_button.setFixedWidth(82)
+            delete_button.setFixedWidth(88)
             delete_button.clicked.connect(
                 self._guard(lambda asset=asset: self._delete_skill_asset(asset))
             )

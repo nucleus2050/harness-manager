@@ -393,9 +393,12 @@ def test_asset_library_item_has_safe_height_and_layout():
     assert "return 118" in source
     assert "actions = QFrame()" in source
     assert 'actions.setObjectName("AssetLibraryActions")' in source
-    assert "actions.setMaximumWidth(286)" in source
+    assert "actions.setFixedWidth(312)" in source
     assert "actions_layout = QHBoxLayout(actions)" in source
-    assert "button.setFixedWidth(82)" in source
+    assert "actions_layout.setContentsMargins(12, 0, 12, 0)" in source
+    assert "actions_layout.setSpacing(14)" in source
+    assert "actions_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)" in source
+    assert "button.setFixedWidth(88)" in source
 
 
 def test_skill_library_item_shows_truncated_description_by_default():
