@@ -797,7 +797,7 @@ class MainWindow(QMainWindow):
             for index, harness in enumerate(self.harnesses):
                 assets = self.controller.list_harness_assets(harness.id)
                 item = QListWidgetItem()
-                item.setSizeHint(QSize(0, 138))
+                item.setSizeHint(QSize(0, 116))
                 self.harness_list.addItem(item)
                 self.harness_list.setItemWidget(
                     item, self._harness_list_card(index, harness, assets)
@@ -815,32 +815,38 @@ class MainWindow(QMainWindow):
         card.mousePressEvent = lambda _event, row=row: self.harness_list.setCurrentRow(row)
 
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(14, 12, 14, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setSpacing(8)
 
         header = QHBoxLayout()
-        header.setSpacing(10)
+        header.setSpacing(14)
 
         copy = QVBoxLayout()
-        copy.setSpacing(4)
+        copy.setSpacing(6)
         title_row = QHBoxLayout()
-        title_row.setSpacing(8)
+        title_row.setSpacing(10)
         title = self._label(harness.name, "ClientName")
         title.setWordWrap(True)
-        scope_label = self._label("本地", "ClientPath")
+        count_label = self._label(f"{len(assets)} 个组件", "HarnessCountPill")
         title_row.addWidget(title, 1)
-        title_row.addWidget(scope_label)
+        title_row.addWidget(count_label)
         copy.addLayout(title_row)
 
         description = self._label(harness.description or "暂无描述", "ClientPath")
         description.setWordWrap(True)
-        description.setMaximumHeight(34)
+        description.setMaximumHeight(30)
         copy.addWidget(description)
         header.addLayout(copy, 1)
 
-        deploy_bar = QHBoxLayout()
-        deploy_bar.setSpacing(6)
-        deploy_bar.addWidget(self._scope_toggle_button())
+        deploy_frame = QFrame()
+        deploy_frame.setObjectName("HarnessDeployBar")
+        deploy_layout = QHBoxLayout(deploy_frame)
+        deploy_layout.setContentsMargins(10, 6, 10, 6)
+        deploy_layout.setSpacing(6)
+        scope_text = "全局" if self.deploy_scope == "global" else "项目"
+        scope_label = self._label(scope_text, "HarnessScopeLabel")
+        deploy_layout.addWidget(scope_label)
+        deploy_layout.addWidget(self._scope_toggle_button())
         for client_type, icon, tooltip in [
             ("claude_code", "✹", "部署套件到 Claude Code"),
             ("codex", "◎", "部署套件到 Codex"),
@@ -855,12 +861,9 @@ class MainWindow(QMainWindow):
                     )
                 )
             )
-            deploy_bar.addWidget(button)
-        header.addLayout(deploy_bar)
+            deploy_layout.addWidget(button)
+        header.addWidget(deploy_frame, 0, Qt.AlignmentFlag.AlignTop)
         layout.addLayout(header)
-
-        count_label = self._label(f"{len(assets)} 个组件", "ClientStatusReady")
-        layout.addWidget(count_label)
         return card
 
     def _scope_toggle_button(self) -> QPushButton:

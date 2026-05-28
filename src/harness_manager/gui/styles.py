@@ -569,9 +569,32 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QFrame#HarnessListCard {{
+        background: transparent;
+        border: none;
+        border-radius: 14px;
+    }}
+
+    QFrame#HarnessDeployBar {{
         background: {tokens['soft_card']};
         border: 1px solid {tokens['soft_border']};
-        border-radius: 16px;
+        border-radius: 18px;
+    }}
+
+    QLabel#HarnessCountPill {{
+        color: {tokens['ready_text']};
+        background: {tokens['ready_bg']};
+        border: 1px solid {tokens['ready_border']};
+        border-radius: 10px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 850;
+    }}
+
+    QLabel#HarnessScopeLabel {{
+        color: {tokens['muted']};
+        background: transparent;
+        font-size: 11px;
+        font-weight: 850;
     }}
 
     QFrame#AssetLibraryItem {{
@@ -706,15 +729,15 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QPushButton#HarnessDeployIcon {{
-        min-width: 28px;
-        max-width: 28px;
-        min-height: 28px;
-        max-height: 28px;
-        border-radius: 14px;
+        min-width: 24px;
+        max-width: 24px;
+        min-height: 24px;
+        max-height: 24px;
+        border-radius: 12px;
         background: transparent;
         border: 1px solid transparent;
         color: {tokens['muted']};
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 900;
         padding: 0;
     }}
@@ -726,15 +749,15 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QPushButton#HarnessScopeIcon {{
-        min-width: 28px;
-        max-width: 28px;
-        min-height: 28px;
-        max-height: 28px;
-        border-radius: 14px;
+        min-width: 24px;
+        max-width: 24px;
+        min-height: 24px;
+        max-height: 24px;
+        border-radius: 12px;
         background: transparent;
         border: 1px solid transparent;
         color: {tokens['muted']};
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 850;
         padding: 0;
     }}
