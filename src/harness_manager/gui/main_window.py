@@ -60,6 +60,73 @@ SKILL_DESCRIPTION_MAX_LENGTH = 180
 AGENTS_SUMMARY_MAX_LENGTH = 96
 MCP_SUMMARY_MAX_LENGTH = 96
 
+UI_TEXT: dict[str, dict[str, str]] = {
+    "zh-CN": {
+        "window_title": "Harness Manager（任务套件管理器）",
+        "settings": "设置",
+        "settings_tip": "设置",
+        "harnesses": "任务套件",
+        "agents": "AGENTS.md",
+        "mcp": "MCP",
+        "skills": "技能库 Skills",
+        "new": "新建",
+        "edit": "编辑",
+        "delete": "删除",
+        "import": "导入",
+        "export": "导出",
+        "custom_source": "添加自定义目录",
+        "zh": "中文",
+        "en": "English",
+        "theme_light": "浅色",
+        "theme_dark": "深色",
+        "theme_obsidian": "黑曜",
+        "theme_matrix": "矩阵",
+        "theme_neon": "霓虹",
+        "theme_sunset": "日落",
+        "theme_forest": "森林",
+        "theme_aurora": "极光",
+        "theme_ember": "余烬",
+        "theme_porcelain": "瓷白",
+        "back": "返回",
+        "export_config": "导出全部配置",
+        "import_config": "导入全部配置",
+        "select_harness": "选择一个任务套件",
+        "harness_hint": "任务套件详情会显示在这里。",
+    },
+    "en-US": {
+        "window_title": "Harness Manager",
+        "settings": "Settings",
+        "settings_tip": "Settings",
+        "harnesses": "Harnesses",
+        "agents": "AGENTS.md",
+        "mcp": "MCP",
+        "skills": "Skills",
+        "new": "New",
+        "edit": "Edit",
+        "delete": "Delete",
+        "import": "Import",
+        "export": "Export",
+        "custom_source": "Add Custom Folder",
+        "zh": "Chinese",
+        "en": "English",
+        "theme_light": "Light",
+        "theme_dark": "Dark",
+        "theme_obsidian": "Obsidian",
+        "theme_matrix": "Matrix",
+        "theme_neon": "Neon",
+        "theme_sunset": "Sunset",
+        "theme_forest": "Forest",
+        "theme_aurora": "Aurora",
+        "theme_ember": "Ember",
+        "theme_porcelain": "Porcelain",
+        "back": "Back",
+        "export_config": "Export Full Config",
+        "import_config": "Import Full Config",
+        "select_harness": "Select a harness",
+        "harness_hint": "Harness details appear here.",
+    },
+}
+
 
 class _WindowsMSG(ctypes.Structure):
     _fields_ = [
@@ -78,6 +145,11 @@ def _app_icon_path() -> Path:
 
 
 class MainWindow(QMainWindow):
+    def _t(self, key: str) -> str:
+        return UI_TEXT.get(self.current_language, UI_TEXT["zh-CN"]).get(
+            key, UI_TEXT["zh-CN"].get(key, key)
+        )
+
     def __init__(self, controller: MainController) -> None:
         super().__init__()
         self.setWindowFlags(
@@ -98,14 +170,16 @@ class MainWindow(QMainWindow):
         self.selected_custom_source_id: str | None = None
         self.current_view = "harnesses"
         self.last_business_view = "harnesses"
-        self.current_theme = self.controller.get_settings().theme
+        settings = self.controller.get_settings()
+        self.current_theme = settings.theme
+        self.current_language = settings.language
         self.deploy_scope = "global"
         self.title_bar: QFrame | None = None
         self.app_shell: QFrame | None = None
         self.shell_layout: QVBoxLayout | None = None
         self.maximize_button: QPushButton | None = None
 
-        self.setWindowTitle("Harness Manager（任务套件管理器）")
+        self.setWindowTitle(self._t("window_title"))
         self.setWindowIcon(QIcon(str(_app_icon_path())))
         self.resize(1240, 760)
         self.setMinimumSize(980, 620)
@@ -118,36 +192,36 @@ class MainWindow(QMainWindow):
         self.skill_count_value = self._label("0", "StatValue")
         self.mcp_count_value = self._label("0", "StatValue")
         self.agents_count_value = self._label("0", "StatValue")
-        self.current_harness_title = self._label("选择一个任务套件", "SectionTitle")
-        self.current_harness_meta = self._label("任务套件详情会显示在这里。", "MutedText")
+        self.current_harness_title = self._label(self._t("select_harness"), "SectionTitle")
+        self.current_harness_meta = self._label(self._t("harness_hint"), "MutedText")
 
-        self.add_custom_source_button = self._button("添加自定义目录", "CompactButton")
+        self.add_custom_source_button = self._button(self._t("custom_source"), "CompactButton")
         self.settings_button = self._button("⚙", "IconButton")
-        self.settings_button.setToolTip("设置")
-        self.harnesses_view_button = self._button("任务套件", "SegmentButtonChecked")
-        self.agents_view_button = self._button("AGENTS.md", "SegmentButton")
-        self.mcp_view_button = self._button("MCP", "SegmentButton")
-        self.skills_view_button = self._button("技能库 Skills", "SegmentButton")
-        self.new_package_button = self._button("新建", "PrimaryButton")
-        self.edit_harness_button = self._button("编辑", "CompactButton")
-        self.delete_harness_button = self._button("删除", "DangerButton")
-        self.import_archive_button = self._button("导入", "CompactButton")
-        self.export_archive_button = self._button("导出", "CompactButton")
-        self.language_zh_button = self._button("中文", "PrimaryButton")
-        self.language_en_button = self._button("English", "CompactButton")
-        self.theme_light_button = self._button("浅色", "CompactButton")
-        self.theme_dark_button = self._button("深色", "CompactButton")
-        self.theme_obsidian_button = self._button("黑曜", "PrimaryButton")
-        self.theme_matrix_button = self._button("矩阵", "CompactButton")
-        self.theme_neon_button = self._button("霓虹", "CompactButton")
-        self.theme_sunset_button = self._button("日落", "CompactButton")
-        self.theme_forest_button = self._button("森林", "CompactButton")
-        self.theme_aurora_button = self._button("极光", "CompactButton")
-        self.theme_ember_button = self._button("余烬", "CompactButton")
-        self.theme_porcelain_button = self._button("瓷白", "CompactButton")
-        self.back_to_business_button = self._button("返回", "CompactButton")
-        self.export_config_button = self._button("导出全部配置", "PrimaryButton")
-        self.import_config_button = self._button("导入全部配置", "CompactButton")
+        self.settings_button.setToolTip(self._t("settings_tip"))
+        self.harnesses_view_button = self._button(self._t("harnesses"), "SegmentButtonChecked")
+        self.agents_view_button = self._button(self._t("agents"), "SegmentButton")
+        self.mcp_view_button = self._button(self._t("mcp"), "SegmentButton")
+        self.skills_view_button = self._button(self._t("skills"), "SegmentButton")
+        self.new_package_button = self._button(self._t("new"), "PrimaryButton")
+        self.edit_harness_button = self._button(self._t("edit"), "CompactButton")
+        self.delete_harness_button = self._button(self._t("delete"), "DangerButton")
+        self.import_archive_button = self._button(self._t("import"), "CompactButton")
+        self.export_archive_button = self._button(self._t("export"), "CompactButton")
+        self.language_zh_button = self._button(self._t("zh"), "PrimaryButton")
+        self.language_en_button = self._button(self._t("en"), "CompactButton")
+        self.theme_light_button = self._button(self._t("theme_light"), "CompactButton")
+        self.theme_dark_button = self._button(self._t("theme_dark"), "CompactButton")
+        self.theme_obsidian_button = self._button(self._t("theme_obsidian"), "PrimaryButton")
+        self.theme_matrix_button = self._button(self._t("theme_matrix"), "CompactButton")
+        self.theme_neon_button = self._button(self._t("theme_neon"), "CompactButton")
+        self.theme_sunset_button = self._button(self._t("theme_sunset"), "CompactButton")
+        self.theme_forest_button = self._button(self._t("theme_forest"), "CompactButton")
+        self.theme_aurora_button = self._button(self._t("theme_aurora"), "CompactButton")
+        self.theme_ember_button = self._button(self._t("theme_ember"), "CompactButton")
+        self.theme_porcelain_button = self._button(self._t("theme_porcelain"), "CompactButton")
+        self.back_to_business_button = self._button(self._t("back"), "CompactButton")
+        self.export_config_button = self._button(self._t("export_config"), "PrimaryButton")
+        self.import_config_button = self._button(self._t("import_config"), "CompactButton")
         self._build_layout()
         self._connect_actions()
         self.refresh()
@@ -218,9 +292,9 @@ class MainWindow(QMainWindow):
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         ))
-        title = self._label("Harness Manager（任务套件管理器）", "TitleText")
+        self.title_bar_title = self._label(self._t("window_title"), "TitleText")
         layout.addWidget(icon)
-        layout.addWidget(title)
+        layout.addWidget(self.title_bar_title)
         layout.addStretch(1)
 
         self.minimize_button = self._window_button("—", "MinimizeButton")
@@ -1611,9 +1685,45 @@ class MainWindow(QMainWindow):
             button.style().unpolish(button)
             button.style().polish(button)
 
+    def _retranslate_static_ui(self) -> None:
+        self.setWindowTitle(self._t("window_title"))
+        self.title_bar_title.setText(self._t("window_title"))
+        self.settings_button.setToolTip(self._t("settings_tip"))
+        self.harnesses_view_button.setText(self._t("harnesses"))
+        self.agents_view_button.setText(self._t("agents"))
+        self.mcp_view_button.setText(self._t("mcp"))
+        self.skills_view_button.setText(self._t("skills"))
+        self.new_package_button.setText(self._t("new"))
+        self.edit_harness_button.setText(self._t("edit"))
+        self.delete_harness_button.setText(self._t("delete"))
+        self.import_archive_button.setText(self._t("import"))
+        self.export_archive_button.setText(self._t("export"))
+        self.add_custom_source_button.setText(self._t("custom_source"))
+        self.language_zh_button.setText(self._t("zh"))
+        self.language_en_button.setText(self._t("en"))
+        self.theme_light_button.setText(self._t("theme_light"))
+        self.theme_dark_button.setText(self._t("theme_dark"))
+        self.theme_obsidian_button.setText(self._t("theme_obsidian"))
+        self.theme_matrix_button.setText(self._t("theme_matrix"))
+        self.theme_neon_button.setText(self._t("theme_neon"))
+        self.theme_sunset_button.setText(self._t("theme_sunset"))
+        self.theme_forest_button.setText(self._t("theme_forest"))
+        self.theme_aurora_button.setText(self._t("theme_aurora"))
+        self.theme_ember_button.setText(self._t("theme_ember"))
+        self.theme_porcelain_button.setText(self._t("theme_porcelain"))
+        self.back_to_business_button.setText(self._t("back"))
+        self.export_config_button.setText(self._t("export_config"))
+        self.import_config_button.setText(self._t("import_config"))
+        if self.harness_list.currentRow() < 0:
+            self.current_harness_title.setText(self._t("select_harness"))
+            self.current_harness_meta.setText(self._t("harness_hint"))
+
     def _save_language(self, language: str) -> None:
         settings = self.controller.save_language(language)
+        self.current_language = settings.language
+        self._retranslate_static_ui()
         self._refresh_settings_buttons(settings)
+        self.refresh()
 
     def _save_theme(self, theme: str) -> None:
         settings = self.controller.save_theme(theme)

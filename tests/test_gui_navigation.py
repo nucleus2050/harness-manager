@@ -71,7 +71,7 @@ def test_settings_uses_compact_gear_and_can_return_to_business_view():
 
     for token in [
         'self.settings_button = self._button("⚙", "IconButton")',
-        'self.back_to_business_button = self._button("返回", "CompactButton")',
+        'self.back_to_business_button = self._button(self._t("back"), "CompactButton")',
         "last_business_view",
         "_show_previous_business_view",
         "hero_actions.addWidget(self.settings_button)",
@@ -405,7 +405,7 @@ def test_harness_delete_action_uses_confirm_and_single_row_actions():
     delete_method = source.split("def _delete_harness", 1)[1].split("\n    def ", 1)[0]
 
     assert "delete_harness_button" in source
-    assert 'self._button("删除", "DangerButton")' in source
+    assert 'self._button(self._t("delete"), "DangerButton")' in source
     for redundant_label in ["新建套件", "编辑套件", "删除套件", "导入套件", "导出套件"]:
         assert redundant_label not in source
     assert "delete_harness(" in controller_source
