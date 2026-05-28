@@ -340,6 +340,17 @@ def test_message_dialog_uses_app_like_custom_chrome():
     assert "QMessageBox" not in dialog_source
 
 
+def test_confirm_dialog_has_no_redundant_title_or_accent():
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+    confirm_source = dialog_source.split("class _ConfirmDialog", 1)[1].split("\n\nclass ", 1)[0]
+
+    assert "DialogTitle" not in confirm_source
+    assert "DialogAccent" not in confirm_source
+    assert "title_label" not in confirm_source
+    assert "message_label = QLabel(message)" in confirm_source
+    assert "确认删除" in confirm_source
+
+
 def test_harness_deploy_icons_are_stateful_toggles():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     stylesheet = Path("src/harness_manager/gui/styles.py").read_text(encoding="utf-8")

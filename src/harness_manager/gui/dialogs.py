@@ -273,15 +273,6 @@ class _ConfirmDialog(QDialog):
         shell_layout.setContentsMargins(20, 18, 20, 18)
         shell_layout.setSpacing(16)
 
-        title_label = QLabel(title)
-        title_label.setObjectName("DialogTitle")
-        shell_layout.addWidget(title_label)
-
-        accent = QFrame()
-        accent.setObjectName("DialogAccent")
-        accent.setFixedHeight(4)
-        shell_layout.addWidget(accent)
-
         message_label = QLabel(message)
         message_label.setObjectName("DialogMessage")
         message_label.setWordWrap(True)
