@@ -103,17 +103,21 @@ class MainController:
         applications: list[dict[str, object]] = []
         for client in self.clients.list_clients():
             rows = rows_by_client.get(client.type, [])
-            components = [
-                {
-                    "asset_name": row["asset_name"],
-                    "asset_type": row["asset_type"],
-                    "harness_name": row["harness_name"],
-                    "target_path": Path(row["target_path"]),
-                    "installed_path": Path(row["installed_path"]),
-                    "status": "ready" if Path(row["installed_path"]).exists() else "missing",
-                }
-                for row in rows
-            ]
+            components_by_harness: dict[tuple[str, str, str], list[sqlite3.Row]] = {}
+            for row in rows:
+                key = (row["harness_id"], row["harness_name"], row["target_path"])
+                components_by_harness.setdefault(key, []).append(row)
+            components = []
+            for (_harness_id, harness_name, target_path), harness_rows in components_by_harness.items():
+                installed_paths = [Path(row["installed_path"]) for row in harness_rows]
+                components.append(
+                    {
+                        "component_name": harness_name,
+                        "asset_count": len(harness_rows),
+                        "target_path": Path(target_path),
+                        "status": "ready" if all(path.exists() for path in installed_paths) else "missing",
+                    }
+                )
             has_ready_component = any(component["status"] == "ready" for component in components)
             configured_path = client.effective_path
             path_ready = has_ready_component or bool(configured_path and configured_path.exists())

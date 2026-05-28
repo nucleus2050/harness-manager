@@ -46,7 +46,7 @@ def test_controller_creates_mcp_config_asset(app_root):
     assert controller.list_assets_by_type("mcp")[0].id == asset.id
 
 
-def test_controller_lists_installed_components_by_application(app_root, tmp_path, sample_skill):
+def test_controller_lists_installed_harnesses_by_application(app_root, tmp_path, sample_skill):
     paths = AppPaths(app_root)
     paths.ensure()
     conn = connect(paths.db_path)
@@ -62,6 +62,7 @@ def test_controller_lists_installed_components_by_application(app_root, tmp_path
     codex = next(item for item in applications if item["client_type"] == "codex")
     assert codex["component_count"] == 1
     assert codex["path_status"] == "ready"
-    assert codex["components"][0]["asset_name"] == skill.name
-    assert codex["components"][0]["asset_type"] == "skill"
-    assert codex["components"][0]["harness_name"] == "代码审查"
+    assert codex["components"][0]["component_name"] == "代码审查"
+    assert codex["components"][0]["asset_count"] == 1
+    assert "asset_name" not in codex["components"][0]
+    assert "asset_type" not in codex["components"][0]
