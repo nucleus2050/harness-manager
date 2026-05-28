@@ -97,6 +97,36 @@ def test_export_harness_writes_harness_manifest_and_assets(app_root, sample_skil
     assert f"assets/agents_md/{agents_asset.id}/AGENTS.md" in names
 
 
+def test_export_then_import_harness_round_trips_assets(app_root, sample_skill, tmp_path):
+    source_service = _service(app_root)
+    skill = source_service.import_skill(sample_skill, "codex")
+    harness = source_service.harnesses.create("frontend-suite", "前端工作流")
+    source_service.harnesses.add_asset(harness.id, skill.id, "skill", 1)
+    agents_file = tmp_path / "AGENTS.md"
+    agents_file.write_text("# Rules\n", encoding="utf-8")
+    agents_asset = source_service.import_agents_md_asset(agents_file, "规则", "custom")
+    source_service.harnesses.add_asset(harness.id, agents_asset.id, "agents_md", 2)
+    archive_path = source_service.export_harness(harness.id)
+
+    fresh_root = tmp_path / "FreshHarnessManager"
+    fresh_root.mkdir()
+    fresh_service = _service(fresh_root)
+    imported_harness_id = fresh_service.import_offline_package(archive_path)
+
+    imported_harness = fresh_service.harnesses.get(imported_harness_id)
+    imported_assets = fresh_service.harnesses.list_assets(imported_harness_id)
+    assert imported_harness.name == "frontend-suite"
+    assert imported_harness.description == "前端工作流"
+    assert [(asset.type, asset.name) for asset in imported_assets] == [
+        ("skill", "sample-skill"),
+        ("agents_md", "规则"),
+    ]
+    assert (fresh_root / "skills" / "sample-skill" / "SKILL.md").read_text(
+        encoding="utf-8"
+    ) == "# Sample Skill\n\nBody\n"
+    assert (fresh_root / imported_assets[1].relative_path).read_text(encoding="utf-8") == "# Rules\n"
+
+
 def test_import_offline_package_rejects_manifest_relative_path_escape(tmp_path):
     app_root = tmp_path / "HarnessManager"
     app_root.mkdir()

@@ -325,8 +325,11 @@ class HarnessService:
     def import_offline_package(self, archive_path: Path | str) -> str:
         extracted = extract_zip(archive_path)
         try:
+            manifest = self._read_offline_manifest(extracted)
+            if manifest.get("schema_version") == 2:
+                return self._import_offline_harness(extracted, manifest)
             package_name, package_description, skill_entries = (
-                self._validated_offline_manifest(extracted)
+                self._validated_offline_manifest(extracted, manifest)
             )
             if self._package_name_exists(package_name):
                 raise ValueError(f"Package already exists: {package_name}")
@@ -366,6 +369,59 @@ class HarnessService:
             return package_id
         finally:
             self._remove_owned_directory(extracted, extracted.parent)
+
+    def _import_offline_harness(self, extracted: Path, manifest: dict) -> str:
+        harness_name, harness_description, asset_entries = self._validated_offline_harness_manifest(
+            extracted, manifest
+        )
+        if any(harness.name == harness_name for harness in self.harnesses.list_harnesses()):
+            raise ValueError(f"Harness already exists: {harness_name}")
+
+        new_skill_ids: list[str] = []
+        created_asset_dirs: list[Path] = []
+        try:
+            with transaction(self.conn):
+                harness = self.harnesses.create(harness_name, harness_description)
+                for sort_order, entry in enumerate(asset_entries, start=1):
+                    asset_type = entry["type"]
+                    if asset_type == "skill":
+                        source = self._validated_offline_skill_source(
+                            extracted, entry["relative_path"]
+                        )
+                        skill, created_new = self._import_skill_without_transaction(source, None)
+                        if created_new:
+                            new_skill_ids.append(skill.id)
+                        asset_id = skill.id
+                    else:
+                        source = self._validated_offline_file_asset_source(
+                            extracted, entry["relative_path"]
+                        )
+                        asset = self._import_file_asset_without_transaction(
+                            source,
+                            asset_type,
+                            entry["name"],
+                            "offline",
+                            source.name,
+                            entry.get("metadata_json", "{}"),
+                        )
+                        created_asset_dirs.append((self.paths.root / asset.relative_path).parent)
+                        asset_id = asset.id
+                    self.harnesses.add_asset(harness.id, asset_id, asset_type, sort_order)
+                self.logs.add(
+                    "import_harness",
+                    f"Imported offline harness {harness_name}",
+                    package_id=harness.id,
+                )
+            return harness.id
+        except Exception:
+            for skill_id in reversed(new_skill_ids):
+                destination = self.paths.skill_path(skill_id)
+                if destination.exists():
+                    self._remove_owned_directory(destination, self.paths.skills_dir)
+            for directory in reversed(created_asset_dirs):
+                if directory.exists():
+                    self._remove_owned_directory(directory, self.paths.root)
+            raise
 
     def install_package(
         self,
@@ -633,13 +689,19 @@ class HarnessService:
         ).fetchone()
         return row is not None
 
-    def _validated_offline_manifest(self, extracted: Path) -> tuple[str, str, list[dict]]:
+    def _read_offline_manifest(self, extracted: Path) -> dict:
         manifest_path = extracted / "manifest.json"
         if not manifest_path.is_file():
             raise FileNotFoundError(manifest_path)
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         if not isinstance(manifest, dict):
             raise ValueError("Offline package manifest must be an object")
+        return manifest
+
+    def _validated_offline_manifest(
+        self, extracted: Path, manifest: dict | None = None
+    ) -> tuple[str, str, list[dict]]:
+        manifest = manifest or self._read_offline_manifest(extracted)
         if manifest.get("schema_version") != 1:
             raise ValueError("Unsupported offline package schema_version")
 
@@ -675,6 +737,49 @@ class HarnessService:
                     f"Offline skill {entry['id']!r} fingerprint mismatch"
                 )
         return package_name, package_description, skill_entries
+
+    def _validated_offline_harness_manifest(
+        self, extracted: Path, manifest: dict
+    ) -> tuple[str, str, list[dict]]:
+        if manifest.get("schema_version") != 2:
+            raise ValueError("Unsupported offline harness schema_version")
+        harness_info = manifest.get("harness")
+        if not isinstance(harness_info, dict):
+            raise ValueError("Offline harness manifest.harness must be an object")
+        _required_non_empty_string(harness_info, "id", "manifest.harness")
+        harness_name = _required_non_empty_string(harness_info, "name", "manifest.harness")
+        harness_description = _optional_string(
+            harness_info, "description", "manifest.harness"
+        )
+
+        asset_entries = manifest.get("assets")
+        if not isinstance(asset_entries, list):
+            raise ValueError("Offline harness manifest.assets must be a list")
+        for index, entry in enumerate(asset_entries):
+            if not isinstance(entry, dict):
+                raise ValueError(f"manifest.assets[{index}] must be an object")
+            _required_non_empty_string(entry, "id", f"manifest.assets[{index}]")
+            asset_type = _required_non_empty_string(
+                entry, "type", f"manifest.assets[{index}]"
+            )
+            if asset_type not in {"skill", "agents_md", "mcp"}:
+                raise ValueError(f"Unsupported offline asset type: {asset_type}")
+            _required_non_empty_string(entry, "name", f"manifest.assets[{index}]")
+            relative_path = _required_non_empty_string(
+                entry, "relative_path", f"manifest.assets[{index}]"
+            )
+            expected_fingerprint = _required_non_empty_string(
+                entry, "fingerprint", f"manifest.assets[{index}]"
+            )
+            if asset_type == "skill":
+                source = self._validated_offline_skill_source(extracted, relative_path)
+            else:
+                source = self._validated_offline_file_asset_source(extracted, relative_path)
+                source = source.parent
+            actual_fingerprint = fingerprint_directory(source)
+            if actual_fingerprint != expected_fingerprint:
+                raise ValueError(f"Offline asset {entry['id']!r} fingerprint mismatch")
+        return harness_name, harness_description, asset_entries
 
     def _validated_managed_skill_source(self, skill: Skill) -> Path:
         source = self.paths.skill_path(skill.id)
@@ -714,6 +819,54 @@ class HarnessService:
         if not source.is_dir():
             raise NotADirectoryError(source)
         return source
+
+    def _validated_offline_file_asset_source(
+        self, extracted_root: Path, relative_path: str
+    ) -> Path:
+        candidate = Path(relative_path)
+        if candidate.is_absolute():
+            raise ValueError(
+                f"Offline asset relative_path must be relative: {relative_path!r}"
+            )
+        source = _resolve_under(
+            extracted_root / candidate, extracted_root, "Offline asset path"
+        )
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        return source
+
+    def _import_file_asset_without_transaction(
+        self,
+        source_file: Path,
+        asset_type: str,
+        name: str,
+        source_type: str | None,
+        destination_name: str,
+        metadata_json: str,
+    ) -> Asset:
+        if not source_file.is_file():
+            raise FileNotFoundError(source_file)
+        asset_id = uuid.uuid4().hex
+        destination_dir = asset_dir(self.paths, asset_type, asset_id)
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        destination = destination_dir / destination_name
+        try:
+            shutil.copy2(source_file, destination)
+            fingerprint = fingerprint_directory(destination_dir)
+            asset = self.assets.upsert(
+                asset_id,
+                asset_type,
+                name,
+                source_type,
+                destination.relative_to(self.paths.root).as_posix(),
+                fingerprint,
+                metadata_json,
+            )
+            self.logs.add("import_asset", f"Imported {asset_type} asset {name}")
+            return asset
+        except Exception:
+            safe_remove_directory(destination_dir)
+            raise
 
     def _validated_install_destination(self, target: Path, skill_id: str) -> Path:
         self.paths.skill_path(skill_id)
