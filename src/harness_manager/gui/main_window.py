@@ -132,7 +132,6 @@ class MainWindow(QMainWindow):
         self.export_archive_button = self._button("导出", "CompactButton")
         self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
         self.add_mcp_button = self._button("添加 MCP", "CompactButton")
-        self.new_mcp_config_button = self._button("+ 新增 MCP", "PrimaryButton")
         self.add_skill_asset_button = self._button("添加技能", "CompactButton")
         self.language_zh_button = self._button("中文", "PrimaryButton")
         self.language_en_button = self._button("English", "CompactButton")
@@ -499,7 +498,9 @@ class MainWindow(QMainWindow):
         copy.addWidget(title)
         copy.addWidget(subtitle)
         layout.addLayout(copy, 1)
-        layout.addWidget(self.new_mcp_config_button)
+        new_mcp_config_button = self._button("+ 新增 MCP", "PrimaryButton")
+        new_mcp_config_button.clicked.connect(self._guard(self._new_mcp_config))
+        layout.addWidget(new_mcp_config_button)
         return toolbar
 
     def _build_mcp_summary(self) -> QWidget:
@@ -743,7 +744,6 @@ class MainWindow(QMainWindow):
         self.delete_harness_button.clicked.connect(self._guard(self._delete_harness))
         self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
         self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
-        self.new_mcp_config_button.clicked.connect(self._guard(self._new_mcp_config))
         self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
@@ -935,7 +935,6 @@ class MainWindow(QMainWindow):
         self.agents_view_button.style().polish(self.agents_view_button)
         self.mcp_view_button.style().unpolish(self.mcp_view_button)
         self.mcp_view_button.style().polish(self.mcp_view_button)
-        self.new_mcp_config_button.setVisible(self.current_view == "mcp")
         self.settings_button.setObjectName(
             "IconButtonChecked" if settings_active else "IconButton"
         )

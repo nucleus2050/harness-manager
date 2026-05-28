@@ -180,12 +180,16 @@ def test_mcp_config_dialog_uses_current_app_theme():
 
 def test_mcp_page_uses_management_layout_not_full_width_button():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    toolbar_source = source.split("def _build_mcp_toolbar", 1)[1].split("\n    def ", 1)[0]
 
     assert "_build_mcp_toolbar" in source
     assert "_build_mcp_summary" in source
     assert "McpToolbar" in source
     assert "McpSummary" in source
     assert "self.asset_library_header_layout.addWidget(self._build_mcp_toolbar())" in source
+    assert "self.new_mcp_config_button" not in source
+    assert "new_mcp_config_button = self._button" in toolbar_source
+    assert "new_mcp_config_button.clicked.connect" in toolbar_source
 
 
 def test_mcp_config_dialog_has_no_builtin_type_buttons():
