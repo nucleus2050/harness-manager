@@ -311,6 +311,21 @@ class HarnessDeployRepository:
             params,
         ).fetchall()
 
+    def list_active_components(self) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            """
+            SELECT hdr.id, hdr.harness_id, h.name AS harness_name,
+                   hdr.asset_id, a.type AS asset_type, a.name AS asset_name,
+                   hdr.client_type, hdr.target_path, hdr.installed_path,
+                   hdr.fingerprint, hdr.installed_at, hdr.status
+            FROM harness_deploy_records hdr
+            JOIN harnesses h ON h.id = hdr.harness_id
+            JOIN assets a ON a.id = hdr.asset_id
+            WHERE hdr.status = 'installed'
+            ORDER BY hdr.client_type, h.name, a.type, a.name
+            """
+        ).fetchall()
+
     def is_active(self, harness_id: str, client_type: str, target_path: Path) -> bool:
         row = self.conn.execute(
             """

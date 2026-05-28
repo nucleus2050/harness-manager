@@ -278,6 +278,24 @@ def test_import_source_scroll_height_adapts_to_content():
         assert token in source
 
 
+def test_applications_view_lists_installed_components():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
+
+    for token in [
+        "self.applications_view_button",
+        '"applications": "应用程序"',
+        "_build_applications_card",
+        "self.applications_body",
+        "_refresh_applications_view",
+        "list_application_components",
+        "component_count",
+        "harness_name",
+    ]:
+        assert token in source
+    assert "list_application_components" in controller_source
+
+
 def test_asset_tab_switch_refreshes_visible_library():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
