@@ -25,6 +25,98 @@ from harness_manager.gui.styles import _THEME_TOKENS
 if TYPE_CHECKING:
     from harness_manager.models import Asset, Harness
 
+DIALOG_TEXT = {
+    "zh-CN": {
+        "ok": "确定",
+        "cancel": "取消",
+        "confirm_delete": "确认删除",
+        "create": "创建",
+        "save": "保存",
+        "choose_harness": "选择任务套件",
+        "choose_harness_message": "请选择要加入的任务套件",
+        "join": "加入",
+        "no_description": "暂无描述",
+        "choose_asset": "选择组件",
+        "choose_asset_message": "请选择要加入任务套件的组件",
+        "continue": "继续",
+        "harness_name": "套件名称",
+        "harness_description": "套件描述",
+        "add_agents": "添加 AGENTS.md",
+        "agents_content": "# AGENTS.md\n\n在此输入提示词内容...",
+        "name": "名称",
+        "agents_name_placeholder": "例如：项目默认提示词",
+        "description": "描述",
+        "description_placeholder": "可选的描述信息",
+        "content": "内容",
+        "import_file": "选择文件导入",
+        "choose_agents_file": "选择 AGENTS.md 文件",
+        "all_files": "所有文件 (*)",
+        "new_mcp": "新建 MCP 配置",
+        "mcp_title": "MCP 标题（唯一）",
+        "display_name": "显示名称",
+        "mcp_display_placeholder": "例如 @modelcontextprotocol/server-time",
+        "mcp_desc_placeholder": "例如：用于网页抓取、数据库查询或时间服务",
+        "full_json": "完整 JSON 配置",
+        "format": "格式化",
+        "import_offline": "导入离线包",
+        "harness_zip_filter": "任务套件 (*.harness.zip);;Zip 压缩包 (*.zip);;所有文件 (*)",
+        "zip_filter": "Zip 压缩包 (*.zip);;所有文件 (*)",
+        "export_config": "导出全部配置",
+        "choose_harness_export": "选择套件导出目录",
+        "import_config": "导入全部配置",
+    },
+    "en-US": {
+        "ok": "OK",
+        "cancel": "Cancel",
+        "confirm_delete": "Delete",
+        "create": "Create",
+        "save": "Save",
+        "choose_harness": "Choose Harness",
+        "choose_harness_message": "Choose the harness to add to",
+        "join": "Add",
+        "no_description": "No description",
+        "choose_asset": "Choose Component",
+        "choose_asset_message": "Choose the component to add to the harness",
+        "continue": "Continue",
+        "harness_name": "Harness name",
+        "harness_description": "Harness description",
+        "add_agents": "Add AGENTS.md",
+        "agents_content": "# AGENTS.md\n\nEnter instruction content here...",
+        "name": "Name",
+        "agents_name_placeholder": "Example: Default project instructions",
+        "description": "Description",
+        "description_placeholder": "Optional description",
+        "content": "Content",
+        "import_file": "Import from File",
+        "choose_agents_file": "Choose AGENTS.md File",
+        "all_files": "All Files (*)",
+        "new_mcp": "New MCP Config",
+        "mcp_title": "MCP title (unique)",
+        "display_name": "Display name",
+        "mcp_display_placeholder": "Example: @modelcontextprotocol/server-time",
+        "mcp_desc_placeholder": "Example: web scraping, database queries, or time services",
+        "full_json": "Full JSON Config",
+        "format": "Format",
+        "import_offline": "Import Offline Bundle",
+        "harness_zip_filter": "Harness (*.harness.zip);;Zip archive (*.zip);;All Files (*)",
+        "zip_filter": "Zip archive (*.zip);;All Files (*)",
+        "export_config": "Export Full Config",
+        "choose_harness_export": "Choose Harness Export Folder",
+        "import_config": "Import Full Config",
+    },
+}
+
+
+def _language(parent: QWidget | None) -> str:
+    return getattr(parent, "current_language", "zh-CN")
+
+
+def _tr(parent: QWidget | None, key: str) -> str:
+    language = _language(parent)
+    return DIALOG_TEXT.get(language, DIALOG_TEXT["zh-CN"]).get(
+        key, DIALOG_TEXT["zh-CN"].get(key, key)
+    )
+
 
 def _dialog_theme_name(theme_source: QWidget | str | None) -> str:
     if isinstance(theme_source, str):
@@ -242,7 +334,7 @@ class _MessageDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        ok = QPushButton("确定")
+        ok = QPushButton(_tr(parent, "ok"))
         ok.setObjectName("DangerDialogButton" if kind == "error" else "PrimaryDialogButton")
         ok.clicked.connect(self.accept)
         buttons.addWidget(ok)
@@ -280,9 +372,9 @@ class _ConfirmDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
+        cancel = QPushButton(_tr(parent, "cancel"))
         cancel.setObjectName("GhostDialogButton")
-        confirm = QPushButton("确认删除")
+        confirm = QPushButton(_tr(parent, "confirm_delete"))
         confirm.setObjectName("DangerDialogButton")
         cancel.clicked.connect(self.reject)
         confirm.clicked.connect(self.accept)
@@ -315,8 +407,8 @@ class _TextDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
-        create = QPushButton("创建")
+        cancel = QPushButton(_tr(parent, "cancel"))
+        create = QPushButton(_tr(parent, "create"))
         create.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)
         create.clicked.connect(self.accept)
@@ -334,11 +426,14 @@ class _HarnessDialog(QDialog):
         self,
         parent: QWidget,
         harnesses: list["Harness"],
-        title: str = "选择任务套件",
-        message: str = "请选择要加入的任务套件",
-        confirm_text: str = "加入",
+        title: str | None = None,
+        message: str | None = None,
+        confirm_text: str | None = None,
     ) -> None:
         super().__init__(parent)
+        title = title or _tr(parent, "choose_harness")
+        message = message or _tr(parent, "choose_harness_message")
+        confirm_text = confirm_text or _tr(parent, "join")
         self.harnesses = harnesses
         self.setObjectName("HarnessPickerDialog")
         self.setWindowTitle(title)
@@ -360,7 +455,7 @@ class _HarnessDialog(QDialog):
         self.list_widget = QListWidget()
         self.list_widget.setObjectName("HarnessPickerList")
         for harness in harnesses:
-            description = harness.description or "暂无描述"
+            description = harness.description or _tr(parent, "no_description")
             self.list_widget.addItem(f"{harness.name}\n{description}")
         if harnesses:
             self.list_widget.setCurrentRow(0)
@@ -368,7 +463,7 @@ class _HarnessDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
+        cancel = QPushButton(_tr(parent, "cancel"))
         cancel.setObjectName("GhostDialogButton")
         confirm = QPushButton(confirm_text)
         confirm.setObjectName("PrimaryDialogButton")
@@ -389,7 +484,7 @@ class _AssetDialog(QDialog):
     def __init__(self, parent: QWidget, assets: list["Asset"]) -> None:
         super().__init__(parent)
         self.assets = assets
-        self.setWindowTitle("选择组件")
+        self.setWindowTitle(_tr(parent, "choose_asset"))
         self.setModal(True)
         self.setMinimumWidth(520)
         self.setStyleSheet(_dialog_stylesheet(parent))
@@ -398,9 +493,9 @@ class _AssetDialog(QDialog):
         layout.setContentsMargins(22, 20, 22, 18)
         layout.setSpacing(14)
 
-        title_label = QLabel("选择组件")
+        title_label = QLabel(_tr(parent, "choose_asset"))
         title_label.setObjectName("DialogTitle")
-        message = QLabel("请选择要加入任务套件的组件")
+        message = QLabel(_tr(parent, "choose_asset_message"))
         message.setObjectName("DialogMessage")
         layout.addWidget(title_label)
         layout.addWidget(message)
@@ -414,8 +509,8 @@ class _AssetDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
-        confirm = QPushButton("继续")
+        cancel = QPushButton(_tr(parent, "cancel"))
+        confirm = QPushButton(_tr(parent, "continue"))
         confirm.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)
         confirm.clicked.connect(self.accept)
@@ -445,10 +540,10 @@ class _HarnessDetailsDialog(QDialog):
         self.setStyleSheet(_dialog_stylesheet(parent))
 
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("套件名称")
+        self.name_input.setPlaceholderText(_tr(parent, "harness_name"))
         self.name_input.setText(name)
         self.description_input = QPlainTextEdit()
-        self.description_input.setPlaceholderText("套件描述")
+        self.description_input.setPlaceholderText(_tr(parent, "harness_description"))
         self.description_input.setPlainText(description)
         self.description_input.setMinimumHeight(92)
 
@@ -458,15 +553,15 @@ class _HarnessDetailsDialog(QDialog):
         title_label = QLabel(title)
         title_label.setObjectName("DialogTitle")
         layout.addWidget(title_label)
-        layout.addWidget(QLabel("套件名称"))
+        layout.addWidget(QLabel(_tr(parent, "harness_name")))
         layout.addWidget(self.name_input)
-        layout.addWidget(QLabel("套件描述"))
+        layout.addWidget(QLabel(_tr(parent, "harness_description")))
         layout.addWidget(self.description_input)
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
-        confirm = QPushButton("保存")
+        cancel = QPushButton(_tr(parent, "cancel"))
+        confirm = QPushButton(_tr(parent, "save"))
         confirm.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)
         confirm.clicked.connect(self.accept)
@@ -485,11 +580,13 @@ class AgentsMdDialog(QDialog):
     def __init__(
         self,
         parent: QWidget,
-        title: str = "添加 AGENTS.md",
+        title: str | None = None,
         name: str = "",
         description: str = "",
-        content: str = "# AGENTS.md\n\n在此输入提示词内容...",
+        content: str | None = None,
     ) -> None:
+        title = title or _tr(parent, "add_agents")
+        content = content or _tr(parent, "agents_content")
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setWindowFlags(
@@ -515,22 +612,22 @@ class AgentsMdDialog(QDialog):
         title_row.addWidget(close)
         layout.addLayout(title_row)
 
-        layout.addWidget(QLabel("名称"))
+        layout.addWidget(QLabel(_tr(parent, "name")))
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("例如：项目默认提示词")
+        self.name_input.setPlaceholderText(_tr(parent, "agents_name_placeholder"))
         self.name_input.setText(name)
         layout.addWidget(self.name_input)
 
-        layout.addWidget(QLabel("描述"))
+        layout.addWidget(QLabel(_tr(parent, "description")))
         self.description_input = QLineEdit()
-        self.description_input.setPlaceholderText("可选的描述信息")
+        self.description_input.setPlaceholderText(_tr(parent, "description_placeholder"))
         self.description_input.setText(description)
         layout.addWidget(self.description_input)
 
         content_header = QHBoxLayout()
-        content_header.addWidget(QLabel("内容"))
+        content_header.addWidget(QLabel(_tr(parent, "content")))
         content_header.addStretch(1)
-        import_button = QPushButton("选择文件导入")
+        import_button = QPushButton(_tr(parent, "import_file"))
         import_button.setObjectName("GhostDialogButton")
         import_button.clicked.connect(self._import_file)
         content_header.addWidget(import_button)
@@ -543,8 +640,8 @@ class AgentsMdDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
-        save = QPushButton("保存")
+        cancel = QPushButton(_tr(parent, "cancel"))
+        save = QPushButton(_tr(parent, "save"))
         save.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)
         save.clicked.connect(self.accept)
@@ -555,9 +652,9 @@ class AgentsMdDialog(QDialog):
     def _import_file(self) -> None:
         value, _ = QFileDialog.getOpenFileName(
             self,
-            "选择 AGENTS.md 文件",
+            _tr(self.parentWidget(), "choose_agents_file"),
             "",
-            "AGENTS.md (AGENTS.md);;Markdown (*.md);;所有文件 (*)",
+            f"AGENTS.md (AGENTS.md);;Markdown (*.md);;{_tr(self.parentWidget(), 'all_files')}",
         )
         if not value:
             return
@@ -578,12 +675,13 @@ class McpConfigDialog(QDialog):
     def __init__(
         self,
         parent: QWidget,
-        title: str = "新建 MCP 配置",
+        title: str | None = None,
         mcp_title: str = "",
         display_name: str = "",
         description: str = "",
         config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
     ) -> None:
+        title = title or _tr(parent, "new_mcp")
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setWindowFlags(
@@ -609,28 +707,28 @@ class McpConfigDialog(QDialog):
         title_row.addWidget(close)
         layout.addLayout(title_row)
 
-        layout.addWidget(QLabel("MCP 标题（唯一）"))
+        layout.addWidget(QLabel(_tr(parent, "mcp_title")))
         self.title_input = QLineEdit()
         self.title_input.setPlaceholderText("my-mcp-server")
         self.title_input.setText(mcp_title)
         layout.addWidget(self.title_input)
 
-        layout.addWidget(QLabel("显示名称"))
+        layout.addWidget(QLabel(_tr(parent, "display_name")))
         self.display_name_input = QLineEdit()
-        self.display_name_input.setPlaceholderText("例如 @modelcontextprotocol/server-time")
+        self.display_name_input.setPlaceholderText(_tr(parent, "mcp_display_placeholder"))
         self.display_name_input.setText(display_name)
         layout.addWidget(self.display_name_input)
 
-        layout.addWidget(QLabel("描述"))
+        layout.addWidget(QLabel(_tr(parent, "description")))
         self.description_input = QLineEdit()
-        self.description_input.setPlaceholderText("例如：用于网页抓取、数据库查询或时间服务")
+        self.description_input.setPlaceholderText(_tr(parent, "mcp_desc_placeholder"))
         self.description_input.setText(description)
         layout.addWidget(self.description_input)
 
         header = QHBoxLayout()
-        header.addWidget(QLabel("完整 JSON 配置"))
+        header.addWidget(QLabel(_tr(parent, "full_json")))
         header.addStretch(1)
-        format_button = QPushButton("格式化")
+        format_button = QPushButton(_tr(parent, "format"))
         format_button.clicked.connect(self._format_json)
         header.addWidget(format_button)
         layout.addLayout(header)
@@ -642,8 +740,8 @@ class McpConfigDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        cancel = QPushButton("取消")
-        save = QPushButton("保存")
+        cancel = QPushButton(_tr(parent, "cancel"))
+        save = QPushButton(_tr(parent, "save"))
         save.setObjectName("PrimaryDialogButton")
         cancel.clicked.connect(self.reject)
         save.clicked.connect(self.accept)
@@ -675,34 +773,34 @@ def choose_directory(parent: QWidget, title: str) -> Path | None:
 def choose_archive(parent: QWidget) -> Path | None:
     value, _ = QFileDialog.getOpenFileName(
         parent,
-        "导入离线包",
+        _tr(parent, "import_offline"),
         "",
-        "任务套件 (*.harness.zip);;Zip 压缩包 (*.zip);;所有文件 (*)",
+        _tr(parent, "harness_zip_filter"),
     )
     return Path(value) if value else None
 
 
-def choose_export_zip(parent: QWidget, title: str = "导出全部配置") -> Path | None:
+def choose_export_zip(parent: QWidget, title: str | None = None) -> Path | None:
     value, _ = QFileDialog.getSaveFileName(
         parent,
-        title,
+        title or _tr(parent, "export_config"),
         "harness-manager-config.zip",
-        "Zip 压缩包 (*.zip);;所有文件 (*)",
+        _tr(parent, "zip_filter"),
     )
     return Path(value) if value else None
 
 
 def choose_harness_export_directory(parent: QWidget) -> Path | None:
-    value = QFileDialog.getExistingDirectory(parent, "选择套件导出目录")
+    value = QFileDialog.getExistingDirectory(parent, _tr(parent, "choose_harness_export"))
     return Path(value) if value else None
 
 
 def choose_config_archive(parent: QWidget) -> Path | None:
     value, _ = QFileDialog.getOpenFileName(
         parent,
-        "导入全部配置",
+        _tr(parent, "import_config"),
         "",
-        "Zip 压缩包 (*.zip);;所有文件 (*)",
+        _tr(parent, "zip_filter"),
     )
     return Path(value) if value else None
 
@@ -722,9 +820,9 @@ def ask_text(parent: QWidget, title: str, label: str) -> str | None:
 def choose_harness(
     parent: QWidget,
     harnesses: list["Harness"],
-    title: str = "选择任务套件",
-    message: str = "请选择要加入的任务套件",
-    confirm_text: str = "加入",
+    title: str | None = None,
+    message: str | None = None,
+    confirm_text: str | None = None,
 ) -> "Harness | None":
     dialog = _HarnessDialog(parent, harnesses, title, message, confirm_text)
     if dialog.exec() != QDialog.DialogCode.Accepted:
@@ -753,10 +851,10 @@ def ask_harness_details(
 
 def ask_agents_md(
     parent: QWidget,
-    title: str = "添加 AGENTS.md",
+    title: str | None = None,
     name: str = "",
     description: str = "",
-    content: str = "# AGENTS.md\n\n在此输入提示词内容...",
+    content: str | None = None,
 ) -> tuple[str, str, str] | None:
     dialog = AgentsMdDialog(parent, title, name, description, content)
     if dialog.exec() != QDialog.DialogCode.Accepted:
@@ -766,7 +864,7 @@ def ask_agents_md(
 
 def ask_mcp_config(
     parent: QWidget,
-    title: str = "新建 MCP 配置",
+    title: str | None = None,
     mcp_title: str = "",
     display_name: str = "",
     description: str = "",

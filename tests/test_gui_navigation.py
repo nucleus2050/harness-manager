@@ -161,8 +161,8 @@ def test_mcp_config_management_text_is_present():
 
     assert "ask_mcp_config" in source
     assert "McpConfigDialog" in dialog_source
-    assert "MCP 描述：" in source
-    assert "配置摘要：" in source
+    assert '"mcp_description_prefix": "MCP 描述"' in source
+    assert '"config_summary_prefix": "配置摘要"' in source
     assert "_mcp_description" in source
     assert "_mcp_config_summary" in source
     assert "_mcp_display_name(asset)" in source
@@ -182,7 +182,7 @@ def test_agents_md_creation_dialog_supports_editor_and_file_import():
     assert "_build_agents_toolbar" in source
     assert "_build_agents_summary" in source
     assert "self.asset_library_header_layout.addWidget(self._build_agents_toolbar())" in source
-    assert "new_agents_button = self._button(\"+ 新增 AGENTS.md\", \"PrimaryButton\")" in agents_toolbar_source
+    assert 'new_agents_button = self._button(self._t("new_agents"), "PrimaryButton")' in agents_toolbar_source
     assert "new_agents_button.clicked.connect(self._guard(self._new_agents_md_asset))" in agents_toolbar_source
     for obsolete in [
         "self.add_agents_button",
@@ -294,9 +294,9 @@ def test_join_harness_prompts_for_target_harness():
     assert "list_harnesses_available_for_asset(asset)" in main_source
     assert "available_harnesses = self.controller.list_harnesses_available_for_asset(asset)" in main_source
     assert "add_button.setEnabled(bool(available_harnesses))" in main_source
-    assert 'add_button.setText("已加入" if self.harnesses else "无套件")' in main_source
+    assert 'add_button.setText(self._t("already_joined") if self.harnesses else self._t("no_harness"))' in main_source
     assert "remove_button.setEnabled(bool(joined_harnesses))" in main_source
-    assert 'remove_button.setText("未加入")' in main_source
+    assert 'remove_button.setText(self._t("not_joined"))' in main_source
     assert "dialogs.show_info" not in main_source
     assert "选择任务套件" in dialog_source
     assert "请选择要加入的任务套件" in dialog_source
@@ -307,8 +307,8 @@ def test_agents_md_library_item_shows_description_and_summary_not_technical_ids(
 
     assert "_agents_md_description" in source
     assert "_agents_md_summary" in source
-    assert "AGENTS.md 描述：" in source
-    assert "内容摘要：" in source
+    assert '"agents_description_prefix": "AGENTS.md 描述"' in source
+    assert '"content_summary_prefix": "内容摘要"' in source
     assert "AGENTS_SUMMARY_MAX_LENGTH" in source
     assert "_truncate_text(self._agents_md_summary(asset), AGENTS_SUMMARY_MAX_LENGTH)" in source
     assert "summary.setMaximumHeight(34)" in source
@@ -348,7 +348,7 @@ def test_confirm_dialog_has_no_redundant_title_or_accent():
     assert "DialogAccent" not in confirm_source
     assert "title_label" not in confirm_source
     assert "message_label = QLabel(message)" in confirm_source
-    assert "确认删除" in confirm_source
+    assert '_tr(parent, "confirm_delete")' in confirm_source
 
 
 def test_harness_deploy_icons_are_stateful_toggles():
@@ -410,7 +410,7 @@ def test_harness_delete_action_uses_confirm_and_single_row_actions():
         assert redundant_label not in source
     assert "delete_harness(" in controller_source
     assert "ask_confirm" in dialog_source
-    assert "删除后不会删除技能、MCP、AGENTS.md 本体" in delete_method
+    assert "delete_harness_message" in delete_method
     assert "controller.delete_harness" in delete_method
     assert "dialogs.show_info" not in delete_method
     assert "QHBoxLayout(bar)" in action_builder
@@ -512,8 +512,8 @@ def test_harness_form_supports_description_and_editing():
     assert "套件描述" in dialog_source
     assert "QPlainTextEdit" in dialog_source
     assert "harness.description or \"暂无描述\"" not in list_card
-    assert "描述：" in details_refresh
-    assert "组件数量：" in details_refresh
+    assert "description_prefix" in details_refresh
+    assert "component_count" in details_refresh
 
 
 def test_harness_details_show_components_grouped_by_type():
@@ -530,7 +530,7 @@ def test_harness_details_show_components_grouped_by_type():
 def test_empty_harness_asset_group_uses_single_list_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
-    assert '_add_wrapped_harness_asset_group(f"{title}\\n0 个组件 - {empty_text}")' in source
+    assert '"asset_group_empty": "{title}\\n0 个组件 - {empty}"' in source
     assert 'self.skill_list.addItem(empty_text)' not in source
 
 
@@ -538,7 +538,7 @@ def test_harness_asset_group_lists_concrete_component_names():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
     assert 'names = "、".join(asset.name for asset in assets)' in source
-    assert '_add_wrapped_harness_asset_group(f"{title}\\n{len(assets)} 个组件：{names}")' in source
+    assert '"asset_group": "{title}\\n{count} 个组件：{names}"' in source
     assert 'self.skill_list.addItem(f"{asset.name}\\nID：{asset.id}")' not in source
 
 

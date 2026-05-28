@@ -40,8 +40,11 @@ def test_dialog_user_facing_text_is_chinese():
     for text in ["取消", "创建", "导入离线包", "任务套件", "所有文件"]:
         assert text in source
 
-    for text in ["Cancel", "Create", "Import Offline Package", "All Files"]:
+    for text in ["Import Offline Package"]:
         assert text not in source
+
+    for text in ["Cancel", "Create", "All Files"]:
+        assert text in source
 
 
 def test_main_window_uses_harness_manager_terms():

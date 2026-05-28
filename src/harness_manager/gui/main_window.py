@@ -92,6 +92,92 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "import_config": "导入全部配置",
         "select_harness": "选择一个任务套件",
         "harness_hint": "任务套件详情会显示在这里。",
+        "app_title": "任务套件",
+        "app_subtitle": "整理、打包并部署本地 AI 技能",
+        "import_sources": "导入来源",
+        "stat_skill": "技能",
+        "settings_desc": "管理界面语言和全量配置备份。",
+        "interface_language": "界面语言",
+        "appearance_theme": "外观主题",
+        "config_backup": "配置备份",
+        "hero_subtitle": "整理可复用技能集合，导出离线包，并部署到 Codex、Claude Code 或 OpenCode。",
+        "harnesses_desc": "把 AGENTS.md、MCP 和技能整理成可复用的任务工作台。",
+        "mcp_management": "MCP 服务器管理",
+        "mcp_management_desc": "维护任务套件可复用的 MCP JSON 配置。",
+        "new_mcp": "+ 新增 MCP",
+        "agents_management": "AGENTS.md 管理",
+        "agents_management_desc": "维护可复用的提示词文件，可直接编辑或从文件导入。",
+        "new_agents": "+ 新增 AGENTS.md",
+        "configured_agents": "已配置 {count} 个 AGENTS.md",
+        "configured_mcp": "已配置 {count} 个 MCP",
+        "component_library": "组件库",
+        "component_library_desc": "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。",
+        "ready": "就绪",
+        "missing": "缺失",
+        "custom": "自定义",
+        "not_configured_path": "未配置路径",
+        "error": "错误",
+        "empty_harness_list": "暂无任务套件\n可以先新建空套件，再导入或关联组件。",
+        "component_count": "{count} 个组件",
+        "global": "全局",
+        "project": "项目",
+        "deploy_claude": "部署套件到 Claude Code",
+        "deploy_codex": "部署套件到 Codex",
+        "deploy_opencode": "部署套件到 OpenCode",
+        "deployed_action": "已部署，点击撤销",
+        "undeployed_action": "未部署，点击部署",
+        "scope_toggle": "切换部署范围：全局默认目录 / 当前项目目录",
+        "global_scope": "全局默认目录",
+        "project_scope": "当前项目目录",
+        "empty_agents": "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。",
+        "empty_mcp": "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。",
+        "empty_skills": "暂无技能\n请从左侧选择 Skill 来源并导入技能。",
+        "not_selected_harness": "未选择任务套件\n请从左侧列表选择一个任务套件。",
+        "description_prefix": "描述",
+        "joined_skills": "已加入的技能",
+        "joined_agents": "已加入的 AGENTS.md",
+        "joined_mcp": "已加入的 MCP",
+        "asset_group_empty": "{title}\n0 个组件 - {empty}",
+        "asset_group": "{title}\n{count} 个组件：{names}",
+        "skill_label": "技能",
+        "component_label": "组件",
+        "choose_harness_first": "请先选择一个任务套件。",
+        "current_app": "当前应用",
+        "config_directory": "配置目录：{name}",
+        "add_custom_source_title": "添加自定义目录",
+        "source_name": "来源名称",
+        "new_harness": "新建任务套件",
+        "edit_harness": "编辑任务套件",
+        "delete_harness": "删除任务套件",
+        "delete_harness_message": "确认删除任务套件「{name}」？\n\n删除后不会删除技能、MCP、AGENTS.md 本体，只会移除套件及其关联关系。",
+        "add_agents": "添加 AGENTS.md",
+        "new_mcp_config": "新建 MCP 配置",
+        "edit_mcp_config": "编辑 MCP 配置",
+        "no_harness_error": "当前没有任务套件，请先新建任务套件。",
+        "choose_remove_harness": "选择要移出的任务套件",
+        "choose_remove_message": "请选择要移出该组件的任务套件",
+        "remove": "移出",
+        "delete_skill": "删除技能",
+        "delete_skill_message": "确认删除技能「{name}」？\n\n删除后会移除技能文件及其任务套件关联。",
+        "agents_description_prefix": "AGENTS.md 描述",
+        "content_summary_prefix": "内容摘要",
+        "mcp_description_prefix": "MCP 描述",
+        "config_summary_prefix": "配置摘要",
+        "type_prefix": "类型",
+        "source_prefix": "来源",
+        "local": "本地",
+        "skill_description_prefix": "技能描述",
+        "add_to_harness": "加入套件",
+        "already_joined": "已加入",
+        "no_harness": "无套件",
+        "remove_from_harness": "移出套件",
+        "not_joined": "未加入",
+        "no_description": "暂无描述",
+        "file_missing": "文件缺失",
+        "no_content": "暂无内容",
+        "config_file_missing": "配置文件缺失",
+        "type_word": "类型",
+        "command_word": "命令",
     },
     "en-US": {
         "window_title": "Harness Manager",
@@ -124,6 +210,92 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "import_config": "Import Full Config",
         "select_harness": "Select a harness",
         "harness_hint": "Harness details appear here.",
+        "app_title": "Harnesses",
+        "app_subtitle": "Organize, package, and deploy local AI skills",
+        "import_sources": "Import Sources",
+        "stat_skill": "Skills",
+        "settings_desc": "Manage interface language and full configuration backups.",
+        "interface_language": "Interface Language",
+        "appearance_theme": "Appearance Theme",
+        "config_backup": "Configuration Backup",
+        "hero_subtitle": "Organize reusable skill sets, export offline bundles, and deploy to Codex, Claude Code, or OpenCode.",
+        "harnesses_desc": "Group AGENTS.md, MCP, and skills into reusable task workbenches.",
+        "mcp_management": "MCP Server Management",
+        "mcp_management_desc": "Maintain reusable MCP JSON configurations for harnesses.",
+        "new_mcp": "+ New MCP",
+        "agents_management": "AGENTS.md Management",
+        "agents_management_desc": "Maintain reusable instruction files by editing directly or importing a file.",
+        "new_agents": "+ New AGENTS.md",
+        "configured_agents": "{count} AGENTS.md configured",
+        "configured_mcp": "{count} MCP configured",
+        "component_library": "Component Library",
+        "component_library_desc": "Browse all skills, AGENTS.md, and MCP components by type and add them to harnesses.",
+        "ready": "Ready",
+        "missing": "Missing",
+        "custom": "Custom",
+        "not_configured_path": "No path configured",
+        "error": "Error",
+        "empty_harness_list": "No harnesses yet\nCreate an empty harness first, then import or link components.",
+        "component_count": "{count} components",
+        "global": "Global",
+        "project": "Project",
+        "deploy_claude": "Deploy harness to Claude Code",
+        "deploy_codex": "Deploy harness to Codex",
+        "deploy_opencode": "Deploy harness to OpenCode",
+        "deployed_action": "Deployed, click to undo",
+        "undeployed_action": "Not deployed, click to deploy",
+        "scope_toggle": "Switch deploy scope: global default directory / current project directory",
+        "global_scope": "global default directory",
+        "project_scope": "current project directory",
+        "empty_agents": "No AGENTS.md\nAdd AGENTS.md from the harness details first.",
+        "empty_mcp": "No MCP\nAdd an MCP configuration from the harness details first.",
+        "empty_skills": "No skills\nSelect a Skill source on the left and import skills.",
+        "not_selected_harness": "No harness selected\nSelect a harness from the list.",
+        "description_prefix": "Description",
+        "joined_skills": "Joined skills",
+        "joined_agents": "Joined AGENTS.md",
+        "joined_mcp": "Joined MCP",
+        "asset_group_empty": "{title}\n0 components - {empty}",
+        "asset_group": "{title}\n{count} components: {names}",
+        "skill_label": "Skill",
+        "component_label": "Component",
+        "choose_harness_first": "Select a harness first.",
+        "current_app": "Current app",
+        "config_directory": "Config directory: {name}",
+        "add_custom_source_title": "Add Custom Folder",
+        "source_name": "Source Name",
+        "new_harness": "New Harness",
+        "edit_harness": "Edit Harness",
+        "delete_harness": "Delete Harness",
+        "delete_harness_message": "Delete harness \"{name}\"?\n\nThis will not delete Skill, MCP, or AGENTS.md assets. It only removes the harness and its links.",
+        "add_agents": "Add AGENTS.md",
+        "new_mcp_config": "New MCP Config",
+        "edit_mcp_config": "Edit MCP Config",
+        "no_harness_error": "No harness exists. Create a harness first.",
+        "choose_remove_harness": "Choose Harness to Remove From",
+        "choose_remove_message": "Choose the harness to remove this component from.",
+        "remove": "Remove",
+        "delete_skill": "Delete Skill",
+        "delete_skill_message": "Delete skill \"{name}\"?\n\nThis will remove the skill files and its harness links.",
+        "agents_description_prefix": "AGENTS.md description",
+        "content_summary_prefix": "Content summary",
+        "mcp_description_prefix": "MCP description",
+        "config_summary_prefix": "Config summary",
+        "type_prefix": "Type",
+        "source_prefix": "Source",
+        "local": "Local",
+        "skill_description_prefix": "Skill description",
+        "add_to_harness": "Add",
+        "already_joined": "Added",
+        "no_harness": "No harness",
+        "remove_from_harness": "Remove",
+        "not_joined": "Not added",
+        "no_description": "No description",
+        "file_missing": "File missing",
+        "no_content": "No content",
+        "config_file_missing": "Config file missing",
+        "type_word": "type",
+        "command_word": "command",
     },
 }
 
@@ -320,17 +492,19 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(22, 24, 22, 24)
         layout.setSpacing(18)
 
-        title = self._label("任务套件", "AppTitle")
-        subtitle = self._label("整理、打包并部署本地 AI 技能", "SidebarSubtitle")
+        self.sidebar_title = self._label(self._t("app_title"), "AppTitle")
+        self.sidebar_subtitle = self._label(self._t("app_subtitle"), "SidebarSubtitle")
+        subtitle = self.sidebar_subtitle
         subtitle.setWordWrap(True)
-        layout.addWidget(title)
+        layout.addWidget(self.sidebar_title)
         layout.addWidget(subtitle)
         layout.addSpacing(8)
 
         stats = self._sidebar_card()
         layout.addWidget(stats)
 
-        clients_title = self._sidebar_label("导入来源")
+        self.clients_title = self._sidebar_label(self._t("import_sources"))
+        clients_title = self.clients_title
         layout.addWidget(clients_title)
         clients_container = QWidget()
         self.client_cards_layout = QVBoxLayout(clients_container)
@@ -358,8 +532,8 @@ class MainWindow(QMainWindow):
         layout.setHorizontalSpacing(14)
         layout.setVerticalSpacing(6)
 
-        harness_label = self._label("任务套件", "SidebarSubtitle")
-        skill_label = self._label("技能", "SidebarSubtitle")
+        self.stat_harness_label = self._label(self._t("harnesses"), "SidebarSubtitle")
+        self.stat_skill_label = self._label(self._t("stat_skill"), "SidebarSubtitle")
         mcp_label = self._label("MCP", "SidebarSubtitle")
         agents_label = self._label("AGENTS.md", "SidebarSubtitle")
         self.harness_count_value.setStyleSheet("color: #f8fafc;")
@@ -368,8 +542,8 @@ class MainWindow(QMainWindow):
         self.agents_count_value.setStyleSheet("color: #f8fafc;")
         layout.addWidget(self.harness_count_value, 0, 0)
         layout.addWidget(self.skill_count_value, 0, 1)
-        layout.addWidget(harness_label, 1, 0)
-        layout.addWidget(skill_label, 1, 1)
+        layout.addWidget(self.stat_harness_label, 1, 0)
+        layout.addWidget(self.stat_skill_label, 1, 1)
         layout.addWidget(self.mcp_count_value, 2, 0)
         layout.addWidget(self.agents_count_value, 2, 1)
         layout.addWidget(mcp_label, 3, 0)
@@ -405,7 +579,13 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(22, 20, 22, 22)
         layout.setSpacing(18)
         settings_header = QHBoxLayout()
-        settings_copy = self._section_header("设置", "管理界面语言和全量配置备份。")
+        settings_copy = QVBoxLayout()
+        settings_copy.setSpacing(4)
+        self.settings_title_label = self._label(self._t("settings"), "SectionTitle")
+        self.settings_desc_label = self._label(self._t("settings_desc"), "MutedText")
+        self.settings_desc_label.setWordWrap(True)
+        settings_copy.addWidget(self.settings_title_label)
+        settings_copy.addWidget(self.settings_desc_label)
         settings_header.addLayout(settings_copy, 1)
         settings_header.addWidget(self.back_to_business_button)
         layout.addLayout(settings_header)
@@ -414,7 +594,8 @@ class MainWindow(QMainWindow):
         language_layout = QVBoxLayout(language_card)
         language_layout.setContentsMargins(18, 16, 18, 18)
         language_layout.setSpacing(12)
-        language_layout.addWidget(self._label("界面语言", "SectionTitle"))
+        self.language_title_label = self._label(self._t("interface_language"), "SectionTitle")
+        language_layout.addWidget(self.language_title_label)
         language_row = QHBoxLayout()
         language_row.addWidget(self.language_zh_button)
         language_row.addWidget(self.language_en_button)
@@ -426,7 +607,8 @@ class MainWindow(QMainWindow):
         theme_layout = QVBoxLayout(theme_card)
         theme_layout.setContentsMargins(18, 16, 18, 18)
         theme_layout.setSpacing(12)
-        theme_layout.addWidget(self._label("外观主题", "SectionTitle"))
+        self.theme_title_label = self._label(self._t("appearance_theme"), "SectionTitle")
+        theme_layout.addWidget(self.theme_title_label)
         theme_grid = QGridLayout()
         theme_grid.setHorizontalSpacing(10)
         theme_grid.setVerticalSpacing(10)
@@ -452,7 +634,8 @@ class MainWindow(QMainWindow):
         backup_layout = QVBoxLayout(backup_card)
         backup_layout.setContentsMargins(18, 16, 18, 18)
         backup_layout.setSpacing(12)
-        backup_layout.addWidget(self._label("配置备份", "SectionTitle"))
+        self.backup_title_label = self._label(self._t("config_backup"), "SectionTitle")
+        backup_layout.addWidget(self.backup_title_label)
         backup_row = QHBoxLayout()
         backup_row.addWidget(self.export_config_button)
         backup_row.addWidget(self.import_config_button)
@@ -484,11 +667,10 @@ class MainWindow(QMainWindow):
 
         copy = QVBoxLayout()
         copy.setSpacing(5)
-        copy.addWidget(self._label("Harness Manager（任务套件管理器）", "PageTitle"))
-        subtitle = self._label(
-            "整理可复用技能集合，导出离线包，并部署到 Codex、Claude Code 或 OpenCode。",
-            "MutedText",
-        )
+        self.hero_title_label = self._label(self._t("window_title"), "PageTitle")
+        copy.addWidget(self.hero_title_label)
+        self.hero_subtitle_label = self._label(self._t("hero_subtitle"), "MutedText")
+        subtitle = self.hero_subtitle_label
         subtitle.setWordWrap(True)
         copy.addWidget(subtitle)
         layout.addLayout(copy, 1)
@@ -504,7 +686,13 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(card)
         layout.setContentsMargins(20, 18, 20, 20)
         layout.setSpacing(12)
-        header = self._section_header("任务套件", "把 AGENTS.md、MCP 和技能整理成可复用的任务工作台。")
+        header = QVBoxLayout()
+        header.setSpacing(4)
+        self.harnesses_title_label = self._label(self._t("harnesses"), "SectionTitle")
+        self.harnesses_desc_label = self._label(self._t("harnesses_desc"), "MutedText")
+        self.harnesses_desc_label.setWordWrap(True)
+        header.addWidget(self.harnesses_title_label)
+        header.addWidget(self.harnesses_desc_label)
         layout.addLayout(header)
         layout.addWidget(self._build_harness_actions())
         layout.addWidget(self.harness_list, 1)
@@ -555,14 +743,14 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(toolbar)
         layout.setContentsMargins(4, 0, 4, 0)
         layout.setSpacing(12)
-        title = self._label("MCP 服务器管理", "SectionTitle")
-        subtitle = self._label("维护任务套件可复用的 MCP JSON 配置。", "MutedText")
+        title = self._label(self._t("mcp_management"), "SectionTitle")
+        subtitle = self._label(self._t("mcp_management_desc"), "MutedText")
         copy = QVBoxLayout()
         copy.setSpacing(4)
         copy.addWidget(title)
         copy.addWidget(subtitle)
         layout.addLayout(copy, 1)
-        new_mcp_config_button = self._button("+ 新增 MCP", "PrimaryButton")
+        new_mcp_config_button = self._button(self._t("new_mcp"), "PrimaryButton")
         new_mcp_config_button.clicked.connect(self._guard(self._new_mcp_config))
         layout.addWidget(new_mcp_config_button)
         return toolbar
@@ -573,14 +761,14 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(toolbar)
         layout.setContentsMargins(4, 0, 4, 0)
         layout.setSpacing(12)
-        title = self._label("AGENTS.md 管理", "SectionTitle")
-        subtitle = self._label("维护可复用的提示词文件，可直接编辑或从文件导入。", "MutedText")
+        title = self._label(self._t("agents_management"), "SectionTitle")
+        subtitle = self._label(self._t("agents_management_desc"), "MutedText")
         copy = QVBoxLayout()
         copy.setSpacing(4)
         copy.addWidget(title)
         copy.addWidget(subtitle)
         layout.addLayout(copy, 1)
-        new_agents_button = self._button("+ 新增 AGENTS.md", "PrimaryButton")
+        new_agents_button = self._button(self._t("new_agents"), "PrimaryButton")
         new_agents_button.clicked.connect(self._guard(self._new_agents_md_asset))
         layout.addWidget(new_agents_button)
         return toolbar
@@ -590,7 +778,7 @@ class MainWindow(QMainWindow):
         summary.setObjectName("AgentsSummary")
         layout = QHBoxLayout(summary)
         layout.setContentsMargins(12, 10, 12, 10)
-        layout.addWidget(self._label(f"已配置 {len(self.library_assets)} 个 AGENTS.md", "MutedText"))
+        layout.addWidget(self._label(self._t("configured_agents").format(count=len(self.library_assets)), "MutedText"))
         layout.addStretch(1)
         return summary
 
@@ -599,7 +787,7 @@ class MainWindow(QMainWindow):
         summary.setObjectName("McpSummary")
         layout = QHBoxLayout(summary)
         layout.setContentsMargins(12, 10, 12, 10)
-        layout.addWidget(self._label(f"已配置 {len(self.library_assets)} 个 MCP", "MutedText"))
+        layout.addWidget(self._label(self._t("configured_mcp").format(count=len(self.library_assets)), "MutedText"))
         layout.addStretch(1)
         return summary
 
@@ -611,6 +799,9 @@ class MainWindow(QMainWindow):
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
+            child_layout = item.layout()
+            if child_layout is not None:
+                self._clear_layout_widgets(child_layout)
         if self.current_view == "mcp":
             self.asset_library_header_layout.addWidget(self._build_mcp_toolbar())
             self.asset_library_header_layout.addWidget(self._build_mcp_summary())
@@ -619,8 +810,18 @@ class MainWindow(QMainWindow):
             self.asset_library_header_layout.addWidget(self._build_agents_summary())
         else:
             self.asset_library_header_layout.addLayout(
-                self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
+                self._section_header(self._t("component_library"), self._t("component_library_desc"))
             )
+
+    def _clear_layout_widgets(self, layout: QVBoxLayout | QHBoxLayout | QGridLayout) -> None:
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+            child_layout = item.layout()
+            if child_layout is not None:
+                self._clear_layout_widgets(child_layout)
 
     def _asset_library_item(self, asset: Asset) -> QWidget:
         row = QFrame()
@@ -639,11 +840,11 @@ class MainWindow(QMainWindow):
         copy.addWidget(title)
         if asset.type == "agents_md":
             description = self._label(
-                f"AGENTS.md 描述：{self._agents_md_description(asset)}",
+                f"{self._t('agents_description_prefix')}: {self._agents_md_description(asset)}",
                 "MutedText",
             )
             summary = self._label(
-                f"内容摘要：{self._truncate_text(self._agents_md_summary(asset), AGENTS_SUMMARY_MAX_LENGTH)}",
+                f"{self._t('content_summary_prefix')}: {self._truncate_text(self._agents_md_summary(asset), AGENTS_SUMMARY_MAX_LENGTH)}",
                 "SkillDescription",
             )
             description.setWordWrap(False)
@@ -655,11 +856,11 @@ class MainWindow(QMainWindow):
                 copy.addWidget(label)
         elif asset.type == "mcp":
             description = self._label(
-                f"MCP 描述：{self._mcp_description(asset)}",
+                f"{self._t('mcp_description_prefix')}: {self._mcp_description(asset)}",
                 "MutedText",
             )
             summary = self._label(
-                f"配置摘要：{self._truncate_text(self._mcp_config_summary(asset), MCP_SUMMARY_MAX_LENGTH)}",
+                f"{self._t('config_summary_prefix')}: {self._truncate_text(self._mcp_config_summary(asset), MCP_SUMMARY_MAX_LENGTH)}",
                 "SkillDescription",
             )
             description.setWordWrap(False)
@@ -671,7 +872,7 @@ class MainWindow(QMainWindow):
                 copy.addWidget(label)
         else:
             meta = self._label(
-                f"类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'}",
+                f"{self._t('type_prefix')}: {self._asset_type_label(asset.type)} - {self._t('source_prefix')}: {asset.source_type or self._t('local')}",
                 "MutedText",
             )
             meta.setWordWrap(True)
@@ -679,7 +880,7 @@ class MainWindow(QMainWindow):
             copy.addWidget(meta)
         if asset.type == "skill":
             description = self._label(
-                f"技能描述：{self._truncate_description(self._skill_description(asset))}",
+                f"{self._t('skill_description_prefix')}: {self._truncate_description(self._skill_description(asset))}",
                 "SkillDescription",
             )
             description.setWordWrap(True)
@@ -701,33 +902,33 @@ class MainWindow(QMainWindow):
         actions_layout.setSpacing(14)
         actions_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        add_button = self._button("加入套件", "CompactButton")
+        add_button = self._button(self._t("add_to_harness"), "CompactButton")
         add_button.setFixedWidth(88)
         add_button.setEnabled(bool(available_harnesses))
         if not available_harnesses:
-            add_button.setText("已加入" if self.harnesses else "无套件")
+            add_button.setText(self._t("already_joined") if self.harnesses else self._t("no_harness"))
         add_button.clicked.connect(
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
         actions_layout.addWidget(add_button)
 
         if asset.type == "mcp":
-            edit_button = self._button("编辑", "CompactButton")
+            edit_button = self._button(self._t("edit"), "CompactButton")
             edit_button.setFixedWidth(88)
             edit_button.clicked.connect(self._guard(lambda asset=asset: self._edit_mcp_config(asset)))
             actions_layout.addWidget(edit_button)
 
-        remove_button = self._button("移出套件", "CompactButton")
+        remove_button = self._button(self._t("remove_from_harness"), "CompactButton")
         remove_button.setFixedWidth(88)
         remove_button.setEnabled(bool(joined_harnesses))
         if not joined_harnesses:
-            remove_button.setText("未加入")
+            remove_button.setText(self._t("not_joined"))
         remove_button.clicked.connect(
             self._guard(lambda asset=asset: self._remove_asset_from_chosen_harness(asset))
         )
         actions_layout.addWidget(remove_button)
         if asset.type == "skill":
-            delete_button = self._button("删除", "CompactButton")
+            delete_button = self._button(self._t("delete"), "CompactButton")
             delete_button.setFixedWidth(88)
             delete_button.clicked.connect(
                 self._guard(lambda asset=asset: self._delete_skill_asset(asset))
@@ -744,7 +945,7 @@ class MainWindow(QMainWindow):
     def _agents_md_description(self, asset: Asset) -> str:
         metadata = self._asset_metadata(asset)
         description = metadata.get("description")
-        return description if isinstance(description, str) and description else "暂无描述"
+        return description if isinstance(description, str) and description else self._t("no_description")
 
     def _asset_metadata(self, asset: Asset) -> dict:
         try:
@@ -756,13 +957,13 @@ class MainWindow(QMainWindow):
     def _agents_md_summary(self, asset: Asset) -> str:
         source = self.controller.paths.root / asset.relative_path
         if not source.is_file():
-            return "文件缺失"
+            return self._t("file_missing")
         lines = [
             line.strip()
             for line in source.read_text(encoding="utf-8", errors="replace").splitlines()
             if line.strip()
         ]
-        return " ".join(lines) or "暂无内容"
+        return " ".join(lines) or self._t("no_content")
 
     def _mcp_display_name(self, asset: Asset) -> str:
         display_name = self._asset_metadata(asset).get("display_name")
@@ -770,12 +971,12 @@ class MainWindow(QMainWindow):
 
     def _mcp_description(self, asset: Asset) -> str:
         description = self._asset_metadata(asset).get("description")
-        return description if isinstance(description, str) and description else "暂无描述"
+        return description if isinstance(description, str) and description else self._t("no_description")
 
     def _mcp_config_summary(self, asset: Asset) -> str:
         source = self.controller.paths.root / asset.relative_path
         if not source.is_file():
-            return "配置文件缺失"
+            return self._t("config_file_missing")
         try:
             parsed = json.loads(source.read_text(encoding="utf-8", errors="replace"))
         except json.JSONDecodeError:
@@ -785,9 +986,9 @@ class MainWindow(QMainWindow):
             server_type = parsed.get("type")
             parts = []
             if isinstance(server_type, str):
-                parts.append(f"类型 {server_type}")
+                parts.append(f"{self._t('type_word')} {server_type}")
             if isinstance(command, str):
-                parts.append(f"命令 {command}")
+                parts.append(f"{self._t('command_word')} {command}")
             return "，".join(parts) or json.dumps(parsed, ensure_ascii=False)
         return json.dumps(parsed, ensure_ascii=False)
 
@@ -823,12 +1024,12 @@ class MainWindow(QMainWindow):
         header.setSpacing(8)
         name = self._label(client.name, "ClientName")
         name.setWordWrap(True)
-        status = self._label("就绪" if ready else "缺失", "ClientStatusReady" if ready else "ClientStatusMissing")
+        status = self._label(self._t("ready") if ready else self._t("missing"), "ClientStatusReady" if ready else "ClientStatusMissing")
         status.setMinimumWidth(48)
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         header.addWidget(name, 1)
         header.addWidget(status)
-        import_button = self._button("导入", "SourceImportButton")
+        import_button = self._button(self._t("import"), "SourceImportButton")
         import_button.setMaximumWidth(48)
         import_button.clicked.connect(
             self._guard(
@@ -840,7 +1041,7 @@ class MainWindow(QMainWindow):
         header.addWidget(import_button)
         layout.addLayout(header)
 
-        path_label = self._label(str(path) if path else "未配置路径", "ClientPath")
+        path_label = self._label(str(path) if path else self._t("not_configured_path"), "ClientPath")
         path_label.setWordWrap(True)
         path_label.setMinimumHeight(34)
         layout.addWidget(path_label)
@@ -865,12 +1066,12 @@ class MainWindow(QMainWindow):
         name = self._label(str(source["name"]), "ClientName")
         name.setWordWrap(True)
         header.addWidget(name, 1)
-        status = self._label("自定义", "ClientStatusReady")
+        status = self._label(self._t("custom"), "ClientStatusReady")
         status.setMinimumWidth(48)
         status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        delete_button = self._button("删除", "SourceDeleteButton")
+        delete_button = self._button(self._t("delete"), "SourceDeleteButton")
         delete_button.setMaximumWidth(48)
-        import_button = self._button("导入", "SourceImportButton")
+        import_button = self._button(self._t("import"), "SourceImportButton")
         import_button.setMaximumWidth(48)
         import_button.clicked.connect(
             self._guard(
@@ -966,7 +1167,7 @@ class MainWindow(QMainWindow):
                 callback()
             except Exception as exc:
                 logger.exception("GUI action failed")
-                dialogs.show_error(self, "错误", str(exc))
+                dialogs.show_error(self, self._t("error"), str(exc))
 
         return wrapped
 
@@ -1006,7 +1207,7 @@ class MainWindow(QMainWindow):
                 )
             self.harness_list.setCurrentRow(min(max(selected_row, 0), len(self.harnesses) - 1))
         else:
-            self.harness_list.addItem("暂无任务套件\n可以先新建空套件，再导入或关联组件。")
+            self.harness_list.addItem(self._t("empty_harness_list"))
             self._refresh_harness_assets(-1)
         has_harness = bool(self.harnesses)
         self.edit_harness_button.setEnabled(has_harness)
@@ -1044,7 +1245,7 @@ class MainWindow(QMainWindow):
         actions_layout = QHBoxLayout(actions)
         actions_layout.setContentsMargins(0, 0, 0, 0)
         actions_layout.setSpacing(10)
-        count_label = self._label(f"{len(assets)} 个组件", "HarnessCountPill")
+        count_label = self._label(self._t("component_count").format(count=len(assets)), "HarnessCountPill")
         count_label.setFixedWidth(72)
         count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         actions_layout.addWidget(count_label)
@@ -1055,22 +1256,22 @@ class MainWindow(QMainWindow):
         deploy_layout = QHBoxLayout(deploy_frame)
         deploy_layout.setContentsMargins(10, 6, 10, 6)
         deploy_layout.setSpacing(6)
-        scope_text = "全局" if self.deploy_scope == "global" else "项目"
+        scope_text = self._t("global") if self.deploy_scope == "global" else self._t("project")
         scope_label = self._label(scope_text, "HarnessScopeLabel")
         deploy_layout.addWidget(scope_label)
         deploy_layout.addWidget(self._scope_toggle_button())
         for client_type, icon, tooltip in [
-            ("claude_code", "✹", "部署套件到 Claude Code"),
-            ("codex", "◎", "部署套件到 Codex"),
-            ("opencode", "✦", "部署套件到 OpenCode"),
+            ("claude_code", "✹", self._t("deploy_claude")),
+            ("codex", "◎", self._t("deploy_codex")),
+            ("opencode", "✦", self._t("deploy_opencode")),
         ]:
             target_path = self._deploy_target_path(client_type)
             active = self.controller.harness_deploy_status(harness.id, client_type, target_path)
             button = self._button(
                 icon, "HarnessDeployIconActive" if active else "HarnessDeployIcon"
             )
-            action_text = "已部署，点击撤销" if active else "未部署，点击部署"
-            button.setToolTip(f"{tooltip}（{self._deploy_scope_label()}）：{action_text}")
+            action_text = self._t("deployed_action") if active else self._t("undeployed_action")
+            button.setToolTip(f"{tooltip} ({self._deploy_scope_label()}): {action_text}")
             button.clicked.connect(
                 self._guard(
                     lambda harness_id=harness.id, client_type=client_type: self._toggle_harness_deployment(
@@ -1086,7 +1287,7 @@ class MainWindow(QMainWindow):
 
     def _scope_toggle_button(self) -> QPushButton:
         button = self._button("⌂" if self.deploy_scope == "global" else "▣", "HarnessScopeIcon")
-        button.setToolTip("切换部署范围：全局默认目录 / 当前项目目录")
+        button.setToolTip(self._t("scope_toggle"))
         button.clicked.connect(self._guard(self._toggle_deploy_scope))
         return button
 
@@ -1095,7 +1296,7 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _deploy_scope_label(self) -> str:
-        return "全局默认目录" if self.deploy_scope == "global" else "当前项目目录"
+        return self._t("global_scope") if self.deploy_scope == "global" else self._t("project_scope")
 
     def _deploy_target_path(self, client_type: ClientType) -> Path | None:
         if self.deploy_scope == "project":
@@ -1138,13 +1339,13 @@ class MainWindow(QMainWindow):
         self.library_skill_list.clear()
         if self.current_view == "agents_md":
             self.library_assets = self.controller.list_assets_by_type("agents_md")
-            empty_text = "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。"
+            empty_text = self._t("empty_agents")
         elif self.current_view == "mcp":
             self.library_assets = self.controller.list_assets_by_type("mcp")
-            empty_text = "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。"
+            empty_text = self._t("empty_mcp")
         else:
             self.library_assets = self.controller.list_assets_by_type("skill")
-            empty_text = "暂无技能\n请从左侧选择 Skill 来源并导入技能。"
+            empty_text = self._t("empty_skills")
             if not self.library_assets:
                 self.library_assets = [
                     Asset(skill.id, "skill", skill.name, skill.source_client, skill.relative_path, skill.fingerprint, "{}")
@@ -1449,40 +1650,44 @@ class MainWindow(QMainWindow):
         self.skill_list.clear()
         self.harness_assets = []
         if row < 0 or row >= len(self.harnesses):
-            self.current_harness_title.setText("选择一个任务套件")
-            self.current_harness_meta.setText("任务套件详情会显示在这里。")
-            self.skill_list.addItem("未选择任务套件\n请从左侧列表选择一个任务套件。")
+            self.current_harness_title.setText(self._t("select_harness"))
+            self.current_harness_meta.setText(self._t("harness_hint"))
+            self.skill_list.addItem(self._t("not_selected_harness"))
             return
 
         harness = self.harnesses[row]
         self.harness_assets = self.controller.list_harness_assets(harness.id)
         self.current_harness_title.setText(harness.name)
         self.current_harness_meta.setText(
-            f"描述：{harness.description or '暂无描述'}\n"
-            f"组件数量：{len(self.harness_assets)}"
+            f"{self._t('description_prefix')}: {harness.description or self._t('no_description')}\n"
+            f"{self._t('component_count').format(count=len(self.harness_assets))}"
         )
         self._add_asset_group(
-            "已加入的技能",
+            self._t("joined_skills"),
             self.controller.list_harness_assets_by_type(harness.id, "skill"),
-            "暂无技能",
+            self._t("empty_skills").split("\n", 1)[0],
         )
         self._add_asset_group(
-            "已加入的 AGENTS.md",
+            self._t("joined_agents"),
             self.controller.list_harness_assets_by_type(harness.id, "agents_md"),
-            "暂无 AGENTS.md",
+            self._t("empty_agents").split("\n", 1)[0],
         )
         self._add_asset_group(
-            "已加入的 MCP",
+            self._t("joined_mcp"),
             self.controller.list_harness_assets_by_type(harness.id, "mcp"),
-            "暂无 MCP",
+            self._t("empty_mcp").split("\n", 1)[0],
         )
 
     def _add_asset_group(self, title: str, assets: list[Asset], empty_text: str) -> None:
         if not assets:
-            self._add_wrapped_harness_asset_group(f"{title}\n0 个组件 - {empty_text}")
+            self._add_wrapped_harness_asset_group(
+                self._t("asset_group_empty").format(title=title, empty=empty_text)
+            )
             return
         names = "、".join(asset.name for asset in assets)
-        self._add_wrapped_harness_asset_group(f"{title}\n{len(assets)} 个组件：{names}")
+        self._add_wrapped_harness_asset_group(
+            self._t("asset_group").format(title=title, count=len(assets), names=names)
+        )
 
     def _add_wrapped_harness_asset_group(self, text: str) -> None:
         title, separator, body = text.partition("\n")
@@ -1508,7 +1713,9 @@ class MainWindow(QMainWindow):
         return 112 + extra_lines * 20
 
     def _asset_type_label(self, asset_type: str) -> str:
-        return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": "技能"}.get(asset_type, "组件")
+        return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": self._t("skill_label")}.get(
+            asset_type, self._t("component_label")
+        )
 
     def _selected_harness_row(self) -> int | None:
         row = self.harness_list.currentRow()
@@ -1517,7 +1724,7 @@ class MainWindow(QMainWindow):
     def _require_harness_row(self) -> int:
         row = self._selected_harness_row()
         if row is None:
-            raise ValueError("请先选择一个任务套件。")
+            raise ValueError(self._t("choose_harness_first"))
         return row
 
     def _import_from_client_source(self, client_type: ClientType) -> None:
@@ -1526,8 +1733,8 @@ class MainWindow(QMainWindow):
         try:
             self.controller.import_from_client_source(client_type)
         except (ValueError, NotADirectoryError):
-            client_name = self._selected_client_name(client_type) or "当前应用"
-            source = dialogs.choose_directory(self, f"配置目录：{client_name}")
+            client_name = self._selected_client_name(client_type) or self._t("current_app")
+            source = dialogs.choose_directory(self, self._t("config_directory").format(name=client_name))
             if source is None:
                 return
             self.controller.set_client_custom_path(client_type, source)
@@ -1541,10 +1748,10 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _add_custom_source(self) -> None:
-        source = dialogs.choose_directory(self, "添加自定义目录")
+        source = dialogs.choose_directory(self, self._t("add_custom_source_title"))
         if source is None:
             return
-        name = dialogs.ask_text(self, "添加自定义目录", "来源名称")
+        name = dialogs.ask_text(self, self._t("add_custom_source_title"), self._t("source_name"))
         if not name:
             name = source.name
         source_id = self.controller.add_custom_import_source(name, source)
@@ -1558,7 +1765,7 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _new_harness(self) -> None:
-        details = dialogs.ask_harness_details(self, "新建任务套件")
+        details = dialogs.ask_harness_details(self, self._t("new_harness"))
         if details is None:
             return
         name, description = details
@@ -1568,7 +1775,7 @@ class MainWindow(QMainWindow):
     def _edit_harness(self) -> None:
         harness = self._selected_harness()
         details = dialogs.ask_harness_details(
-            self, "编辑任务套件", harness.name, harness.description
+            self, self._t("edit_harness"), harness.name, harness.description
         )
         if details is None:
             return
@@ -1580,9 +1787,8 @@ class MainWindow(QMainWindow):
         harness = self._selected_harness()
         confirmed = dialogs.ask_confirm(
             self,
-            "删除任务套件",
-            f"确认删除任务套件「{harness.name}」？\n\n"
-            "删除后不会删除技能、MCP、AGENTS.md 本体，只会移除套件及其关联关系。",
+            self._t("delete_harness"),
+            self._t("delete_harness_message").format(name=harness.name),
         )
         if not confirmed:
             return
@@ -1594,7 +1800,7 @@ class MainWindow(QMainWindow):
         return self.harnesses[row]
 
     def _new_agents_md_asset(self) -> None:
-        details = dialogs.ask_agents_md(self, "添加 AGENTS.md")
+        details = dialogs.ask_agents_md(self, self._t("add_agents"))
         if details is None:
             return
         name, description, content = details
@@ -1602,7 +1808,7 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _new_mcp_config(self) -> None:
-        details = dialogs.ask_mcp_config(self, "新建 MCP 配置")
+        details = dialogs.ask_mcp_config(self, self._t("new_mcp_config"))
         if details is None:
             return
         title, display_name, description, config_json = details
@@ -1613,7 +1819,7 @@ class MainWindow(QMainWindow):
         config_path = self.controller.paths.root / asset.relative_path
         details = dialogs.ask_mcp_config(
             self,
-            "编辑 MCP 配置",
+            self._t("edit_mcp_config"),
             asset.name,
             self._mcp_display_name(asset),
             self._mcp_description(asset),
@@ -1714,6 +1920,20 @@ class MainWindow(QMainWindow):
         self.back_to_business_button.setText(self._t("back"))
         self.export_config_button.setText(self._t("export_config"))
         self.import_config_button.setText(self._t("import_config"))
+        self.sidebar_title.setText(self._t("app_title"))
+        self.sidebar_subtitle.setText(self._t("app_subtitle"))
+        self.clients_title.setText(self._t("import_sources"))
+        self.stat_harness_label.setText(self._t("harnesses"))
+        self.stat_skill_label.setText(self._t("stat_skill"))
+        self.settings_title_label.setText(self._t("settings"))
+        self.settings_desc_label.setText(self._t("settings_desc"))
+        self.language_title_label.setText(self._t("interface_language"))
+        self.theme_title_label.setText(self._t("appearance_theme"))
+        self.backup_title_label.setText(self._t("config_backup"))
+        self.hero_title_label.setText(self._t("window_title"))
+        self.hero_subtitle_label.setText(self._t("hero_subtitle"))
+        self.harnesses_title_label.setText(self._t("harnesses"))
+        self.harnesses_desc_label.setText(self._t("harnesses_desc"))
         if self.harness_list.currentRow() < 0:
             self.current_harness_title.setText(self._t("select_harness"))
             self.current_harness_meta.setText(self._t("harness_hint"))
@@ -1748,7 +1968,7 @@ class MainWindow(QMainWindow):
         if not available_harnesses:
             if self.harnesses:
                 return
-            raise ValueError("当前没有任务套件，请先新建任务套件。")
+            raise ValueError(self._t("no_harness_error"))
         harness = dialogs.choose_harness(self, available_harnesses)
         if harness is None:
             return
@@ -1762,9 +1982,9 @@ class MainWindow(QMainWindow):
         harness = dialogs.choose_harness(
             self,
             joined_harnesses,
-            title="选择要移出的任务套件",
-            message="请选择要移出该组件的任务套件",
-            confirm_text="移出",
+            title=self._t("choose_remove_harness"),
+            message=self._t("choose_remove_message"),
+            confirm_text=self._t("remove"),
         )
         if harness is None:
             return
@@ -1774,9 +1994,8 @@ class MainWindow(QMainWindow):
     def _delete_skill_asset(self, asset: Asset) -> None:
         confirmed = dialogs.ask_confirm(
             self,
-            "删除技能",
-            f"确认删除技能「{asset.name}」？\n\n"
-            "删除后会移除技能文件及其任务套件关联。",
+            self._t("delete_skill"),
+            self._t("delete_skill_message").format(name=asset.name),
         )
         if not confirmed:
             return
