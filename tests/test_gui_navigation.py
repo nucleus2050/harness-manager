@@ -301,14 +301,10 @@ def test_applications_view_lists_installed_components():
         "_refresh_applications_view",
         "list_application_components",
         "component_count",
-        "component_name",
-        "asset_count",
+        "harness_name",
     ]:
         assert token in source
     assert "list_application_components" in controller_source
-    method = source.split("def _installed_component_row", 1)[1].split("\n    def ", 1)[0]
-    assert "asset_name" not in method
-    assert "_asset_type_label" not in method
 
 
 def test_asset_tab_switch_refreshes_visible_library():

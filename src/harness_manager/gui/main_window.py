@@ -117,6 +117,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "installed_components": "已安装组件",
         "installed_empty": "暂无已安装组件",
         "configured_path": "配置路径",
+        "from_harness": "来自套件",
         "ready": "就绪",
         "missing": "缺失",
         "custom": "自定义",
@@ -240,6 +241,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "installed_components": "Installed Components",
         "installed_empty": "No installed components",
         "configured_path": "Configured Path",
+        "from_harness": "From Harness",
         "ready": "Ready",
         "missing": "Missing",
         "custom": "Custom",
@@ -729,11 +731,11 @@ class MainWindow(QMainWindow):
         copy = QVBoxLayout()
         copy.setSpacing(3)
         title = self._label(
-            str(component["component_name"]),
+            f"{component['asset_name']} · {self._asset_type_label(str(component['asset_type']))}",
             "ClientName",
         )
-        source = self._label(self._t("component_count").format(count=component["asset_count"]), "MutedText")
-        target = self._label(str(component["target_path"]), "ClientPath")
+        source = self._label(f"{self._t('from_harness')}: {component['harness_name']}", "MutedText")
+        target = self._label(str(component["installed_path"]), "ClientPath")
         target.setWordWrap(True)
         copy.addWidget(title)
         copy.addWidget(source)
