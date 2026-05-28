@@ -1580,21 +1580,8 @@ class MainWindow(QMainWindow):
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
         logger.info("Toggling harness deployment: harness=%s client=%s", harness_id, client_type)
         target_path = self._deploy_target_path(client_type)
-        action, result = self.controller.toggle_harness_deploy(harness_id, client_type, target_path)
-        harness = next(item for item in self.harnesses if item.id == harness_id)
+        self.controller.toggle_harness_deploy(harness_id, client_type, target_path)
         self.refresh()
-        if action == "deployed":
-            dialogs.show_info(
-                self,
-                "部署完成",
-                f"已将任务套件 {harness.name} 部署到{self._deploy_scope_label()}，包含 {len(result)} 个技能。",
-            )
-            return
-        if result:
-            message = "，".join(f"{asset_id}: {status}" for asset_id, status in result.items())
-        else:
-            message = "没有找到可撤销的部署记录。"
-        dialogs.show_info(self, "撤销部署完成", message)
 
     def _project_deploy_target(self, client_type: ClientType) -> Path:
         base = self.controller.paths.root

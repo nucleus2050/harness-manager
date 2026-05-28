@@ -279,6 +279,15 @@ def test_harness_deploy_icons_are_stateful_toggles():
     assert "_deploy_harness(" not in source
 
 
+def test_successful_harness_deploy_uses_icon_state_without_dialog():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    method = source.split("def _toggle_harness_deployment", 1)[1].split("\n    def ", 1)[0]
+
+    assert "self.refresh()" in method
+    assert "toggle_harness_deploy" in method
+    assert "dialogs.show_info" not in method
+
+
 def test_asset_library_adds_harness_action_on_each_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
