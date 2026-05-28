@@ -16,8 +16,6 @@ def test_main_window_user_facing_text_is_chinese():
         "选择一个任务套件",
         "暂无任务套件",
         "导入技能",
-        "安装",
-        "卸载",
     ]:
         assert text in source
 

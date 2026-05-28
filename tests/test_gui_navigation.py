@@ -236,7 +236,7 @@ def test_join_harness_prompts_for_target_harness():
 
     assert "choose_harness" in main_source
     assert "list_harnesses_without_asset(asset.id)" in main_source
-    assert "已经加入所有任务套件" in main_source
+    assert "dialogs.show_info" not in main_source
     assert "选择任务套件" in dialog_source
     assert "请选择要加入的任务套件" in dialog_source
 
@@ -286,6 +286,12 @@ def test_successful_harness_deploy_uses_icon_state_without_dialog():
     assert "self.refresh()" in method
     assert "toggle_harness_deploy" in method
     assert "dialogs.show_info" not in method
+
+
+def test_successful_gui_actions_do_not_show_info_dialogs():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "dialogs.show_info" not in source
 
 
 def test_export_harness_button_is_enabled_and_uses_harness_export():
@@ -339,10 +345,11 @@ def test_asset_library_adds_harness_action_on_each_item():
     assert "join_harness_button" not in source
 
 
-def test_skill_library_delete_is_direct_without_confirmation():
+def test_skill_library_delete_requires_confirmation_without_success_dialog():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     method = source.split("def _delete_skill_asset", 1)[1].split("\n    def ", 1)[0]
 
+    assert "ask_confirm" in method
     assert "delete_skill_asset(asset.id)" in method
     assert "self.refresh()" in method
     assert "dialogs.show_info" not in method

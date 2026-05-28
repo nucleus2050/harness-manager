@@ -17,4 +17,4 @@ def test_main_window_has_custom_source_text_and_direct_import_flow():
     assert "remove_custom_import_source" in source
     assert '"SourceImportButton"' in source
     assert '"SourceDeleteButton"' in source
-    assert "已删除自定义来源。" in source
+    assert "dialogs.show_info" not in source

@@ -1332,23 +1332,21 @@ class MainWindow(QMainWindow):
         self.selected_client_type = client_type
         self.selected_custom_source_id = None
         try:
-            imported = self.controller.import_from_client_source(client_type)
+            self.controller.import_from_client_source(client_type)
         except (ValueError, NotADirectoryError):
             client_name = self._selected_client_name(client_type) or "当前应用"
             source = dialogs.choose_directory(self, f"配置目录：{client_name}")
             if source is None:
                 return
             self.controller.set_client_custom_path(client_type, source)
-            imported = self.controller.import_from_client_source(client_type)
+            self.controller.import_from_client_source(client_type)
         self.refresh()
-        dialogs.show_info(self, "导入完成", f"已导入 {len(imported)} 个技能。")
 
     def _import_from_custom_source(self, source_id: str) -> None:
         self.selected_client_type = None
         self.selected_custom_source_id = source_id
-        imported = self.controller.import_from_custom_source(source_id)
+        self.controller.import_from_custom_source(source_id)
         self.refresh()
-        dialogs.show_info(self, "导入完成", f"已导入 {len(imported)} 个技能。")
 
     def _add_custom_source(self) -> None:
         source = dialogs.choose_directory(self, "添加自定义目录")
@@ -1360,14 +1358,12 @@ class MainWindow(QMainWindow):
         source_id = self.controller.add_custom_import_source(name, source)
         self.refresh()
         self._select_custom_source(source_id)
-        dialogs.show_info(self, "添加完成", f"已添加自定义目录 {name}。")
 
     def _remove_custom_source(self, source_id: str) -> None:
         self.controller.remove_custom_import_source(source_id)
         if self.selected_custom_source_id == source_id:
             self.selected_custom_source_id = None
         self.refresh()
-        dialogs.show_info(self, "删除完成", "已删除自定义来源。")
 
     def _new_harness(self) -> None:
         details = dialogs.ask_harness_details(self, "新建任务套件")
@@ -1376,7 +1372,6 @@ class MainWindow(QMainWindow):
         name, description = details
         self.controller.create_harness(name, description)
         self.refresh()
-        dialogs.show_info(self, "创建完成", f"已创建任务套件 {name}。")
 
     def _edit_harness(self) -> None:
         harness = self._selected_harness()
@@ -1388,7 +1383,6 @@ class MainWindow(QMainWindow):
         name, description = details
         self.controller.update_harness(harness.id, name, description)
         self.refresh()
-        dialogs.show_info(self, "保存完成", f"已更新任务套件 {name}。")
 
     def _delete_harness(self) -> None:
         harness = self._selected_harness()
@@ -1415,7 +1409,6 @@ class MainWindow(QMainWindow):
         asset = self.controller.import_agents_md_asset(source, name)
         self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
-        dialogs.show_info(self, "添加完成", f"已将 {name} 加入任务套件。")
 
     def _import_mcp_to_harness(self) -> None:
         source = dialogs.choose_asset_file(self, "导入 MCP", "JSON 配置 (*.json);;所有文件 (*)")
@@ -1425,7 +1418,6 @@ class MainWindow(QMainWindow):
         asset = self.controller.import_mcp_asset(source, name)
         self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
-        dialogs.show_info(self, "添加完成", f"已将 {name} 加入任务套件。")
 
     def _new_mcp_config(self) -> None:
         details = dialogs.ask_mcp_config(self, "新建 MCP 配置")
@@ -1434,7 +1426,6 @@ class MainWindow(QMainWindow):
         title, display_name, config_json = details
         self.controller.create_mcp_config_asset(title, display_name, config_json)
         self.refresh()
-        dialogs.show_info(self, "保存完成", f"已保存 MCP 配置 {title}。")
 
     def _edit_mcp_config(self, asset: Asset) -> None:
         config_path = self.controller.paths.root / asset.relative_path
@@ -1450,7 +1441,6 @@ class MainWindow(QMainWindow):
         title, display_name, config_json = details
         self.controller.update_mcp_config_asset(asset.id, title, display_name, config_json)
         self.refresh()
-        dialogs.show_info(self, "保存完成", f"已更新 MCP 配置 {title}。")
 
     def _apply_theme(self, theme: str) -> None:
         self.current_theme = theme
@@ -1513,28 +1503,24 @@ class MainWindow(QMainWindow):
     def _save_language(self, language: str) -> None:
         settings = self.controller.save_language(language)
         self._refresh_settings_buttons(settings)
-        dialogs.show_info(self, "保存完成", "语言设置已保存。")
 
     def _save_theme(self, theme: str) -> None:
         settings = self.controller.save_theme(theme)
         self._apply_theme(settings.theme)
         self._refresh_settings_buttons(settings)
-        dialogs.show_info(self, "保存完成", "外观主题已保存。")
 
     def _export_full_config(self) -> None:
         destination = dialogs.choose_export_zip(self)
         if destination is None:
             return
-        archive = self.controller.export_full_config(destination)
-        dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
+        self.controller.export_full_config(destination)
 
     def _import_full_config(self) -> None:
         archive = dialogs.choose_config_archive(self)
         if archive is None:
             return
-        backup = self.controller.import_full_config(archive)
+        self.controller.import_full_config(archive)
         self.refresh()
-        dialogs.show_info(self, "导入完成", f"已导入配置，原配置已备份到 {backup}。")
 
     def _add_first_skill_to_harness(self) -> None:
         skills = self.controller.list_assets_by_type("skill")
@@ -1543,13 +1529,11 @@ class MainWindow(QMainWindow):
         asset = skills[0]
         self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
-        dialogs.show_info(self, "添加完成", f"已将技能 {asset.name} 加入任务套件。")
 
     def _add_asset_to_chosen_harness(self, asset: Asset) -> None:
         available_harnesses = self.controller.list_harnesses_without_asset(asset.id)
         if not available_harnesses:
             if self.harnesses:
-                dialogs.show_info(self, "无需重复加入", f"{asset.name} 已经加入所有任务套件。")
                 return
             raise ValueError("当前没有任务套件，请先新建任务套件。")
         harness = dialogs.choose_harness(self, available_harnesses)
@@ -1557,12 +1541,10 @@ class MainWindow(QMainWindow):
             return
         self.controller.add_asset_to_harness(harness.id, asset.id, asset.type)
         self.refresh()
-        dialogs.show_info(self, "添加完成", f"已将 {asset.name} 加入 {harness.name}。")
 
     def _remove_asset_from_chosen_harness(self, asset: Asset) -> None:
         joined_harnesses = self.controller.list_harnesses_with_asset(asset.id)
         if not joined_harnesses:
-            dialogs.show_info(self, "无需移出", f"{asset.name} 尚未加入任何任务套件。")
             return
         harness = dialogs.choose_harness(
             self,
@@ -1575,9 +1557,16 @@ class MainWindow(QMainWindow):
             return
         self.controller.remove_asset_from_harness(harness.id, asset.id)
         self.refresh()
-        dialogs.show_info(self, "移出完成", f"已将 {asset.name} 从 {harness.name} 移出。")
 
     def _delete_skill_asset(self, asset: Asset) -> None:
+        confirmed = dialogs.ask_confirm(
+            self,
+            "删除技能",
+            f"确认删除技能「{asset.name}」？\n\n"
+            "删除后会移除技能文件及其任务套件关联。",
+        )
+        if not confirmed:
+            return
         self.controller.delete_skill_asset(asset.id)
         self.refresh()
 
@@ -1587,16 +1576,14 @@ class MainWindow(QMainWindow):
             return
         self.controller.import_offline_package(archive)
         self.refresh()
-        dialogs.show_info(self, "导入完成", f"已导入 {archive.name}。")
 
     def _export_archive(self) -> None:
         destination = dialogs.choose_harness_export_directory(self)
         if destination is None:
             return
-        archive = self.controller.export_harness_by_row(
+        self.controller.export_harness_by_row(
             self._require_harness_row(), destination
         )
-        dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
         logger.info("Toggling harness deployment: harness=%s client=%s", harness_id, client_type)
@@ -1613,20 +1600,14 @@ class MainWindow(QMainWindow):
         return base / ".opencode" / "skills"
 
     def _install(self, client_type: ClientType) -> None:
-        installed = self.controller.install_package_by_row(
+        self.controller.install_package_by_row(
             self._require_harness_row(), client_type
         )
-        dialogs.show_info(self, "安装完成", f"已安装 {len(installed)} 个技能。")
 
     def _uninstall(self, client_type: ClientType) -> None:
-        result = self.controller.uninstall_package_by_row(
+        self.controller.uninstall_package_by_row(
             self._require_harness_row(), client_type
         )
-        if result:
-            message = ", ".join(f"{skill_id}: {status}" for skill_id, status in result.items())
-        else:
-            message = "没有找到可卸载的安装记录。"
-        dialogs.show_info(self, "卸载结果", message)
 
 
 def run_app(argv: list[str] | None = None) -> int:
