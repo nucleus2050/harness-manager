@@ -9,9 +9,9 @@ def test_main_window_user_facing_text_is_chinese():
     for text in [
         "任务套件管理器",
         "任务套件",
-        "新建套件",
-        "导入套件",
-        "导出套件",
+        'self._button("新建"',
+        'self._button("导入"',
+        'self._button("导出"',
         "部署套件",
         "选择一个任务套件",
         "暂无任务套件",

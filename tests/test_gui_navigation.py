@@ -312,7 +312,9 @@ def test_harness_delete_action_uses_confirm_and_split_actions():
     delete_method = source.split("def _delete_harness", 1)[1].split("\n    def ", 1)[0]
 
     assert "delete_harness_button" in source
-    assert "删除套件" in source
+    assert 'self._button("删除", "DangerButton")' in source
+    for redundant_label in ["新建套件", "编辑套件", "删除套件", "导入套件", "导出套件"]:
+        assert redundant_label not in source
     assert "delete_harness(" in controller_source
     assert "ask_confirm" in dialog_source
     assert "删除后不会删除技能、MCP、AGENTS.md 本体" in delete_method
