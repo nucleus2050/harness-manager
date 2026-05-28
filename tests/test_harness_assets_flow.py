@@ -114,3 +114,50 @@ def test_controller_deploys_harness_creates_missing_target_directory(
     assert target.is_dir()
     assert installed == [target / skill.id]
     assert (target / skill.id / "SKILL.md").is_file()
+
+
+def test_controller_tracks_and_toggles_harness_deployment(app_root, tmp_path, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("可撤销部署", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / "codex-skills"
+
+    assert not controller.harness_deploy_status(harness.id, "codex", target)
+
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "deployed"
+    assert result == [target / skill.id]
+    assert controller.harness_deploy_status(harness.id, "codex", target)
+    assert (target / skill.id / "SKILL.md").is_file()
+
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "undeployed"
+    assert result == {skill.id: "uninstalled"}
+    assert not controller.harness_deploy_status(harness.id, "codex", target)
+    assert not (target / skill.id).exists()
+
+
+def test_controller_does_not_undeploy_modified_harness_skill(app_root, tmp_path, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("保护本地修改", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / "codex-skills"
+    controller.toggle_harness_deploy(harness.id, "codex", target)
+    (target / skill.id / "SKILL.md").write_text("# Local Edit\n", encoding="utf-8")
+
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "undeployed"
+    assert result == {skill.id: "modified"}
+    assert (target / skill.id).exists()
+    assert not controller.harness_deploy_status(harness.id, "codex", target)

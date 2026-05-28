@@ -102,6 +102,19 @@ CREATE TABLE IF NOT EXISTS harness_assets (
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (harness_id, asset_id)
+);
+
+CREATE TABLE IF NOT EXISTS harness_deploy_records (
+  id TEXT PRIMARY KEY,
+  harness_id TEXT NOT NULL REFERENCES harnesses(id) ON DELETE CASCADE,
+  asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
+  client_type TEXT NOT NULL,
+  target_path TEXT NOT NULL,
+  installed_path TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  installed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  uninstalled_at TEXT,
+  status TEXT NOT NULL
 );"""
 
 CLIENT_SEEDS = (

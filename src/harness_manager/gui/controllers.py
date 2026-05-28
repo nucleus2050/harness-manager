@@ -212,6 +212,27 @@ class MainController:
         target.mkdir(parents=True, exist_ok=True)
         return self.service.deploy_harness(harness_id, client_type, target, overwrite=overwrite)
 
+    def harness_deploy_status(
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str | None = None,
+    ) -> bool:
+        target = Path(target_path) if target_path is not None else self._client_target(client_type)
+        return self.service.harness_deploy_status(harness_id, client_type, target)
+
+    def toggle_harness_deploy(
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str | None = None,
+    ) -> tuple[str, list[Path] | dict[str, InstallStatus]]:
+        target = Path(target_path) if target_path is not None else self._client_target(client_type)
+        if self.service.harness_deploy_status(harness_id, client_type, target):
+            return "undeployed", self.service.undeploy_harness(harness_id, client_type, target)
+        target.mkdir(parents=True, exist_ok=True)
+        return "deployed", self.service.deploy_harness(harness_id, client_type, target)
+
     def uninstall_package_by_row(
         self, package_row: int, client_type: ClientType
     ) -> dict[str, InstallStatus]:

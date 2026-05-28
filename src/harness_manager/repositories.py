@@ -254,6 +254,83 @@ class InstallRepository:
         )
 
 
+class HarnessDeployRepository:
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self.conn = conn
+
+    def add_deployed(
+        self,
+        harness_id: str,
+        asset_id: str,
+        client_type: str,
+        target_path: Path,
+        installed_path: Path,
+        fingerprint: str,
+    ) -> str:
+        record_id = uuid.uuid4().hex
+        self.conn.execute(
+            """
+            INSERT INTO harness_deploy_records(
+              id, harness_id, asset_id, client_type, target_path,
+              installed_path, fingerprint, status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'installed')
+            """,
+            (
+                record_id,
+                harness_id,
+                asset_id,
+                client_type,
+                str(target_path),
+                str(installed_path),
+                fingerprint,
+            ),
+        )
+        return record_id
+
+    def list_active(
+        self, harness_id: str, client_type: str, target_path: Path | None = None
+    ) -> list[sqlite3.Row]:
+        params: list[object] = [harness_id, client_type]
+        target_filter = ""
+        if target_path is not None:
+            target_filter = " AND target_path = ?"
+            params.append(str(target_path))
+        return self.conn.execute(
+            f"""
+            SELECT id, harness_id, asset_id, client_type, target_path,
+                   installed_path, fingerprint, status
+            FROM harness_deploy_records
+            WHERE harness_id = ? AND client_type = ? AND status = 'installed'{target_filter}
+            ORDER BY installed_at
+            """,
+            params,
+        ).fetchall()
+
+    def is_active(self, harness_id: str, client_type: str, target_path: Path) -> bool:
+        row = self.conn.execute(
+            """
+            SELECT 1
+            FROM harness_deploy_records
+            WHERE harness_id = ? AND client_type = ? AND target_path = ? AND status = 'installed'
+            LIMIT 1
+            """,
+            (harness_id, client_type, str(target_path)),
+        ).fetchone()
+        return row is not None
+
+    def mark_status(self, record_id: str, status: str) -> None:
+        uninstalled_at = "CURRENT_TIMESTAMP" if status in {"uninstalled", "modified", "missing"} else "uninstalled_at"
+        self.conn.execute(
+            f"""
+            UPDATE harness_deploy_records
+            SET status = ?, uninstalled_at = {uninstalled_at}
+            WHERE id = ?
+            """,
+            (status, record_id),
+        )
+
+
 class LogRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn

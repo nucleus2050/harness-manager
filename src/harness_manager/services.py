@@ -16,6 +16,7 @@ from harness_manager.fingerprint import fingerprint_directory
 from harness_manager.models import Asset, ClientType, InstallStatus, Package, Skill
 from harness_manager.repositories import (
     AssetRepository,
+    HarnessDeployRepository,
     HarnessRepository,
     InstallRepository,
     LogRepository,
@@ -101,6 +102,7 @@ class HarnessService:
         self.skills = SkillRepository(conn)
         self.assets = AssetRepository(conn)
         self.harnesses = HarnessRepository(conn)
+        self.harness_deploys = HarnessDeployRepository(conn)
         self.packages = PackageRepository(conn)
         self.installs = InstallRepository(conn)
         self.logs = LogRepository(conn)
@@ -368,11 +370,16 @@ class HarnessService:
 
         self.harnesses.get(harness_id)
         skill_assets = self.harnesses.list_assets_by_type(harness_id, "skill")
+        active_records = self.harness_deploys.list_active(harness_id, client_type, target)
+        active_asset_ids = {record["asset_id"] for record in active_records}
         deployed_paths: list[Path] = []
         copied_destinations: list[Path] = []
         try:
             with transaction(self.conn):
                 for asset in skill_assets:
+                    if asset.id in active_asset_ids:
+                        deployed_paths.append(target / asset.id)
+                        continue
                     source = self._validated_managed_asset_source(asset)
                     destination = self._validated_install_destination(target, asset.id)
                     destination_preexisted = destination.exists()
@@ -384,6 +391,15 @@ class HarnessService:
                         raise
                     if not destination_preexisted:
                         copied_destinations.append(destination)
+                    deployed_fingerprint = fingerprint_directory(destination)
+                    self.harness_deploys.add_deployed(
+                        harness_id,
+                        asset.id,
+                        client_type,
+                        target,
+                        destination,
+                        deployed_fingerprint,
+                    )
                     deployed_paths.append(destination)
                 self.logs.add(
                     "deploy_harness",
@@ -397,6 +413,39 @@ class HarnessService:
                     self._remove_owned_directory(destination, target)
             raise
         return deployed_paths
+
+    def harness_deploy_status(
+        self, harness_id: str, client_type: ClientType, target_path: Path | str
+    ) -> bool:
+        self.harnesses.get(harness_id)
+        return self.harness_deploys.is_active(harness_id, client_type, Path(target_path))
+
+    def undeploy_harness(
+        self, harness_id: str, client_type: ClientType, target_path: Path | str
+    ) -> dict[str, InstallStatus]:
+        target = Path(target_path)
+        records = self.harness_deploys.list_active(harness_id, client_type, target)
+        statuses: dict[str, InstallStatus] = {}
+        with transaction(self.conn):
+            for record in records:
+                asset_id = record["asset_id"]
+                try:
+                    installed_path = self._validated_harness_undeploy_path(record)
+                except ValueError:
+                    self.harness_deploys.mark_status(record["id"], "modified")
+                    status = "modified"
+                else:
+                    status = self._undeploy_harness_record(
+                        record["id"], installed_path, record["fingerprint"]
+                    )
+                statuses[asset_id] = status
+            self.logs.add(
+                "undeploy_harness",
+                f"Undeployed harness {harness_id} from {client_type}",
+                client_type,
+                package_id=harness_id,
+            )
+        return statuses
 
     def uninstall_package(
         self, package_id: str, client_type: ClientType
@@ -550,6 +599,20 @@ class HarnessService:
             raise ValueError(f"Install record path for {skill_id!r} escapes target")
         return expected_path
 
+    def _validated_harness_undeploy_path(self, record: sqlite3.Row) -> Path:
+        asset_id = record["asset_id"]
+        self.paths.skill_path(asset_id)
+        target = Path(record["target_path"])
+        installed_path = Path(record["installed_path"])
+        expected_path = target / asset_id
+        if installed_path.resolve() != expected_path.resolve():
+            raise ValueError(
+                f"Deploy record path for {asset_id!r} does not match expected target path"
+            )
+        if not _is_resolved_under(installed_path, target):
+            raise ValueError(f"Deploy record path for {asset_id!r} escapes target")
+        return expected_path
+
     def _remove_owned_directory(self, directory: Path, owner_root: Path) -> None:
         _resolve_under(directory, owner_root, "Directory cleanup target")
         safe_remove_directory(directory)
@@ -569,6 +632,23 @@ class HarnessService:
 
         safe_remove_directory(installed_path)
         self.installs.mark_status(record_id, "uninstalled")
+        return "uninstalled"
+
+    def _undeploy_harness_record(
+        self, record_id: str, installed_path: Path, installed_fingerprint: str
+    ) -> InstallStatus:
+        if not installed_path.exists():
+            self.harness_deploys.mark_status(record_id, "missing")
+            return "missing"
+        if not installed_path.is_dir():
+            self.harness_deploys.mark_status(record_id, "modified")
+            return "modified"
+        if fingerprint_directory(installed_path) != installed_fingerprint:
+            self.harness_deploys.mark_status(record_id, "modified")
+            return "modified"
+
+        safe_remove_directory(installed_path)
+        self.harness_deploys.mark_status(record_id, "uninstalled")
         return "uninstalled"
 
 

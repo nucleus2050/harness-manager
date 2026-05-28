@@ -862,11 +862,16 @@ class MainWindow(QMainWindow):
             ("codex", "◎", "部署套件到 Codex"),
             ("opencode", "✦", "部署套件到 OpenCode"),
         ]:
-            button = self._button(icon, "HarnessDeployIcon")
-            button.setToolTip(f"{tooltip}（{self._deploy_scope_label()}）")
+            target_path = self._deploy_target_path(client_type)
+            active = self.controller.harness_deploy_status(harness.id, client_type, target_path)
+            button = self._button(
+                icon, "HarnessDeployIconActive" if active else "HarnessDeployIcon"
+            )
+            action_text = "已部署，点击撤销" if active else "未部署，点击部署"
+            button.setToolTip(f"{tooltip}（{self._deploy_scope_label()}）：{action_text}")
             button.clicked.connect(
                 self._guard(
-                    lambda harness_id=harness.id, client_type=client_type: self._deploy_harness(
+                    lambda harness_id=harness.id, client_type=client_type: self._toggle_harness_deployment(
                         harness_id, client_type
                     )
                 )
@@ -889,6 +894,11 @@ class MainWindow(QMainWindow):
 
     def _deploy_scope_label(self) -> str:
         return "全局默认目录" if self.deploy_scope == "global" else "当前项目目录"
+
+    def _deploy_target_path(self, client_type: ClientType) -> Path | None:
+        if self.deploy_scope == "project":
+            return self._project_deploy_target(client_type)
+        return None
 
     def _refresh_view_state(self) -> None:
         harness_active = self.current_view == "harnesses"
@@ -1561,18 +1571,23 @@ class MainWindow(QMainWindow):
         archive = self.controller.export_package_by_row(self._require_harness_row())
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
-    def _deploy_harness(self, harness_id: str, client_type: ClientType) -> None:
-        target_path = None
-        if self.deploy_scope == "project":
-            target_path = self._project_deploy_target(client_type)
-            target_path.mkdir(parents=True, exist_ok=True)
-        installed = self.controller.deploy_harness_by_id(harness_id, client_type, target_path)
+    def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
+        target_path = self._deploy_target_path(client_type)
+        action, result = self.controller.toggle_harness_deploy(harness_id, client_type, target_path)
         harness = next(item for item in self.harnesses if item.id == harness_id)
-        dialogs.show_info(
-            self,
-            "部署完成",
-            f"已将任务套件 {harness.name} 部署到{self._deploy_scope_label()}，包含 {len(installed)} 个技能。",
-        )
+        self.refresh()
+        if action == "deployed":
+            dialogs.show_info(
+                self,
+                "部署完成",
+                f"已将任务套件 {harness.name} 部署到{self._deploy_scope_label()}，包含 {len(result)} 个技能。",
+            )
+            return
+        if result:
+            message = "，".join(f"{asset_id}: {status}" for asset_id, status in result.items())
+        else:
+            message = "没有找到可撤销的部署记录。"
+        dialogs.show_info(self, "撤销部署完成", message)
 
     def _project_deploy_target(self, client_type: ClientType) -> Path:
         base = self.controller.paths.root

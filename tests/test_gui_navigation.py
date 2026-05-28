@@ -264,6 +264,21 @@ def test_message_dialog_uses_app_like_custom_chrome():
     assert "QMessageBox" not in dialog_source
 
 
+def test_harness_deploy_icons_are_stateful_toggles():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    stylesheet = Path("src/harness_manager/gui/styles.py").read_text(encoding="utf-8")
+
+    for token in [
+        "harness_deploy_status",
+        "_toggle_harness_deployment",
+        "HarnessDeployIconActive",
+        "已部署，点击撤销",
+        "未部署，点击部署",
+    ]:
+        assert token in source + stylesheet
+    assert "_deploy_harness(" not in source
+
+
 def test_asset_library_adds_harness_action_on_each_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
