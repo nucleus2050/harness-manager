@@ -827,9 +827,7 @@ class MainWindow(QMainWindow):
         title_row.setSpacing(10)
         title = self._label(harness.name, "ClientName")
         title.setWordWrap(True)
-        count_label = self._label(f"{len(assets)} 个组件", "HarnessCountPill")
         title_row.addWidget(title, 1)
-        title_row.addWidget(count_label)
         copy.addLayout(title_row)
 
         description = self._label(harness.description or "暂无描述", "ClientPath")
@@ -838,8 +836,20 @@ class MainWindow(QMainWindow):
         copy.addWidget(description)
         header.addLayout(copy, 1)
 
+        actions = QFrame()
+        actions.setObjectName("HarnessActions")
+        actions.setFixedWidth(258)
+        actions_layout = QHBoxLayout(actions)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(10)
+        count_label = self._label(f"{len(assets)} 个组件", "HarnessCountPill")
+        count_label.setFixedWidth(72)
+        count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        actions_layout.addWidget(count_label)
+
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
+        deploy_frame.setFixedWidth(176)
         deploy_layout = QHBoxLayout(deploy_frame)
         deploy_layout.setContentsMargins(10, 6, 10, 6)
         deploy_layout.setSpacing(6)
@@ -862,7 +872,8 @@ class MainWindow(QMainWindow):
                 )
             )
             deploy_layout.addWidget(button)
-        header.addWidget(deploy_frame, 0, Qt.AlignmentFlag.AlignTop)
+        actions_layout.addWidget(deploy_frame)
+        header.addWidget(actions, 0, Qt.AlignmentFlag.AlignTop)
         layout.addLayout(header)
         return card
 

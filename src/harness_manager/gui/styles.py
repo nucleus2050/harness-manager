@@ -580,6 +580,11 @@ def build_stylesheet(theme: str = "light") -> str:
         border-radius: 18px;
     }}
 
+    QFrame#HarnessActions {{
+        background: transparent;
+        border: none;
+    }}
+
     QLabel#HarnessCountPill {{
         color: {tokens['ready_text']};
         background: {tokens['ready_bg']};
