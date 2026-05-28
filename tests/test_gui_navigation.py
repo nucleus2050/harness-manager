@@ -493,11 +493,16 @@ def test_client_source_cards_have_safe_height_and_wrapping():
 def test_harness_form_supports_description_and_editing():
     main_source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+    list_card = main_source.split("def _harness_list_card", 1)[1].split("\n    def ", 1)[0]
+    details_refresh = main_source.split("def _refresh_harness_assets", 1)[1].split("\n    def ", 1)[0]
 
     assert "ask_harness_details" in main_source
     assert "编辑任务套件" in main_source
     assert "套件描述" in dialog_source
     assert "QPlainTextEdit" in dialog_source
+    assert "harness.description or \"暂无描述\"" not in list_card
+    assert "描述：" in details_refresh
+    assert "组件数量：" in details_refresh
 
 
 def test_harness_details_show_components_grouped_by_type():

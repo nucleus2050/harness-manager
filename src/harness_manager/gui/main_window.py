@@ -962,10 +962,6 @@ class MainWindow(QMainWindow):
         title_row.addWidget(title, 1)
         copy.addLayout(title_row)
 
-        description = self._label(harness.description or "暂无描述", "ClientPath")
-        description.setWordWrap(True)
-        description.setMaximumHeight(30)
-        copy.addWidget(description)
         header.addLayout(copy, 1)
 
         actions = QFrame()
@@ -1388,8 +1384,8 @@ class MainWindow(QMainWindow):
         self.harness_assets = self.controller.list_harness_assets(harness.id)
         self.current_harness_title.setText(harness.name)
         self.current_harness_meta.setText(
-            f"包含 {len(self.harness_assets)} 个组件"
-            + (f" - {harness.description}" if harness.description else "")
+            f"描述：{harness.description or '暂无描述'}\n"
+            f"组件数量：{len(self.harness_assets)}"
         )
         self._add_asset_group(
             "已加入的技能",
