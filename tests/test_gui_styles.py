@@ -30,7 +30,7 @@ def test_stylesheet_removes_label_background_blocks_and_adds_compact_buttons():
     assert "QPushButton#CompactButton" in stylesheet
     assert "QPushButton#IconButton" in stylesheet
     assert "QFrame#ActionBar" in stylesheet
-    assert "QFrame#DeployRow" in stylesheet
+    assert "QFrame#HarnessListCard" in stylesheet
 
 
 def test_stylesheet_has_client_cards_and_deploy_buttons():

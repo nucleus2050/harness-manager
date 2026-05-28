@@ -568,7 +568,7 @@ def build_stylesheet(theme: str = "light") -> str:
         border-radius: 18px;
     }}
 
-    QFrame#DeployRow {{
+    QFrame#HarnessListCard {{
         background: {tokens['soft_card']};
         border: 1px solid {tokens['soft_border']};
         border-radius: 16px;
@@ -702,6 +702,43 @@ def build_stylesheet(theme: str = "light") -> str:
 
     QPushButton#IconButton:hover {{
         background: {tokens['soft_card']};
+        border-color: {tokens['hover_border']};
+    }}
+
+    QPushButton#HarnessDeployIcon {{
+        min-width: 42px;
+        max-width: 42px;
+        min-height: 34px;
+        border-radius: 14px;
+        background: {tokens['selected_bg']};
+        border: 1px solid {tokens['selected_border']};
+        color: {tokens['primary_hover']};
+        font-size: 12px;
+        font-weight: 900;
+        padding: 0;
+    }}
+
+    QPushButton#HarnessDeployIcon:hover {{
+        background: {tokens['primary']};
+        border-color: {tokens['primary']};
+        color: #ffffff;
+    }}
+
+    QPushButton#HarnessScopeIcon {{
+        min-width: 54px;
+        max-width: 54px;
+        min-height: 34px;
+        border-radius: 14px;
+        background: transparent;
+        border: 1px solid {tokens['compact_border']};
+        color: {tokens['compact_text']};
+        font-size: 12px;
+        font-weight: 850;
+        padding: 0;
+    }}
+
+    QPushButton#HarnessScopeIcon:hover {{
+        background: {tokens['hover_bg']};
         border-color: {tokens['hover_border']};
     }}
 

@@ -93,6 +93,7 @@ class MainWindow(QMainWindow):
         self.current_view = "harnesses"
         self.last_business_view = "harnesses"
         self.current_theme = self.controller.get_settings().theme
+        self.deploy_scope = "global"
         self.title_bar: QFrame | None = None
         self.app_shell: QFrame | None = None
         self.shell_layout: QVBoxLayout | None = None
@@ -129,12 +130,6 @@ class MainWindow(QMainWindow):
         self.add_mcp_button = self._button("添加 MCP", "CompactButton")
         self.new_mcp_config_button = self._button("+ 新增 MCP", "PrimaryButton")
         self.add_skill_asset_button = self._button("添加技能", "CompactButton")
-        self.install_codex_button = self._button("安装", "DeployInstallButton")
-        self.uninstall_codex_button = self._button("卸载", "DeployUninstallButton")
-        self.install_claude_button = self._button("安装", "DeployInstallButton")
-        self.uninstall_claude_button = self._button("卸载", "DeployUninstallButton")
-        self.install_opencode_button = self._button("安装", "DeployInstallButton")
-        self.uninstall_opencode_button = self._button("卸载", "DeployUninstallButton")
         self.language_zh_button = self._button("中文", "PrimaryButton")
         self.language_en_button = self._button("English", "CompactButton")
         self.theme_light_button = self._button("浅色", "CompactButton")
@@ -150,15 +145,7 @@ class MainWindow(QMainWindow):
         self.back_to_business_button = self._button("返回", "CompactButton")
         self.export_config_button = self._button("导出全部配置", "PrimaryButton")
         self.import_config_button = self._button("导入全部配置", "CompactButton")
-        for button in [
-            self.export_archive_button,
-            self.install_codex_button,
-            self.uninstall_codex_button,
-            self.install_claude_button,
-            self.uninstall_claude_button,
-            self.install_opencode_button,
-            self.uninstall_opencode_button,
-        ]:
+        for button in [self.export_archive_button]:
             button.setEnabled(False)
             button.setToolTip("任务套件部署将在组件安装语义确定后接入。")
 
@@ -483,21 +470,6 @@ class MainWindow(QMainWindow):
         asset_layout.addStretch(1)
         layout.addWidget(asset_actions)
         layout.addWidget(self.skill_list, 1)
-
-        layout.addWidget(self._label("部署套件（待接入）", "SectionTitle"))
-        layout.addWidget(
-            self._deploy_row("Codex", "C", self.install_codex_button, self.uninstall_codex_button)
-        )
-        layout.addWidget(
-            self._deploy_row(
-                "Claude Code", "CC", self.install_claude_button, self.uninstall_claude_button
-            )
-        )
-        layout.addWidget(
-            self._deploy_row(
-                "OpenCode", "OC", self.install_opencode_button, self.uninstall_opencode_button
-            )
-        )
         return card
 
     def _build_skills_library_card(self) -> QFrame:
@@ -628,28 +600,6 @@ class MainWindow(QMainWindow):
         if len(description) <= SKILL_DESCRIPTION_MAX_LENGTH:
             return description
         return description[:SKILL_DESCRIPTION_MAX_LENGTH].rstrip() + "..."
-
-    def _deploy_row(
-        self, title: str, badge: str, install_button: QPushButton, uninstall_button: QPushButton
-    ) -> QFrame:
-        row = QFrame()
-        row.setObjectName("DeployRow")
-        layout = QHBoxLayout(row)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(10)
-
-        badge_label = self._label(badge, "MutedText")
-        badge_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge_label.setFixedWidth(34)
-        badge_label.setStyleSheet(
-            "background: #dbeafe; color: #1d4ed8; border-radius: 10px; font-weight: 800;"
-        )
-        name = self._label(title, "SectionTitle")
-        layout.addWidget(badge_label)
-        layout.addWidget(name, 1)
-        layout.addWidget(install_button)
-        layout.addWidget(uninstall_button)
-        return row
 
     def _client_card(self, client: ClientConfig) -> QFrame:
         path = client.effective_path
@@ -795,20 +745,6 @@ class MainWindow(QMainWindow):
         self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
-        self.install_codex_button.clicked.connect(self._guard(lambda: self._install("codex")))
-        self.uninstall_codex_button.clicked.connect(self._guard(lambda: self._uninstall("codex")))
-        self.install_claude_button.clicked.connect(
-            self._guard(lambda: self._install("claude_code"))
-        )
-        self.uninstall_claude_button.clicked.connect(
-            self._guard(lambda: self._uninstall("claude_code"))
-        )
-        self.install_opencode_button.clicked.connect(
-            self._guard(lambda: self._install("opencode"))
-        )
-        self.uninstall_opencode_button.clicked.connect(
-            self._guard(lambda: self._uninstall("opencode"))
-        )
         self.language_zh_button.clicked.connect(self._guard(lambda: self._save_language("zh-CN")))
         self.language_en_button.clicked.connect(self._guard(lambda: self._save_language("en-US")))
         self.theme_light_button.clicked.connect(self._guard(lambda: self._save_theme("light")))
@@ -859,16 +795,74 @@ class MainWindow(QMainWindow):
         self.harness_list.clear()
         if self.harnesses:
             for index, harness in enumerate(self.harnesses):
-                skills = self.controller.list_harness_assets(harness.id)
-                description = harness.description or "暂无描述"
-                self.harness_list.addItem(
-                    f"{harness.name}\n{len(skills)} 个组件 - {description}"
+                assets = self.controller.list_harness_assets(harness.id)
+                item = QListWidgetItem()
+                item.setSizeHint(QSize(0, 138))
+                self.harness_list.addItem(item)
+                self.harness_list.setItemWidget(
+                    item, self._harness_list_card(index, harness, assets)
                 )
             self.harness_list.setCurrentRow(min(max(selected_row, 0), len(self.harnesses) - 1))
         else:
             self.harness_list.addItem("暂无任务套件\n可以先新建空套件，再导入或关联组件。")
             self._refresh_harness_assets(-1)
         self._refresh_asset_library(all_skills)
+
+    def _harness_list_card(self, row: int, harness: Harness, assets: list[Asset]) -> QWidget:
+        card = QFrame()
+        card.setObjectName("HarnessListCard")
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+        card.mousePressEvent = lambda _event, row=row: self.harness_list.setCurrentRow(row)
+
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(10)
+
+        header = QHBoxLayout()
+        header.setSpacing(8)
+        title = self._label(harness.name, "ClientName")
+        title.setWordWrap(True)
+        count_label = self._label(f"{len(assets)} 个组件", "ClientStatusReady")
+        count_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        header.addWidget(title, 1)
+        header.addWidget(count_label)
+        layout.addLayout(header)
+
+        description = self._label(harness.description or "暂无描述", "ClientPath")
+        description.setWordWrap(True)
+        description.setMaximumHeight(32)
+        layout.addWidget(description)
+
+        deploy_bar = QHBoxLayout()
+        deploy_bar.setSpacing(8)
+        deploy_bar.addWidget(self._scope_toggle_button())
+        for client_type, text, tooltip in [
+            ("claude_code", "CC", "部署套件到 Claude Code"),
+            ("codex", "C", "部署套件到 Codex"),
+            ("opencode", "OC", "部署套件到 OpenCode"),
+        ]:
+            button = self._button(text, "HarnessDeployIcon")
+            button.setToolTip(f"{tooltip}（{self._deploy_scope_label()}）")
+            button.clicked.connect(
+                self._guard(lambda row=row, client_type=client_type: self._deploy_harness(row, client_type))
+            )
+            deploy_bar.addWidget(button)
+        deploy_bar.addStretch(1)
+        layout.addLayout(deploy_bar)
+        return card
+
+    def _scope_toggle_button(self) -> QPushButton:
+        button = self._button("全局" if self.deploy_scope == "global" else "项目", "HarnessScopeIcon")
+        button.setToolTip("切换部署范围：全局默认目录 / 当前项目目录")
+        button.clicked.connect(self._guard(self._toggle_deploy_scope))
+        return button
+
+    def _toggle_deploy_scope(self) -> None:
+        self.deploy_scope = "project" if self.deploy_scope == "global" else "global"
+        self.refresh()
+
+    def _deploy_scope_label(self) -> str:
+        return "全局默认目录" if self.deploy_scope == "global" else "当前项目目录"
 
     def _refresh_view_state(self) -> None:
         harness_active = self.current_view == "harnesses"
@@ -1540,6 +1534,27 @@ class MainWindow(QMainWindow):
     def _export_archive(self) -> None:
         archive = self.controller.export_package_by_row(self._require_harness_row())
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
+
+    def _deploy_harness(self, row: int, client_type: ClientType) -> None:
+        target_path = None
+        if self.deploy_scope == "project":
+            target_path = self._project_deploy_target(client_type)
+            target_path.mkdir(parents=True, exist_ok=True)
+        installed = self.controller.install_package_by_row(row, client_type, target_path)
+        harness = self.harnesses[row]
+        dialogs.show_info(
+            self,
+            "部署完成",
+            f"已将任务套件 {harness.name} 部署到{self._deploy_scope_label()}，包含 {len(installed)} 个技能。",
+        )
+
+    def _project_deploy_target(self, client_type: ClientType) -> Path:
+        base = self.controller.paths.root
+        if client_type == "codex":
+            return base / ".codex" / "skills"
+        if client_type == "claude_code":
+            return base / ".claude" / "skills"
+        return base / ".opencode" / "skills"
 
     def _install(self, client_type: ClientType) -> None:
         installed = self.controller.install_package_by_row(
