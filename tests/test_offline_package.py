@@ -97,6 +97,20 @@ def test_export_harness_writes_harness_manifest_and_assets(app_root, sample_skil
     assert f"assets/agents_md/{agents_asset.id}/AGENTS.md" in names
 
 
+def test_export_harness_writes_to_selected_directory(app_root, sample_skill, tmp_path):
+    source_service = _service(app_root)
+    skill = source_service.import_skill(sample_skill, "codex")
+    harness = source_service.harnesses.create("daily-suite", "日常工作流")
+    source_service.harnesses.add_asset(harness.id, skill.id, "skill", 1)
+    selected_directory = tmp_path / "用户选择的导出目录"
+    selected_directory.mkdir()
+
+    archive_path = source_service.export_harness(harness.id, selected_directory)
+
+    assert archive_path == selected_directory / "daily-suite.harness.zip"
+    assert archive_path.is_file()
+
+
 def test_export_then_import_harness_round_trips_assets(app_root, sample_skill, tmp_path):
     source_service = _service(app_root)
     skill = source_service.import_skill(sample_skill, "codex")

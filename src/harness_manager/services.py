@@ -264,7 +264,9 @@ class HarnessService:
         finally:
             self._remove_owned_directory(staging, staging.parent)
 
-    def export_harness(self, harness_id: str) -> Path:
+    def export_harness(
+        self, harness_id: str, export_destination: Path | str | None = None
+    ) -> Path:
         harness = self.harnesses.get(harness_id)
         assets = self.harnesses.list_assets(harness_id)
         staging = Path(tempfile.mkdtemp(prefix="harness-manager-export-"))
@@ -280,9 +282,9 @@ class HarnessService:
                     if not source.is_file():
                         raise FileNotFoundError(source)
                     export_relative_path = f"assets/{asset.type}/{asset.id}/{source.name}"
-                    destination = staging / export_relative_path
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(source, destination)
+                    asset_destination = staging / export_relative_path
+                    asset_destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, asset_destination)
                 manifest_assets.append(
                     {
                         "id": asset.id,
@@ -306,7 +308,7 @@ class HarnessService:
             (staging / "manifest.json").write_text(
                 json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-            archive_path = self.paths.exports_dir / f"{_slug(harness.name)}.harness.zip"
+            archive_path = self._harness_export_path(harness.name, export_destination)
             make_zip(staging, archive_path)
             with transaction(self.conn):
                 self.logs.add(
@@ -321,6 +323,15 @@ class HarnessService:
             raise
         finally:
             self._remove_owned_directory(staging, staging.parent)
+
+    def _harness_export_path(self, harness_name: str, destination: Path | str | None) -> Path:
+        archive_name = f"{_slug(harness_name)}.harness.zip"
+        if destination is None:
+            return self.paths.exports_dir / archive_name
+        destination_path = Path(destination)
+        if destination_path.suffix.lower() == ".zip":
+            return destination_path
+        return destination_path / archive_name
 
     def import_offline_package(self, archive_path: Path | str) -> str:
         extracted = extract_zip(archive_path)

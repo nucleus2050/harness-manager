@@ -514,6 +514,11 @@ def choose_export_zip(parent: QWidget, title: str = "导出全部配置") -> Pat
     return Path(value) if value else None
 
 
+def choose_harness_export_directory(parent: QWidget) -> Path | None:
+    value = QFileDialog.getExistingDirectory(parent, "选择套件导出目录")
+    return Path(value) if value else None
+
+
 def choose_config_archive(parent: QWidget) -> Path | None:
     value, _ = QFileDialog.getOpenFileName(
         parent,

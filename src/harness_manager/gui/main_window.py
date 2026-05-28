@@ -1570,7 +1570,12 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "导入完成", f"已导入 {archive.name}。")
 
     def _export_archive(self) -> None:
-        archive = self.controller.export_harness_by_row(self._require_harness_row())
+        destination = dialogs.choose_harness_export_directory(self)
+        if destination is None:
+            return
+        archive = self.controller.export_harness_by_row(
+            self._require_harness_row(), destination
+        )
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:

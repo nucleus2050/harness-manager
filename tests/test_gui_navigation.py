@@ -291,9 +291,15 @@ def test_successful_harness_deploy_uses_icon_state_without_dialog():
 def test_export_harness_button_is_enabled_and_uses_harness_export():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+    export_method = source.split("def _export_archive", 1)[1].split("\n    def ", 1)[0]
 
     assert "export_harness_by_row" in source
     assert "export_harness_by_row" in controller_source
+    assert "choose_harness_export_directory" in dialog_source
+    assert "choose_harness_export_directory(self)" in export_method
+    assert "export_harness_by_row(" in export_method
+    assert "self._require_harness_row(), destination" in export_method
     assert "for button in [self.export_archive_button]" not in source
     assert "export_package_by_row(self._require_harness_row())" not in source
 
