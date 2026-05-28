@@ -66,7 +66,6 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "settings": "设置",
         "settings_tip": "设置",
         "harnesses": "任务套件",
-        "applications": "应用程序",
         "agents": "AGENTS.md",
         "mcp": "MCP",
         "skills": "技能库 Skills",
@@ -113,11 +112,6 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "configured_mcp": "已配置 {count} 个 MCP",
         "component_library": "组件库",
         "component_library_desc": "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。",
-        "applications_desc": "从客户端角度查看 Codex、Claude Code、OpenCode 当前安装了哪些组件。",
-        "installed_components": "已安装组件",
-        "installed_empty": "暂无已安装组件",
-        "configured_path": "配置路径",
-        "from_harness": "来自套件",
         "ready": "就绪",
         "missing": "缺失",
         "custom": "自定义",
@@ -190,7 +184,6 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "settings": "Settings",
         "settings_tip": "Settings",
         "harnesses": "Harnesses",
-        "applications": "Applications",
         "agents": "AGENTS.md",
         "mcp": "MCP",
         "skills": "Skills",
@@ -237,11 +230,6 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "configured_mcp": "{count} MCP configured",
         "component_library": "Component Library",
         "component_library_desc": "Browse all skills, AGENTS.md, and MCP components by type and add them to harnesses.",
-        "applications_desc": "View installed components in Codex, Claude Code, and OpenCode from the client perspective.",
-        "installed_components": "Installed Components",
-        "installed_empty": "No installed components",
-        "configured_path": "Configured Path",
-        "from_harness": "From Harness",
         "ready": "Ready",
         "missing": "Missing",
         "custom": "Custom",
@@ -349,7 +337,6 @@ class MainWindow(QMainWindow):
         self.library_assets: list[Asset] = []
         self.client_cards_layout: QVBoxLayout | None = None
         self.client_scroll: QScrollArea | None = None
-        self.applications_layout: QVBoxLayout | None = None
         self.asset_library_header_layout: QVBoxLayout | None = None
         self.selected_client_type: ClientType | None = None
         self.selected_custom_source_id: str | None = None
@@ -384,7 +371,6 @@ class MainWindow(QMainWindow):
         self.settings_button = self._button("⚙", "IconButton")
         self.settings_button.setToolTip(self._t("settings_tip"))
         self.harnesses_view_button = self._button(self._t("harnesses"), "SegmentButtonChecked")
-        self.applications_view_button = self._button(self._t("applications"), "SegmentButton")
         self.agents_view_button = self._button(self._t("agents"), "SegmentButton")
         self.mcp_view_button = self._button(self._t("mcp"), "SegmentButton")
         self.skills_view_button = self._button(self._t("skills"), "SegmentButton")
@@ -581,8 +567,6 @@ class MainWindow(QMainWindow):
         harnesses_body_layout.addWidget(self._build_harnesses_card(), 5)
         harnesses_body_layout.addWidget(self._build_details_card(), 4)
         layout.addWidget(self.harnesses_body, 1)
-        self.applications_body = self._build_applications_card()
-        layout.addWidget(self.applications_body, 1)
         self.skills_body = self._build_skills_library_card()
         layout.addWidget(self.skills_body, 1)
         self.settings_body = self._build_settings_card()
@@ -661,91 +645,6 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return card
 
-    def _build_applications_card(self) -> QFrame:
-        card = self._card()
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(22, 20, 22, 22)
-        layout.setSpacing(14)
-        self.applications_title_label = self._label(self._t("applications"), "SectionTitle")
-        self.applications_desc_label = self._label(self._t("applications_desc"), "MutedText")
-        self.applications_desc_label.setWordWrap(True)
-        layout.addWidget(self.applications_title_label)
-        layout.addWidget(self.applications_desc_label)
-        self.applications_layout = QVBoxLayout()
-        self.applications_layout.setSpacing(12)
-        layout.addLayout(self.applications_layout)
-        layout.addStretch(1)
-        return card
-
-    def _refresh_applications_view(self) -> None:
-        if self.applications_layout is None:
-            return
-        self._clear_layout_widgets(self.applications_layout)
-        for application in self.controller.list_application_components():
-            self.applications_layout.addWidget(self._application_card(application))
-        self.applications_layout.addStretch(1)
-
-    def _application_card(self, application: dict[str, object]) -> QFrame:
-        card = self._card()
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(10)
-
-        header = QHBoxLayout()
-        header.setSpacing(12)
-        name = self._label(str(application["client_name"]), "ClientName")
-        count = self._label(
-            self._t("component_count").format(count=application["component_count"]),
-            "HarnessCountPill",
-        )
-        count.setFixedWidth(88)
-        count.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        status_key = str(application["path_status"])
-        status = self._label(self._t(status_key), f"ClientStatus{status_key.title()}")
-        header.addWidget(name, 1)
-        header.addWidget(count)
-        header.addWidget(status)
-        layout.addLayout(header)
-
-        configured_path = application["configured_path"] or self._t("not_configured_path")
-        path = self._label(f"{self._t('configured_path')}: {configured_path}", "ClientPath")
-        path.setWordWrap(True)
-        layout.addWidget(path)
-
-        components = list(application["components"])
-        if not components:
-            layout.addWidget(self._label(self._t("installed_empty"), "MutedText"))
-            return card
-
-        layout.addWidget(self._label(self._t("installed_components"), "MutedText"))
-        for component in components:
-            layout.addWidget(self._installed_component_row(component))
-        return card
-
-    def _installed_component_row(self, component: dict[str, object]) -> QFrame:
-        row = QFrame()
-        row.setObjectName("AssetLibraryItem")
-        row_layout = QHBoxLayout(row)
-        row_layout.setContentsMargins(12, 8, 12, 8)
-        row_layout.setSpacing(12)
-        copy = QVBoxLayout()
-        copy.setSpacing(3)
-        title = self._label(
-            f"{component['asset_name']} · {self._asset_type_label(str(component['asset_type']))}",
-            "ClientName",
-        )
-        source = self._label(f"{self._t('from_harness')}: {component['harness_name']}", "MutedText")
-        target = self._label(str(component["installed_path"]), "ClientPath")
-        target.setWordWrap(True)
-        copy.addWidget(title)
-        copy.addWidget(source)
-        copy.addWidget(target)
-        row_layout.addLayout(copy, 1)
-        status_key = str(component["status"])
-        status = self._label(self._t(status_key), f"ClientStatus{status_key.title()}")
-        row_layout.addWidget(status, 0, Qt.AlignmentFlag.AlignTop)
-        return row
-
     def _build_view_switch(self) -> QFrame:
         switch = QFrame()
         switch.setObjectName("ActionBar")
@@ -753,7 +652,6 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
         layout.addWidget(self.harnesses_view_button)
-        layout.addWidget(self.applications_view_button)
         layout.addWidget(self.agents_view_button)
         layout.addWidget(self.mcp_view_button)
         layout.addWidget(self.skills_view_button)
@@ -1239,7 +1137,6 @@ class MainWindow(QMainWindow):
         self.settings_button.clicked.connect(self._show_settings_view)
         self.back_to_business_button.clicked.connect(self._show_previous_business_view)
         self.harnesses_view_button.clicked.connect(self._show_harnesses_view)
-        self.applications_view_button.clicked.connect(self._show_applications_view)
         self.agents_view_button.clicked.connect(lambda: self._show_asset_view("agents_md"))
         self.mcp_view_button.clicked.connect(lambda: self._show_asset_view("mcp"))
         self.skills_view_button.clicked.connect(self._show_skills_view)
@@ -1297,7 +1194,6 @@ class MainWindow(QMainWindow):
             self._add_custom_source_card(source)
         self._refresh_client_source_scroll_height()
         self._refresh_client_source_scroll_height()
-        self._refresh_applications_view()
 
         self.harness_list.clear()
         if self.harnesses:
@@ -1410,16 +1306,11 @@ class MainWindow(QMainWindow):
     def _refresh_view_state(self) -> None:
         harness_active = self.current_view == "harnesses"
         self.harnesses_body.setVisible(harness_active)
-        applications_active = self.current_view == "applications"
-        self.applications_body.setVisible(applications_active)
         settings_active = self.current_view == "settings"
         self.settings_body.setVisible(settings_active)
-        self.skills_body.setVisible(not harness_active and not applications_active and not settings_active)
+        self.skills_body.setVisible(not harness_active and not settings_active)
         self.harnesses_view_button.setObjectName(
             "SegmentButtonChecked" if harness_active else "SegmentButton"
-        )
-        self.applications_view_button.setObjectName(
-            "SegmentButtonChecked" if applications_active else "SegmentButton"
         )
         self.skills_view_button.setObjectName(
             "SegmentButtonChecked" if self.current_view == "skills" else "SegmentButton"
@@ -1432,8 +1323,6 @@ class MainWindow(QMainWindow):
         )
         self.harnesses_view_button.style().unpolish(self.harnesses_view_button)
         self.harnesses_view_button.style().polish(self.harnesses_view_button)
-        self.applications_view_button.style().unpolish(self.applications_view_button)
-        self.applications_view_button.style().polish(self.applications_view_button)
         self.skills_view_button.style().unpolish(self.skills_view_button)
         self.skills_view_button.style().polish(self.skills_view_button)
         self.agents_view_button.style().unpolish(self.agents_view_button)
@@ -1483,12 +1372,6 @@ class MainWindow(QMainWindow):
         self.last_business_view = self.current_view
         self._refresh_view_state()
 
-    def _show_applications_view(self) -> None:
-        self.current_view = "applications"
-        self._refresh_applications_view()
-        self.last_business_view = self.current_view
-        self._refresh_view_state()
-
     def _show_asset_view(self, asset_type: str) -> None:
         self.current_view = asset_type
         self._refresh_current_asset_library()
@@ -1511,8 +1394,6 @@ class MainWindow(QMainWindow):
         previous = self.last_business_view if self.last_business_view != "settings" else "harnesses"
         if previous in {"agents_md", "mcp"}:
             self._show_asset_view(previous)
-        elif previous == "applications":
-            self._show_applications_view()
         elif previous == "skills":
             self._show_skills_view()
         else:
@@ -2015,7 +1896,6 @@ class MainWindow(QMainWindow):
         self.title_bar_title.setText(self._t("window_title"))
         self.settings_button.setToolTip(self._t("settings_tip"))
         self.harnesses_view_button.setText(self._t("harnesses"))
-        self.applications_view_button.setText(self._t("applications"))
         self.agents_view_button.setText(self._t("agents"))
         self.mcp_view_button.setText(self._t("mcp"))
         self.skills_view_button.setText(self._t("skills"))
@@ -2047,8 +1927,6 @@ class MainWindow(QMainWindow):
         self.stat_skill_label.setText(self._t("stat_skill"))
         self.settings_title_label.setText(self._t("settings"))
         self.settings_desc_label.setText(self._t("settings_desc"))
-        self.applications_title_label.setText(self._t("applications"))
-        self.applications_desc_label.setText(self._t("applications_desc"))
         self.language_title_label.setText(self._t("interface_language"))
         self.theme_title_label.setText(self._t("appearance_theme"))
         self.backup_title_label.setText(self._t("config_backup"))

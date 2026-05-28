@@ -95,40 +95,6 @@ class MainController:
     def list_clients(self) -> list[ClientConfig]:
         return self.clients.list_clients()
 
-    def list_application_components(self) -> list[dict[str, object]]:
-        rows_by_client: dict[str, list[sqlite3.Row]] = {}
-        for row in self.service.harness_deploys.list_active_components():
-            rows_by_client.setdefault(row["client_type"], []).append(row)
-
-        applications: list[dict[str, object]] = []
-        for client in self.clients.list_clients():
-            rows = rows_by_client.get(client.type, [])
-            components = [
-                {
-                    "asset_name": row["asset_name"],
-                    "asset_type": row["asset_type"],
-                    "harness_name": row["harness_name"],
-                    "target_path": Path(row["target_path"]),
-                    "installed_path": Path(row["installed_path"]),
-                    "status": "ready" if Path(row["installed_path"]).exists() else "missing",
-                }
-                for row in rows
-            ]
-            has_ready_component = any(component["status"] == "ready" for component in components)
-            configured_path = client.effective_path
-            path_ready = has_ready_component or bool(configured_path and configured_path.exists())
-            applications.append(
-                {
-                    "client_type": client.type,
-                    "client_name": client.name,
-                    "configured_path": configured_path,
-                    "path_status": "ready" if path_ready else "missing",
-                    "component_count": len(components),
-                    "components": components,
-                }
-            )
-        return applications
-
     def list_packages(self) -> list[Package]:
         return self.packages.list_packages()
 
