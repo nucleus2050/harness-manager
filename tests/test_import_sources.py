@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from harness_manager.app_paths import AppPaths
 from harness_manager.db import connect
 from harness_manager.gui.controllers import MainController
@@ -108,3 +110,38 @@ def test_controller_deletes_skill_from_library(app_root, sample_skill):
     assert controller.list_skills() == []
     assert controller.list_harness_assets(harness.id) == []
     assert not (paths.skills_dir / skill.id).exists()
+
+
+def test_controller_deletes_harness_without_deleting_assets(app_root, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("待删除套件", "临时")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+
+    controller.delete_harness(harness.id)
+
+    assert controller.list_harnesses() == []
+    assert [asset.id for asset in controller.list_assets_by_type("skill")] == [skill.id]
+    assert [skill.id for skill in controller.list_skills()] == [skill.id]
+    assert (paths.skills_dir / skill.id).exists()
+
+
+def test_controller_blocks_deleting_deployed_harness(app_root, sample_skill, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("已部署套件", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / "codex-skills"
+    target.mkdir()
+    controller.deploy_harness_by_id(harness.id, "codex", target)
+
+    with pytest.raises(ValueError, match="请先撤销部署"):
+        controller.delete_harness(harness.id)
+
+    assert [item.id for item in controller.list_harnesses()] == [harness.id]

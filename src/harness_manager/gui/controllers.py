@@ -53,6 +53,9 @@ class MainController:
         with transaction(self.conn):
             return self.harnesses.update(harness_id, name, description)
 
+    def delete_harness(self, harness_id: str) -> None:
+        self.service.delete_harness(harness_id)
+
     def list_harnesses(self):
         return self.harnesses.list_harnesses()
 

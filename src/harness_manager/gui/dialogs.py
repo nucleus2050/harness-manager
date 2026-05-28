@@ -227,6 +227,57 @@ class _MessageDialog(QDialog):
         layout.addWidget(shell)
 
 
+class _ConfirmDialog(QDialog):
+    def __init__(self, parent: QWidget, title: str, message: str) -> None:
+        super().__init__(parent)
+        self.setObjectName("MessageDialog")
+        self.setWindowTitle(title)
+        self.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setModal(True)
+        self.setMinimumWidth(460)
+        self.setStyleSheet(_dialog_stylesheet())
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        shell = QFrame()
+        shell.setObjectName("DialogShell")
+        shell_layout = QVBoxLayout(shell)
+        shell_layout.setContentsMargins(20, 18, 20, 18)
+        shell_layout.setSpacing(16)
+
+        title_label = QLabel(title)
+        title_label.setObjectName("DialogTitle")
+        shell_layout.addWidget(title_label)
+
+        accent = QFrame()
+        accent.setObjectName("DialogAccent")
+        accent.setFixedHeight(4)
+        shell_layout.addWidget(accent)
+
+        message_label = QLabel(message)
+        message_label.setObjectName("DialogMessage")
+        message_label.setWordWrap(True)
+        shell_layout.addWidget(message_label)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton("取消")
+        cancel.setObjectName("GhostDialogButton")
+        confirm = QPushButton("确认删除")
+        confirm.setObjectName("DangerDialogButton")
+        cancel.clicked.connect(self.reject)
+        confirm.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(confirm)
+        shell_layout.addLayout(buttons)
+        layout.addWidget(shell)
+
+
 class _TextDialog(QDialog):
     def __init__(self, parent: QWidget, title: str, label: str) -> None:
         super().__init__(parent)
@@ -592,3 +643,7 @@ def show_error(parent: QWidget, title: str, message: str) -> None:
 
 def show_info(parent: QWidget, title: str, message: str) -> None:
     _MessageDialog(parent, title, message, "info").exec()
+
+
+def ask_confirm(parent: QWidget, title: str, message: str) -> bool:
+    return _ConfirmDialog(parent, title, message).exec() == QDialog.DialogCode.Accepted

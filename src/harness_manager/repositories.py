@@ -323,6 +323,18 @@ class HarnessDeployRepository:
         ).fetchone()
         return row is not None
 
+    def has_active_for_harness(self, harness_id: str) -> bool:
+        row = self.conn.execute(
+            """
+            SELECT 1
+            FROM harness_deploy_records
+            WHERE harness_id = ? AND status = 'installed'
+            LIMIT 1
+            """,
+            (harness_id,),
+        ).fetchone()
+        return row is not None
+
     def mark_status(self, record_id: str, status: str) -> None:
         uninstalled_at = "CURRENT_TIMESTAMP" if status in {"uninstalled", "modified", "missing"} else "uninstalled_at"
         self.conn.execute(
@@ -523,6 +535,13 @@ class HarnessRepository:
             (name, description, harness_id),
         )
         return self.get(harness_id)
+
+    def delete(self, harness_id: str) -> None:
+        self.conn.execute(
+            "DELETE FROM harness_deploy_records WHERE harness_id = ?", (harness_id,)
+        )
+        self.conn.execute("DELETE FROM harness_assets WHERE harness_id = ?", (harness_id,))
+        self.conn.execute("DELETE FROM harnesses WHERE id = ?", (harness_id,))
 
     def list_harnesses(self) -> list[Harness]:
         rows = self.conn.execute(

@@ -143,6 +143,20 @@ class HarnessService:
         if destination.exists():
             self._remove_owned_directory(destination, self.paths.skills_dir)
 
+    def delete_harness(self, harness_id: str) -> None:
+        harness = self.harnesses.get(harness_id)
+        if self.harness_deploys.has_active_for_harness(harness_id):
+            logger.error("Refusing to delete deployed harness %s", harness_id)
+            raise ValueError("该任务套件仍有已部署内容，请先撤销部署后再删除。")
+        with transaction(self.conn):
+            self.harnesses.delete(harness_id)
+            self.logs.add(
+                "delete_harness",
+                f"Deleted harness {harness.name}",
+                package_id=harness_id,
+            )
+        logger.info("Deleted harness %s", harness_id)
+
     def _import_skill_without_transaction(
         self, source_path: Path, source_client: ClientType | None
     ) -> tuple[Skill, bool]:

@@ -304,6 +304,23 @@ def test_export_harness_button_is_enabled_and_uses_harness_export():
     assert "export_package_by_row(self._require_harness_row())" not in source
 
 
+def test_harness_delete_action_uses_confirm_and_split_actions():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+    action_builder = source.split("def _build_harness_actions", 1)[1].split("\n    def ", 1)[0]
+    delete_method = source.split("def _delete_harness", 1)[1].split("\n    def ", 1)[0]
+
+    assert "delete_harness_button" in source
+    assert "删除套件" in source
+    assert "delete_harness(" in controller_source
+    assert "ask_confirm" in dialog_source
+    assert "删除后不会删除技能、MCP、AGENTS.md 本体" in delete_method
+    assert "controller.delete_harness" in delete_method
+    assert action_builder.count("QHBoxLayout()") >= 2
+    assert "archive_row" in action_builder
+
+
 def test_asset_library_adds_harness_action_on_each_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 

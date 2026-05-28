@@ -127,6 +127,7 @@ class MainWindow(QMainWindow):
         self.skills_view_button = self._button("技能库 Skills", "SegmentButton")
         self.new_package_button = self._button("新建套件", "PrimaryButton")
         self.edit_harness_button = self._button("编辑套件", "CompactButton")
+        self.delete_harness_button = self._button("删除套件", "DangerButton")
         self.import_archive_button = self._button("导入套件", "CompactButton")
         self.export_archive_button = self._button("导出套件", "CompactButton")
         self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
@@ -439,14 +440,22 @@ class MainWindow(QMainWindow):
     def _build_harness_actions(self) -> QFrame:
         bar = QFrame()
         bar.setObjectName("ActionBar")
-        layout = QHBoxLayout(bar)
+        layout = QVBoxLayout(bar)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
-        layout.addWidget(self.new_package_button)
-        layout.addWidget(self.edit_harness_button)
-        layout.addWidget(self.import_archive_button)
-        layout.addWidget(self.export_archive_button)
-        layout.addStretch(1)
+        main_row = QHBoxLayout()
+        main_row.setSpacing(8)
+        main_row.addWidget(self.new_package_button)
+        main_row.addWidget(self.edit_harness_button)
+        main_row.addWidget(self.delete_harness_button)
+        main_row.addStretch(1)
+        archive_row = QHBoxLayout()
+        archive_row.setSpacing(8)
+        archive_row.addWidget(self.import_archive_button)
+        archive_row.addWidget(self.export_archive_button)
+        archive_row.addStretch(1)
+        layout.addLayout(main_row)
+        layout.addLayout(archive_row)
         return bar
 
     def _build_details_card(self) -> QFrame:
@@ -738,6 +747,7 @@ class MainWindow(QMainWindow):
         self.skills_view_button.clicked.connect(self._show_skills_view)
         self.new_package_button.clicked.connect(self._guard(self._new_harness))
         self.edit_harness_button.clicked.connect(self._guard(self._edit_harness))
+        self.delete_harness_button.clicked.connect(self._guard(self._delete_harness))
         self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
         self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
         self.new_mcp_config_button.clicked.connect(self._guard(self._new_mcp_config))
@@ -808,6 +818,10 @@ class MainWindow(QMainWindow):
         else:
             self.harness_list.addItem("暂无任务套件\n可以先新建空套件，再导入或关联组件。")
             self._refresh_harness_assets(-1)
+        has_harness = bool(self.harnesses)
+        self.edit_harness_button.setEnabled(has_harness)
+        self.delete_harness_button.setEnabled(has_harness)
+        self.export_archive_button.setEnabled(has_harness)
         self._refresh_asset_library(all_skills)
 
     def _harness_list_card(self, row: int, harness: Harness, assets: list[Asset]) -> QWidget:
@@ -1382,6 +1396,20 @@ class MainWindow(QMainWindow):
         self.controller.update_harness(harness.id, name, description)
         self.refresh()
         dialogs.show_info(self, "保存完成", f"已更新任务套件 {name}。")
+
+    def _delete_harness(self) -> None:
+        harness = self._selected_harness()
+        confirmed = dialogs.ask_confirm(
+            self,
+            "删除任务套件",
+            f"确认删除任务套件「{harness.name}」？\n\n"
+            "删除后不会删除技能、MCP、AGENTS.md 本体，只会移除套件及其关联关系。",
+        )
+        if not confirmed:
+            return
+        self.controller.delete_harness(harness.id)
+        self.refresh()
+        dialogs.show_info(self, "删除完成", f"已删除任务套件 {harness.name}。")
 
     def _selected_harness(self) -> Harness:
         row = self._require_harness_row()
