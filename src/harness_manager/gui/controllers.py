@@ -201,6 +201,16 @@ class MainController:
         target = Path(target_path) if target_path is not None else self._client_target(client_type)
         return self.service.install_package(package.id, client_type, target, overwrite=overwrite)
 
+    def deploy_harness_by_id(
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str | None = None,
+        overwrite: bool = False,
+    ) -> list[Path]:
+        target = Path(target_path) if target_path is not None else self._client_target(client_type)
+        return self.service.deploy_harness(harness_id, client_type, target, overwrite=overwrite)
+
     def uninstall_package_by_row(
         self, package_row: int, client_type: ClientType
     ) -> dict[str, InstallStatus]:

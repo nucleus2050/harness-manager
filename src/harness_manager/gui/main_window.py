@@ -819,40 +819,52 @@ class MainWindow(QMainWindow):
         layout.setSpacing(10)
 
         header = QHBoxLayout()
-        header.setSpacing(8)
+        header.setSpacing(10)
+
+        copy = QVBoxLayout()
+        copy.setSpacing(4)
+        title_row = QHBoxLayout()
+        title_row.setSpacing(8)
         title = self._label(harness.name, "ClientName")
         title.setWordWrap(True)
-        count_label = self._label(f"{len(assets)} 个组件", "ClientStatusReady")
-        count_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        header.addWidget(title, 1)
-        header.addWidget(count_label)
-        layout.addLayout(header)
+        scope_label = self._label("本地", "ClientPath")
+        title_row.addWidget(title, 1)
+        title_row.addWidget(scope_label)
+        copy.addLayout(title_row)
 
         description = self._label(harness.description or "暂无描述", "ClientPath")
         description.setWordWrap(True)
-        description.setMaximumHeight(32)
-        layout.addWidget(description)
+        description.setMaximumHeight(34)
+        copy.addWidget(description)
+        header.addLayout(copy, 1)
 
         deploy_bar = QHBoxLayout()
-        deploy_bar.setSpacing(8)
+        deploy_bar.setSpacing(6)
         deploy_bar.addWidget(self._scope_toggle_button())
-        for client_type, text, tooltip in [
-            ("claude_code", "CC", "部署套件到 Claude Code"),
-            ("codex", "C", "部署套件到 Codex"),
-            ("opencode", "OC", "部署套件到 OpenCode"),
+        for client_type, icon, tooltip in [
+            ("claude_code", "✹", "部署套件到 Claude Code"),
+            ("codex", "◎", "部署套件到 Codex"),
+            ("opencode", "✦", "部署套件到 OpenCode"),
         ]:
-            button = self._button(text, "HarnessDeployIcon")
+            button = self._button(icon, "HarnessDeployIcon")
             button.setToolTip(f"{tooltip}（{self._deploy_scope_label()}）")
             button.clicked.connect(
-                self._guard(lambda row=row, client_type=client_type: self._deploy_harness(row, client_type))
+                self._guard(
+                    lambda harness_id=harness.id, client_type=client_type: self._deploy_harness(
+                        harness_id, client_type
+                    )
+                )
             )
             deploy_bar.addWidget(button)
-        deploy_bar.addStretch(1)
-        layout.addLayout(deploy_bar)
+        header.addLayout(deploy_bar)
+        layout.addLayout(header)
+
+        count_label = self._label(f"{len(assets)} 个组件", "ClientStatusReady")
+        layout.addWidget(count_label)
         return card
 
     def _scope_toggle_button(self) -> QPushButton:
-        button = self._button("全局" if self.deploy_scope == "global" else "项目", "HarnessScopeIcon")
+        button = self._button("⌂" if self.deploy_scope == "global" else "▣", "HarnessScopeIcon")
         button.setToolTip("切换部署范围：全局默认目录 / 当前项目目录")
         button.clicked.connect(self._guard(self._toggle_deploy_scope))
         return button
@@ -1535,13 +1547,13 @@ class MainWindow(QMainWindow):
         archive = self.controller.export_package_by_row(self._require_harness_row())
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
-    def _deploy_harness(self, row: int, client_type: ClientType) -> None:
+    def _deploy_harness(self, harness_id: str, client_type: ClientType) -> None:
         target_path = None
         if self.deploy_scope == "project":
             target_path = self._project_deploy_target(client_type)
             target_path.mkdir(parents=True, exist_ok=True)
-        installed = self.controller.install_package_by_row(row, client_type, target_path)
-        harness = self.harnesses[row]
+        installed = self.controller.deploy_harness_by_id(harness_id, client_type, target_path)
+        harness = next(item for item in self.harnesses if item.id == harness_id)
         dialogs.show_info(
             self,
             "部署完成",

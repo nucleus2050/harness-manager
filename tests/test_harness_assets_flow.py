@@ -78,3 +78,20 @@ def test_controller_lists_harnesses_with_asset_and_removes_membership(app_root, 
 
     assert [harness.id for harness in joined] == [first.id]
     assert controller.list_harness_assets(first.id) == []
+
+
+def test_controller_deploys_harness_by_id_without_package_row(app_root, tmp_path, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("可部署套件", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / "codex-skills"
+    target.mkdir()
+
+    installed = controller.deploy_harness_by_id(harness.id, "codex", target)
+
+    assert installed == [target / skill.id]
+    assert (target / skill.id / "SKILL.md").is_file()

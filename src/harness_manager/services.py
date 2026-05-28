@@ -16,6 +16,7 @@ from harness_manager.fingerprint import fingerprint_directory
 from harness_manager.models import Asset, ClientType, InstallStatus, Package, Skill
 from harness_manager.repositories import (
     AssetRepository,
+    HarnessRepository,
     InstallRepository,
     LogRepository,
     PackageRepository,
@@ -99,6 +100,7 @@ class HarnessService:
         self.conn = conn
         self.skills = SkillRepository(conn)
         self.assets = AssetRepository(conn)
+        self.harnesses = HarnessRepository(conn)
         self.packages = PackageRepository(conn)
         self.installs = InstallRepository(conn)
         self.logs = LogRepository(conn)
@@ -353,6 +355,49 @@ class HarnessService:
             raise
         return installed_paths
 
+    def deploy_harness(
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str,
+        overwrite: bool = False,
+    ) -> list[Path]:
+        target = Path(target_path)
+        if not target.is_dir():
+            raise NotADirectoryError(target)
+
+        self.harnesses.get(harness_id)
+        skill_assets = self.harnesses.list_assets_by_type(harness_id, "skill")
+        deployed_paths: list[Path] = []
+        copied_destinations: list[Path] = []
+        try:
+            with transaction(self.conn):
+                for asset in skill_assets:
+                    source = self._validated_managed_asset_source(asset)
+                    destination = self._validated_install_destination(target, asset.id)
+                    destination_preexisted = destination.exists()
+                    try:
+                        copy_directory(source, destination, overwrite=overwrite)
+                    except Exception:
+                        if not destination_preexisted and destination.exists():
+                            self._remove_owned_directory(destination, target)
+                        raise
+                    if not destination_preexisted:
+                        copied_destinations.append(destination)
+                    deployed_paths.append(destination)
+                self.logs.add(
+                    "deploy_harness",
+                    f"Deployed harness {harness_id} to {target}",
+                    client_type,
+                    package_id=harness_id,
+                )
+        except Exception:
+            for destination in reversed(copied_destinations):
+                if destination.exists():
+                    self._remove_owned_directory(destination, target)
+            raise
+        return deployed_paths
+
     def uninstall_package(
         self, package_id: str, client_type: ClientType
     ) -> dict[str, InstallStatus]:
@@ -459,6 +504,13 @@ class HarnessService:
             raise ValueError(
                 f"Persisted skill path for {skill.id!r} does not match managed source"
             )
+        if not source.is_dir():
+            raise NotADirectoryError(source)
+        return source
+
+    def _validated_managed_asset_source(self, asset: Asset) -> Path:
+        source = self.paths.root / asset.relative_path
+        _resolve_under(source, self.paths.root, "Managed asset source")
         if not source.is_dir():
             raise NotADirectoryError(source)
         return source

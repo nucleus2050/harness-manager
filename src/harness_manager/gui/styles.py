@@ -706,33 +706,35 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QPushButton#HarnessDeployIcon {{
-        min-width: 42px;
-        max-width: 42px;
-        min-height: 34px;
+        min-width: 28px;
+        max-width: 28px;
+        min-height: 28px;
+        max-height: 28px;
         border-radius: 14px;
-        background: {tokens['selected_bg']};
-        border: 1px solid {tokens['selected_border']};
-        color: {tokens['primary_hover']};
-        font-size: 12px;
+        background: transparent;
+        border: 1px solid transparent;
+        color: {tokens['muted']};
+        font-size: 15px;
         font-weight: 900;
         padding: 0;
     }}
 
     QPushButton#HarnessDeployIcon:hover {{
-        background: {tokens['primary']};
-        border-color: {tokens['primary']};
-        color: #ffffff;
+        background: {tokens['hover_bg']};
+        border-color: {tokens['hover_border']};
+        color: {tokens['primary_hover']};
     }}
 
     QPushButton#HarnessScopeIcon {{
-        min-width: 54px;
-        max-width: 54px;
-        min-height: 34px;
+        min-width: 28px;
+        max-width: 28px;
+        min-height: 28px;
+        max-height: 28px;
         border-radius: 14px;
         background: transparent;
-        border: 1px solid {tokens['compact_border']};
-        color: {tokens['compact_text']};
-        font-size: 12px;
+        border: 1px solid transparent;
+        color: {tokens['muted']};
+        font-size: 14px;
         font-weight: 850;
         padding: 0;
     }}
