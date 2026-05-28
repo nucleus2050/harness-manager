@@ -1,35 +1,251 @@
-# Harness Manager
+# Harness Manager（任务套件管理器）
 
-Windows desktop GUI for managing task harnesses. A harness can include AGENTS.md instructions, MCP configuration assets, and skills. Hook support is deferred.
+Harness Manager 是一个本地 Windows 桌面应用，用来管理完成某项任务所需的上下文和工具组件。它把分散在 Codex、Claude Code、OpenCode 等工具里的 `Skill`、`AGENTS.md` 和 MCP 配置整理成可复用的“任务套件”，并支持把套件部署到不同工具的默认目录或项目目录。
 
-## Development
+当前暂不实现 Hook 管理，因为不同工具的 Hook 标准和安装方式差异较大。
+
+## 这个项目解决什么实际问题
+
+在使用多个 AI 编程工具时，同一类任务往往需要重复准备相同资源：
+
+- 前端开发需要固定的一组 Skills、MCP server 和项目提示词。
+- 代码审查需要另一组审查规则、上下文说明和辅助工具。
+- 不同工具（Codex、Claude Code、OpenCode）有不同的默认目录和配置方式。
+- 手工复制、安装和删除这些资源容易遗漏，也难以知道某个任务到底依赖了哪些组件。
+
+Harness Manager 的目标是把这些资源抽象成“任务套件”：
+
+- 先在组件库中维护 `Skill`、`AGENTS.md` 和 `MCP`。
+- 再把组件加入某个任务套件。
+- 最后把任务套件一键部署到目标工具。
+
+这样可以减少重复配置，也能让某项工作的上下文、提示词和工具依赖更清晰。
+
+## 当前核心功能
+
+### 任务套件
+
+- 新建、编辑、删除任务套件。
+- 一个任务套件可以包含：
+  - 多个 `Skill`
+  - 多个 `MCP`
+  - 一个 `AGENTS.md`
+- 选中任务套件后展示已加入的 Skill、AGENTS.md 和 MCP。
+- 支持导出任务套件为 `.harness.zip`。
+- 支持导入离线任务套件包。
+- 删除任务套件只删除套件和关联关系，不删除组件库里的组件。
+- 如果任务套件仍有已部署内容，会阻止删除，要求先撤销部署。
+
+### Skill 管理
+
+- 支持从 Codex、Claude Code、OpenCode 默认目录导入 Skill。
+- 支持添加自定义 Skill 目录并导入。
+- Skill 会复制到当前应用管理目录。
+- Skill 可以加入或移出任务套件。
+- 已加入所有可用任务套件时，加入按钮会显示为不可用状态。
+
+### AGENTS.md 管理
+
+- AGENTS.md 是组件库中的独立组件。
+- 支持在界面中直接新建 AGENTS.md 内容。
+- 支持从本地文件选择并导入 AGENTS.md / Markdown 文件。
+- 列表中展示名称、描述和内容摘要，不展示技术 ID。
+- 一个任务套件最多只能加入一个 AGENTS.md。
+
+### MCP 管理
+
+- MCP 是组件库中的独立配置组件。
+- 支持新增和编辑 MCP JSON 配置。
+- 支持填写显示名称和描述。
+- 列表中展示显示名称、描述和配置摘要，不展示技术 ID。
+- MCP 可以加入或移出任务套件。
+
+### 部署与撤销
+
+- 任务套件卡片上提供 Codex、Claude Code、OpenCode 的部署入口。
+- 支持全局默认目录和项目级目录切换。
+- 部署是有状态的：
+  - 未部署时点击为部署。
+  - 已部署时点击为撤销。
+- 成功操作不弹二次提示，按钮状态和列表刷新即为反馈。
+- 失败时会展示错误原因。
+- 删除、移除文件等可能带来不可逆影响的操作会保留确认。
+
+### 配置与备份
+
+- 支持界面语言设置。
+- 支持主题切换。
+- 支持全量配置导入和导出。
+- 支持通过环境变量配置日志等级：
+
+```powershell
+$env:HARNESS_MANAGER_LOG_LEVEL="DEBUG"
+```
+
+可用等级包括 `DEBUG`、`INFO`、`ERROR`，默认是 `INFO`。
+
+## 技术架构
+
+项目采用分层 Python 架构，核心业务逻辑不依赖 Qt，便于测试和维护。
+
+```text
+src/harness_manager/
+  __main__.py              # 应用入口
+  app_paths.py             # 运行目录和数据目录解析
+  asset_paths.py           # 组件文件路径规则
+  client_detection.py      # Codex / Claude Code / OpenCode 默认目录发现
+  db.py                    # SQLite schema 初始化和事务辅助
+  repositories.py          # 数据库访问层
+  services.py              # 业务用例：导入、导出、部署、撤销、删除等
+  file_ops.py              # 文件复制、删除、压缩、解压的安全封装
+  fingerprint.py           # 目录 fingerprint 计算，用于安全撤销/卸载
+  settings.py              # 语言、主题、全量配置导入导出
+  logging_config.py        # 日志配置
+  gui/
+    main_window.py         # 主窗口与页面交互
+    controllers.py         # GUI 到 service/repository 的薄封装
+    dialogs.py             # 自定义弹窗
+    styles.py              # Qt stylesheet 和主题 token
+```
+
+### 分层职责
+
+- GUI 层只负责界面、交互和刷新。
+- Controller 层负责把 GUI 操作转换为业务调用。
+- Service 层负责核心业务流程和文件系统操作。
+- Repository 层负责 SQLite CRUD。
+- 文件系统操作集中在 `file_ops.py` 和 `services.py` 中，避免 GUI 直接操作关键目录。
+
+### 数据存储
+
+应用使用 SQLite 保存元数据，组件文件保存在应用运行目录下。
+
+默认运行目录结构：
+
+```text
+HarnessManager/
+  data/
+    harness.db
+  assets/
+    agents/
+      <asset_id>/AGENTS.md
+    mcp/
+      <asset_id>/mcp.json
+  skills/
+    <skill_id>/SKILL.md
+  exports/
+    <任务套件名称>.harness.zip
+  config/
+    settings.json
+```
+
+说明：
+
+- 任务套件本身是数据库中的抽象概念。
+- Skill、AGENTS.md、MCP 是组件资产。
+- `.harness.zip` 是离线导入/导出的任务套件包。
+- 撤销部署时会通过 fingerprint 判断目标文件是否被修改，避免误删用户改过的内容。
+
+## 技术栈
+
+- Python 3.11+
+- PySide6 / Qt Widgets
+- SQLite（Python 标准库 `sqlite3`）
+- pytest
+- PyInstaller
+
+## 本地开发
+
+建议在项目根目录执行：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e .[dev]
-pytest
+python -m pip install -e .[dev]
+```
+
+启动应用：
+
+```powershell
 python -m harness_manager
 ```
 
-## Build
+也可以使用安装后的命令：
+
+```powershell
+harness-manager
+```
+
+运行测试：
+
+```powershell
+pytest -q
+python -m compileall -q src tests
+```
+
+仅验证 GUI 模块可导入：
+
+```powershell
+python -c "from harness_manager.gui.main_window import MainWindow; print('gui import ok')"
+```
+
+## 如何打包
+
+项目通过 `scripts/build.ps1` 使用 PyInstaller 打包 Windows 桌面程序。
+
+### 1. 安装依赖
+
+```powershell
+python -m pip install -e .[dev]
+```
+
+### 2. 执行打包脚本
 
 ```powershell
 .\scripts\build.ps1
 ```
 
-## Runtime Data
+脚本实际执行的关键步骤包括：
 
-The app stores runtime data under the directory where it is launched:
+```powershell
+python -m PyInstaller `
+  --noconfirm `
+  --windowed `
+  --name HarnessManager `
+  --icon src/harness_manager/resources/app.ico `
+  --paths src `
+  src/harness_manager/__main__.py
+```
 
-- `data/harness.db`
-- `skills/`
-- `assets/`
-- `exports/`
-- `config/`
+### 3. 打包产物
 
-Use a writable directory such as `D:\Tools\HarnessManager` for normal use.
+打包完成后，可执行文件位于：
 
-## Safety
+```text
+dist/HarnessManager/HarnessManager.exe
+```
 
-Uninstall removes only paths recorded in `install_records`. If an installed skill has been edited after installation, uninstall marks it as modified and leaves it in place.
+建议把 `dist/HarnessManager/` 整个目录复制到一个可写目录中运行，例如：
+
+```text
+D:\Tools\HarnessManager\
+```
+
+应用会在运行目录下创建或使用 `data/`、`assets/`、`skills/`、`exports/`、`config/` 等目录。因此不要放在无写权限目录中运行。
+
+## 安全策略
+
+- 导入组件时复制到应用管理目录，不直接依赖原始来源目录。
+- 解压离线包时检查路径穿越、文件数量、大小和压缩比。
+- 撤销部署只处理有部署记录的路径。
+- 如果部署目标被用户修改，撤销会标记为 modified，不会直接删除。
+- 删除任务套件不会删除组件资产。
+- 删除 Skill 会删除组件库中的 Skill 文件和关联关系，因此会要求确认。
+
+## 当前限制
+
+- Hook 管理暂不实现。
+- 任务套件部署当前主要面向 Codex、Claude Code、OpenCode。
+- AGENTS.md 在一个任务套件中限制为一个。
+- 旧的 Package 相关代码仍有兼容保留，但用户界面统一使用“任务套件”概念。
+
