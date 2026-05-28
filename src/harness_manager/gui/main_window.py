@@ -57,6 +57,7 @@ TITLE_BAR_HEIGHT = 42
 CLIENT_CARD_MIN_HEIGHT = 92
 CLIENT_SOURCE_VISIBLE_ROWS = 3
 SKILL_DESCRIPTION_MAX_LENGTH = 180
+AGENTS_SUMMARY_MAX_LENGTH = 96
 
 
 class _WindowsMSG(ctypes.Structure):
@@ -566,11 +567,14 @@ class MainWindow(QMainWindow):
                 "MutedText",
             )
             summary = self._label(
-                f"内容摘要：{self._truncate_description(self._agents_md_summary(asset))}",
+                f"内容摘要：{self._truncate_text(self._agents_md_summary(asset), AGENTS_SUMMARY_MAX_LENGTH)}",
                 "SkillDescription",
             )
+            description.setWordWrap(False)
+            description.setMaximumHeight(18)
+            summary.setWordWrap(True)
+            summary.setMaximumHeight(34)
             for label in [description, summary]:
-                label.setWordWrap(True)
                 label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
                 copy.addWidget(label)
         else:
@@ -669,9 +673,12 @@ class MainWindow(QMainWindow):
         return skill_description(skill_root)
 
     def _truncate_description(self, description: str) -> str:
-        if len(description) <= SKILL_DESCRIPTION_MAX_LENGTH:
-            return description
-        return description[:SKILL_DESCRIPTION_MAX_LENGTH].rstrip() + "..."
+        return self._truncate_text(description, SKILL_DESCRIPTION_MAX_LENGTH)
+
+    def _truncate_text(self, text: str, max_length: int) -> str:
+        if len(text) <= max_length:
+            return text
+        return text[:max_length].rstrip() + "..."
 
     def _client_card(self, client: ClientConfig) -> QFrame:
         path = client.effective_path

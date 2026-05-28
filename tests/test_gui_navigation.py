@@ -304,6 +304,10 @@ def test_agents_md_library_item_shows_description_and_summary_not_technical_ids(
     assert "_agents_md_summary" in source
     assert "AGENTS.md 描述：" in source
     assert "内容摘要：" in source
+    assert "AGENTS_SUMMARY_MAX_LENGTH" in source
+    assert "_truncate_text(self._agents_md_summary(asset), AGENTS_SUMMARY_MAX_LENGTH)" in source
+    assert "summary.setMaximumHeight(34)" in source
+    assert "description.setMaximumHeight(18)" in source
     assert "asset.type == \"agents_md\"" in source
     assert "类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}" not in source
 
