@@ -561,6 +561,9 @@ class MainWindow(QMainWindow):
             copy.addWidget(description)
         layout.addLayout(copy, 1)
 
+        available_harnesses = self.controller.list_harnesses_without_asset(asset.id)
+        joined_harnesses = self.controller.list_harnesses_with_asset(asset.id)
+
         actions = QFrame()
         actions.setObjectName("AssetLibraryActions")
         actions.setFixedWidth(312)
@@ -572,6 +575,9 @@ class MainWindow(QMainWindow):
 
         add_button = self._button("加入套件", "CompactButton")
         add_button.setFixedWidth(88)
+        add_button.setEnabled(bool(available_harnesses))
+        if not available_harnesses:
+            add_button.setText("已加入" if self.harnesses else "无套件")
         add_button.clicked.connect(
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
@@ -585,6 +591,9 @@ class MainWindow(QMainWindow):
 
         remove_button = self._button("移出套件", "CompactButton")
         remove_button.setFixedWidth(88)
+        remove_button.setEnabled(bool(joined_harnesses))
+        if not joined_harnesses:
+            remove_button.setText("未加入")
         remove_button.clicked.connect(
             self._guard(lambda asset=asset: self._remove_asset_from_chosen_harness(asset))
         )

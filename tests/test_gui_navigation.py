@@ -254,6 +254,11 @@ def test_join_harness_prompts_for_target_harness():
 
     assert "choose_harness" in main_source
     assert "list_harnesses_without_asset(asset.id)" in main_source
+    assert "available_harnesses = self.controller.list_harnesses_without_asset(asset.id)" in main_source
+    assert "add_button.setEnabled(bool(available_harnesses))" in main_source
+    assert 'add_button.setText("已加入" if self.harnesses else "无套件")' in main_source
+    assert "remove_button.setEnabled(bool(joined_harnesses))" in main_source
+    assert 'remove_button.setText("未加入")' in main_source
     assert "dialogs.show_info" not in main_source
     assert "选择任务套件" in dialog_source
     assert "请选择要加入的任务套件" in dialog_source
