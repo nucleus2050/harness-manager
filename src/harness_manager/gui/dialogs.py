@@ -20,54 +20,64 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from harness_manager.gui.styles import _THEME_TOKENS
+
 if TYPE_CHECKING:
     from harness_manager.models import Asset, Harness
 
 
-def _dialog_stylesheet() -> str:
-    return """
-    QDialog {
-        background: #f8fafc;
+def _dialog_theme_name(theme_source: QWidget | str | None) -> str:
+    if isinstance(theme_source, str):
+        return theme_source
+    return getattr(theme_source, "current_theme", "light")
+
+
+def _dialog_stylesheet(theme_source: QWidget | str | None = None) -> str:
+    theme = _dialog_theme_name(theme_source)
+    tokens = _THEME_TOKENS.get(theme, _THEME_TOKENS["light"])
+    return f"""
+    QDialog {{
+        background: {tokens['card']};
         border-radius: 18px;
-    }
-    QLabel {
+    }}
+    QLabel {{
         background: transparent;
-        color: #0f172a;
+        color: {tokens['title']};
         font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    }
-    QLabel#DialogTitle {
+    }}
+    QLabel#DialogTitle {{
         font-size: 18px;
         font-weight: 800;
-    }
-    QLabel#DialogMessage {
-        color: #475569;
+    }}
+    QLabel#DialogMessage {{
+        color: {tokens['muted']};
         font-size: 13px;
-    }
-    QDialog#MessageDialog {
+    }}
+    QDialog#MessageDialog {{
         background: transparent;
-    }
-    QFrame#DialogShell {
-        background: #0b0f17;
-        border: 1px solid #263142;
+    }}
+    QFrame#DialogShell {{
+        background: {tokens['card']};
+        border: 1px solid {tokens['card_border']};
         border-radius: 22px;
-    }
-    QFrame#DialogAccent {
-        background: #ef4444;
+    }}
+    QFrame#DialogAccent {{
+        background: {tokens['danger_text']};
         border-radius: 2px;
-    }
-    QDialog#MessageDialog QLabel {
-        color: #e5eefc;
-    }
-    QDialog#MessageDialog QLabel#DialogMessage {
-        color: #9fb0c7;
+    }}
+    QDialog#MessageDialog QLabel {{
+        color: {tokens['title']};
+    }}
+    QDialog#MessageDialog QLabel#DialogMessage {{
+        color: {tokens['muted']};
         font-size: 13px;
-    }
-    QDialog#MessageDialog QLabel#DialogTitle {
-        color: #f8fafc;
+    }}
+    QDialog#MessageDialog QLabel#DialogTitle {{
+        color: {tokens['title']};
         font-size: 18px;
         font-weight: 900;
-    }
-    QPushButton#DialogCloseButton {
+    }}
+    QPushButton#DialogCloseButton {{
         min-width: 30px;
         max-width: 30px;
         min-height: 30px;
@@ -75,16 +85,16 @@ def _dialog_stylesheet() -> str:
         border-radius: 15px;
         border: 1px solid transparent;
         background: transparent;
-        color: #94a3b8;
+        color: {tokens['muted']};
         font-size: 16px;
         padding: 0;
-    }
-    QPushButton#DialogCloseButton:hover {
-        background: #182235;
-        border-color: #334155;
-        color: #f8fafc;
-    }
-    QLabel#DialogIcon {
+    }}
+    QPushButton#DialogCloseButton:hover {{
+        background: {tokens['hover_bg']};
+        border-color: {tokens['hover_border']};
+        color: {tokens['title']};
+    }}
+    QLabel#DialogIcon {{
         min-width: 36px;
         min-height: 36px;
         max-width: 36px;
@@ -93,67 +103,80 @@ def _dialog_stylesheet() -> str:
         color: white;
         font-weight: 900;
         font-size: 18px;
-    }
-    QLineEdit {
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
+    }}
+    QLineEdit {{
+        background: {tokens['soft_card']};
+        border: 1px solid {tokens['compact_border']};
         border-radius: 12px;
         padding: 9px 11px;
-        color: #0f172a;
+        color: {tokens['title']};
         font-size: 13px;
-    }
-    QPlainTextEdit {
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
+    }}
+    QLineEdit::placeholder {{
+        color: {tokens['muted']};
+    }}
+    QPlainTextEdit {{
+        background: {tokens['soft_card']};
+        border: 1px solid {tokens['compact_border']};
         border-radius: 12px;
         padding: 9px 11px;
-        color: #0f172a;
+        color: {tokens['title']};
         font-size: 13px;
-    }
-    QPushButton {
+    }}
+    QPushButton {{
         min-width: 82px;
         min-height: 34px;
         border-radius: 12px;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        color: #334155;
+        border: 1px solid {tokens['compact_border']};
+        background: {tokens['button_bg']};
+        color: {tokens['button_text']};
         font-weight: 700;
         padding: 6px 14px;
-    }
-    QPushButton#PrimaryDialogButton {
-        background: #2563eb;
-        border-color: #2563eb;
+    }}
+    QPushButton:hover {{
+        background: {tokens['hover_bg']};
+        border-color: {tokens['hover_border']};
+    }}
+    QPushButton#PrimaryDialogButton {{
+        background: {tokens['primary']};
+        border-color: {tokens['primary']};
         color: #ffffff;
-    }
-    QPushButton#DangerDialogButton {
-        background: #dc2626;
-        border-color: #ef4444;
-        color: #ffffff;
-    }
-    QPushButton#GhostDialogButton {
-        background: #ffffff;
-        border-color: #d8e1ee;
-        color: #172033;
-    }
-    QListWidget#HarnessPickerList {
-        background: #f8fafc;
-        border: 1px solid #dbe4f0;
+    }}
+    QPushButton#PrimaryDialogButton:hover {{
+        background: {tokens['primary_hover']};
+    }}
+    QPushButton#DangerDialogButton {{
+        background: {tokens['danger_bg']};
+        border-color: {tokens['danger_border']};
+        color: {tokens['danger_text']};
+    }}
+    QPushButton#DangerDialogButton:hover {{
+        background: {tokens['danger_hover']};
+    }}
+    QPushButton#GhostDialogButton {{
+        background: {tokens['button_bg']};
+        border-color: {tokens['compact_border']};
+        color: {tokens['button_text']};
+    }}
+    QListWidget#HarnessPickerList {{
+        background: {tokens['soft_card']};
+        border: 1px solid {tokens['soft_border']};
         border-radius: 16px;
         padding: 8px;
-    }
-    QListWidget#HarnessPickerList::item {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+    }}
+    QListWidget#HarnessPickerList::item {{
+        background: {tokens['card']};
+        border: 1px solid {tokens['card_border']};
         border-radius: 14px;
         margin: 6px 0;
         padding: 14px;
         min-height: 54px;
-        color: #172033;
-    }
-    QListWidget#HarnessPickerList::item:selected {
-        background: #dbeafe;
-        border: 1px solid #2563eb;
-    }
+        color: {tokens['list_text']};
+    }}
+    QListWidget#HarnessPickerList::item:selected {{
+        background: {tokens['selected_bg']};
+        border: 1px solid {tokens['selected_border']};
+    }}
     """
 
 
@@ -170,7 +193,7 @@ class _MessageDialog(QDialog):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setModal(True)
         self.setMinimumWidth(440)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -240,7 +263,7 @@ class _ConfirmDialog(QDialog):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setModal(True)
         self.setMinimumWidth(460)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -284,7 +307,7 @@ class _TextDialog(QDialog):
         self.setWindowTitle(title)
         self.setModal(True)
         self.setMinimumWidth(460)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
         self.input = QLineEdit()
         self.input.setPlaceholderText(label)
 
@@ -330,7 +353,7 @@ class _HarnessDialog(QDialog):
         self.setWindowTitle(title)
         self.setModal(True)
         self.setMinimumSize(560, 460)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 20)
@@ -378,7 +401,7 @@ class _AssetDialog(QDialog):
         self.setWindowTitle("选择组件")
         self.setModal(True)
         self.setMinimumWidth(520)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(22, 20, 22, 18)
@@ -428,7 +451,7 @@ class _HarnessDetailsDialog(QDialog):
         self.setWindowTitle(title)
         self.setModal(True)
         self.setMinimumWidth(520)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
 
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("套件名称")
@@ -480,7 +503,7 @@ class McpConfigDialog(QDialog):
         self.setWindowTitle(title)
         self.setModal(True)
         self.setMinimumSize(720, 620)
-        self.setStyleSheet(_dialog_stylesheet())
+        self.setStyleSheet(_dialog_stylesheet(parent))
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 22, 24, 20)
