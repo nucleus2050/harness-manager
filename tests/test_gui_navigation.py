@@ -293,7 +293,9 @@ def test_applications_view_lists_installed_components():
 
     for token in [
         "self.applications_view_button",
-        '"applications": "应用程序"',
+        '"applications": "智能体"',
+        '"applications": "Agents"',
+        "从智能体角度查看 Codex、Claude Code、OpenCode 当前安装了哪些组件。",
         "_build_applications_card",
         "self.applications_body",
         "_refresh_applications_view",
