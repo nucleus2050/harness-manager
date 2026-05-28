@@ -169,13 +169,20 @@ def test_agents_md_creation_dialog_supports_editor_and_file_import():
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
     controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
     service_source = Path("src/harness_manager/services.py").read_text(encoding="utf-8")
+    agents_toolbar_source = source.split("def _build_agents_toolbar", 1)[1].split("\n    def ", 1)[0]
 
     for text in ["添加 AGENTS.md", "名称", "描述", "内容", "选择文件导入", "在此输入提示词内容"]:
         assert text in dialog_source
     assert "AgentsMdDialog" in dialog_source
     assert "ask_agents_md" in dialog_source
+    assert "_build_agents_toolbar" in source
+    assert "_build_agents_summary" in source
+    assert "self.asset_library_header_layout.addWidget(self._build_agents_toolbar())" in source
+    assert "new_agents_button = self._button(\"+ 新增 AGENTS.md\", \"PrimaryButton\")" in agents_toolbar_source
+    assert "new_agents_button.clicked.connect(self._guard(self._new_agents_md_asset))" in agents_toolbar_source
     assert "choose_asset_file" not in source.split("def _import_agents_to_harness", 1)[1].split("\n    def ", 1)[0]
     assert "ask_agents_md" in source
+    assert "def _new_agents_md_asset" in source
     assert "create_agents_md_asset" in controller_source
     assert "create_agents_md_asset" in service_source
     assert "metadata_json" in service_source

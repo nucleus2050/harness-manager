@@ -503,6 +503,33 @@ class MainWindow(QMainWindow):
         layout.addWidget(new_mcp_config_button)
         return toolbar
 
+    def _build_agents_toolbar(self) -> QWidget:
+        toolbar = QFrame()
+        toolbar.setObjectName("AgentsToolbar")
+        layout = QHBoxLayout(toolbar)
+        layout.setContentsMargins(4, 0, 4, 0)
+        layout.setSpacing(12)
+        title = self._label("AGENTS.md 管理", "SectionTitle")
+        subtitle = self._label("维护可复用的提示词文件，可直接编辑或从文件导入。", "MutedText")
+        copy = QVBoxLayout()
+        copy.setSpacing(4)
+        copy.addWidget(title)
+        copy.addWidget(subtitle)
+        layout.addLayout(copy, 1)
+        new_agents_button = self._button("+ 新增 AGENTS.md", "PrimaryButton")
+        new_agents_button.clicked.connect(self._guard(self._new_agents_md_asset))
+        layout.addWidget(new_agents_button)
+        return toolbar
+
+    def _build_agents_summary(self) -> QWidget:
+        summary = QFrame()
+        summary.setObjectName("AgentsSummary")
+        layout = QHBoxLayout(summary)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.addWidget(self._label(f"已配置 {len(self.library_assets)} 个 AGENTS.md", "MutedText"))
+        layout.addStretch(1)
+        return summary
+
     def _build_mcp_summary(self) -> QWidget:
         summary = QFrame()
         summary.setObjectName("McpSummary")
@@ -523,6 +550,9 @@ class MainWindow(QMainWindow):
         if self.current_view == "mcp":
             self.asset_library_header_layout.addWidget(self._build_mcp_toolbar())
             self.asset_library_header_layout.addWidget(self._build_mcp_summary())
+        elif self.current_view == "agents_md":
+            self.asset_library_header_layout.addWidget(self._build_agents_toolbar())
+            self.asset_library_header_layout.addWidget(self._build_agents_summary())
         else:
             self.asset_library_header_layout.addLayout(
                 self._section_header("组件库", "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。")
@@ -1426,6 +1456,14 @@ class MainWindow(QMainWindow):
         name, description, content = details
         asset = self.controller.create_agents_md_asset(name, description, content)
         self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
+        self.refresh()
+
+    def _new_agents_md_asset(self) -> None:
+        details = dialogs.ask_agents_md(self, "添加 AGENTS.md")
+        if details is None:
+            return
+        name, description, content = details
+        self.controller.create_agents_md_asset(name, description, content)
         self.refresh()
 
     def _import_mcp_to_harness(self) -> None:
