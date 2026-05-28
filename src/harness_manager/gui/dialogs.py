@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -41,6 +42,47 @@ def _dialog_stylesheet() -> str:
     QLabel#DialogMessage {
         color: #475569;
         font-size: 13px;
+    }
+    QDialog#MessageDialog {
+        background: transparent;
+    }
+    QFrame#DialogShell {
+        background: #0b0f17;
+        border: 1px solid #263142;
+        border-radius: 22px;
+    }
+    QFrame#DialogAccent {
+        background: #ef4444;
+        border-radius: 2px;
+    }
+    QDialog#MessageDialog QLabel {
+        color: #e5eefc;
+    }
+    QDialog#MessageDialog QLabel#DialogMessage {
+        color: #9fb0c7;
+        font-size: 13px;
+    }
+    QDialog#MessageDialog QLabel#DialogTitle {
+        color: #f8fafc;
+        font-size: 18px;
+        font-weight: 900;
+    }
+    QPushButton#DialogCloseButton {
+        min-width: 30px;
+        max-width: 30px;
+        min-height: 30px;
+        max-height: 30px;
+        border-radius: 15px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 16px;
+        padding: 0;
+    }
+    QPushButton#DialogCloseButton:hover {
+        background: #182235;
+        border-color: #334155;
+        color: #f8fafc;
     }
     QLabel#DialogIcon {
         min-width: 36px;
@@ -84,7 +126,7 @@ def _dialog_stylesheet() -> str:
         color: #ffffff;
     }
     QPushButton#DangerDialogButton {
-        background: #ef4444;
+        background: #dc2626;
         border-color: #ef4444;
         color: #ffffff;
     }
@@ -118,14 +160,45 @@ def _dialog_stylesheet() -> str:
 class _MessageDialog(QDialog):
     def __init__(self, parent: QWidget, title: str, message: str, kind: str) -> None:
         super().__init__(parent)
+        self.setObjectName("MessageDialog")
         self.setWindowTitle(title)
+        self.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setModal(True)
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(440)
         self.setStyleSheet(_dialog_stylesheet())
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(22, 20, 22, 18)
-        layout.setSpacing(18)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        shell = QFrame()
+        shell.setObjectName("DialogShell")
+        shell_layout = QVBoxLayout(shell)
+        shell_layout.setContentsMargins(20, 18, 20, 18)
+        shell_layout.setSpacing(16)
+
+        top = QHBoxLayout()
+        top.setSpacing(10)
+        title_label = QLabel(title)
+        title_label.setObjectName("DialogTitle")
+        close = QPushButton("×")
+        close.setObjectName("DialogCloseButton")
+        close.clicked.connect(self.reject)
+        top.addWidget(title_label, 1)
+        top.addWidget(close)
+        shell_layout.addLayout(top)
+
+        accent = QFrame()
+        accent.setObjectName("DialogAccent")
+        accent.setFixedHeight(4)
+        if kind != "error":
+            accent.setStyleSheet("background: #2563eb; border-radius: 2px;")
+        shell_layout.addWidget(accent)
 
         body = QHBoxLayout()
         body.setSpacing(14)
@@ -136,16 +209,13 @@ class _MessageDialog(QDialog):
             "background: #ef4444;" if kind == "error" else "background: #2563eb;"
         )
         text = QVBoxLayout()
-        title_label = QLabel(title)
-        title_label.setObjectName("DialogTitle")
         message_label = QLabel(message)
         message_label.setObjectName("DialogMessage")
         message_label.setWordWrap(True)
-        text.addWidget(title_label)
         text.addWidget(message_label)
         body.addWidget(icon)
         body.addLayout(text, 1)
-        layout.addLayout(body)
+        shell_layout.addLayout(body)
 
         buttons = QHBoxLayout()
         buttons.addStretch(1)
@@ -153,7 +223,8 @@ class _MessageDialog(QDialog):
         ok.setObjectName("DangerDialogButton" if kind == "error" else "PrimaryDialogButton")
         ok.clicked.connect(self.accept)
         buttons.addWidget(ok)
-        layout.addLayout(buttons)
+        shell_layout.addLayout(buttons)
+        layout.addWidget(shell)
 
 
 class _TextDialog(QDialog):

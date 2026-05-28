@@ -95,3 +95,22 @@ def test_controller_deploys_harness_by_id_without_package_row(app_root, tmp_path
 
     assert installed == [target / skill.id]
     assert (target / skill.id / "SKILL.md").is_file()
+
+
+def test_controller_deploys_harness_creates_missing_target_directory(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("默认目录部署", "")
+    skill = controller.import_skill_directory(sample_skill, "claude_code")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / ".claude" / "skills"
+
+    installed = controller.deploy_harness_by_id(harness.id, "claude_code", target)
+
+    assert target.is_dir()
+    assert installed == [target / skill.id]
+    assert (target / skill.id / "SKILL.md").is_file()

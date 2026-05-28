@@ -209,6 +209,7 @@ class MainController:
         overwrite: bool = False,
     ) -> list[Path]:
         target = Path(target_path) if target_path is not None else self._client_target(client_type)
+        target.mkdir(parents=True, exist_ok=True)
         return self.service.deploy_harness(harness_id, client_type, target, overwrite=overwrite)
 
     def uninstall_package_by_row(

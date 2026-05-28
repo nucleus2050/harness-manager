@@ -250,6 +250,20 @@ def test_harness_picker_uses_refined_card_style():
     assert "setMinimumSize(560, 460)" in dialog_source
 
 
+def test_message_dialog_uses_app_like_custom_chrome():
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+
+    for token in [
+        "FramelessWindowHint",
+        "MessageDialog",
+        "DialogShell",
+        "DialogCloseButton",
+        "DialogAccent",
+    ]:
+        assert token in dialog_source
+    assert "QMessageBox" not in dialog_source
+
+
 def test_asset_library_adds_harness_action_on_each_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
