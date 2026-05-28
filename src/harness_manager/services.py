@@ -7,6 +7,7 @@ import uuid
 import re
 import sqlite3
 import tempfile
+import hashlib
 from pathlib import Path
 
 from harness_manager.app_paths import AppPaths
@@ -26,6 +27,9 @@ from harness_manager.repositories import (
 )
 
 logger = logging.getLogger(__name__)
+
+HARNESS_BLOCK_START = "<!-- harness-manager:start:{harness_id}:{asset_id} -->"
+HARNESS_BLOCK_END = "<!-- harness-manager:end:{harness_id}:{asset_id} -->"
 
 
 def _slug(value: str) -> str:
@@ -511,7 +515,7 @@ class HarnessService:
             raise NotADirectoryError(target)
 
         self.harnesses.get(harness_id)
-        skill_assets = self.harnesses.list_assets_by_type(harness_id, "skill")
+        harness_assets = self.harnesses.list_assets(harness_id)
         active_records = self.harness_deploys.list_active(harness_id, client_type, target)
         active_asset_ids = {record["asset_id"] for record in active_records}
         deployed_paths: list[Path] = []
@@ -519,13 +523,29 @@ class HarnessService:
         logger.info("Deploying harness %s to %s for %s", harness_id, target, client_type)
         try:
             with transaction(self.conn):
-                for asset in skill_assets:
+                for asset in harness_assets:
                     if asset.id in active_asset_ids:
                         logger.debug("Skipping active deployed asset %s", asset.id)
-                        deployed_paths.append(target / asset.id)
+                        deployed_paths.append(self._harness_asset_deploy_destination(asset, client_type, target))
+                        continue
+                    destination = self._harness_asset_deploy_destination(asset, client_type, target)
+                    if asset.type != "skill":
+                        source = self._validated_managed_asset_source(asset)
+                        self._deploy_file_asset_to_client(
+                            harness_id, asset, client_type, target, source, destination
+                        )
+                        deployed_fingerprint = _fingerprint_file(destination)
+                        self.harness_deploys.add_deployed(
+                            harness_id,
+                            asset.id,
+                            client_type,
+                            target,
+                            destination,
+                            deployed_fingerprint,
+                        )
+                        deployed_paths.append(destination)
                         continue
                     source = self._validated_managed_asset_source(asset)
-                    destination = self._validated_install_destination(target, asset.id)
                     destination_preexisted = destination.exists()
                     if destination_preexisted and not overwrite:
                         source_fingerprint = fingerprint_directory(source)
@@ -592,23 +612,29 @@ class HarnessService:
     ) -> bool:
         self.harnesses.get(harness_id)
         target = Path(target_path).resolve()
-        skill_assets = self.harnesses.list_assets_by_type(harness_id, "skill")
-        if not skill_assets:
+        harness_assets = self.harnesses.list_assets(harness_id)
+        if not harness_assets:
             return False
         records = self.harness_deploys.list_active(harness_id, client_type, target)
         records_by_asset = {record["asset_id"]: record for record in records}
-        if set(records_by_asset) != {asset.id for asset in skill_assets}:
+        if set(records_by_asset) != {asset.id for asset in harness_assets}:
             return False
-        for asset in skill_assets:
+        for asset in harness_assets:
             record = records_by_asset[asset.id]
             try:
-                installed_path = self._validated_harness_undeploy_path(record)
+                installed_path = self._validated_harness_undeploy_path(record, asset)
             except ValueError:
                 logger.debug("Deploy record for asset %s is invalid", asset.id)
                 return False
-            if not installed_path.is_dir():
-                return False
-            if fingerprint_directory(installed_path) != record["fingerprint"]:
+            if asset.type == "skill":
+                if not installed_path.is_dir():
+                    return False
+                fingerprint = fingerprint_directory(installed_path)
+            else:
+                if not installed_path.is_file():
+                    return False
+                fingerprint = _fingerprint_file(installed_path)
+            if fingerprint != record["fingerprint"]:
                 return False
         return True
 
@@ -625,14 +651,24 @@ class HarnessService:
     ) -> bool:
         target = Path(target_path).resolve()
         records = self.harness_deploys.list_active(harness_id, client_type, target)
+        assets = {asset.id: asset for asset in self.harnesses.list_assets(harness_id)}
         for record in records:
             try:
-                installed_path = self._validated_harness_undeploy_path(record)
+                installed_path = self._validated_harness_undeploy_path(record, assets.get(record["asset_id"]))
             except ValueError:
                 return True
-            if not installed_path.is_dir():
+            asset = assets.get(record["asset_id"])
+            if asset is None:
                 return True
-            if fingerprint_directory(installed_path) != record["fingerprint"]:
+            if asset.type == "skill":
+                if not installed_path.is_dir():
+                    return True
+                fingerprint = fingerprint_directory(installed_path)
+            else:
+                if not installed_path.is_file():
+                    return True
+                fingerprint = _fingerprint_file(installed_path)
+            if fingerprint != record["fingerprint"]:
                 return True
         return False
 
@@ -641,20 +677,27 @@ class HarnessService:
     ) -> dict[str, InstallStatus]:
         target = Path(target_path).resolve()
         records = self.harness_deploys.list_active(harness_id, client_type, target)
+        assets = {asset.id: asset for asset in self.harnesses.list_assets(harness_id)}
         statuses: dict[str, InstallStatus] = {}
         logger.info("Undeploying harness %s from %s for %s", harness_id, target, client_type)
         with transaction(self.conn):
             for record in records:
                 asset_id = record["asset_id"]
+                asset = assets.get(asset_id)
                 try:
-                    installed_path = self._validated_harness_undeploy_path(record)
+                    installed_path = self._validated_harness_undeploy_path(record, asset)
                 except ValueError:
                     self.harness_deploys.mark_status(record["id"], "modified")
                     status = "modified"
                 else:
-                    status = self._undeploy_harness_record(
-                        record["id"], installed_path, record["fingerprint"]
-                    )
+                    if asset is not None and asset.type != "skill":
+                        status = self._undeploy_harness_file_record(
+                            record["id"], installed_path, record["fingerprint"]
+                        )
+                    else:
+                        status = self._undeploy_harness_record(
+                            record["id"], installed_path, record["fingerprint"]
+                        )
                 statuses[asset_id] = status
             self.logs.add(
                 "undeploy_harness",
@@ -826,6 +869,8 @@ class HarnessService:
     def _validated_managed_asset_source(self, asset: Asset) -> Path:
         source = self.paths.root / asset.relative_path
         _resolve_under(source, self.paths.root, "Managed asset source")
+        if source.is_file():
+            return source.parent
         if not source.is_dir():
             raise NotADirectoryError(source)
         return source
@@ -913,19 +958,77 @@ class HarnessService:
             raise ValueError(f"Install record path for {skill_id!r} escapes target")
         return expected_path
 
-    def _validated_harness_undeploy_path(self, record: sqlite3.Row) -> Path:
+    def _validated_harness_undeploy_path(
+        self, record: sqlite3.Row, asset: Asset | None = None
+    ) -> Path:
         asset_id = record["asset_id"]
-        self.paths.skill_path(asset_id)
+        if asset is None or asset.type == "skill":
+            self.paths.skill_path(asset_id)
         target = Path(record["target_path"])
         installed_path = Path(record["installed_path"])
-        expected_path = target / asset_id
+        expected_path = (
+            self._harness_asset_deploy_destination(asset, record["client_type"], target)
+            if asset is not None
+            else target / asset_id
+        )
         if installed_path.resolve() != expected_path.resolve():
             raise ValueError(
                 f"Deploy record path for {asset_id!r} does not match expected target path"
             )
-        if not _is_resolved_under(installed_path, target):
+        owner_root = target if asset is not None and asset.type == "skill" else _client_config_root(record["client_type"], target).parent
+        if not _is_resolved_under(installed_path, owner_root):
             raise ValueError(f"Deploy record path for {asset_id!r} escapes target")
         return expected_path
+
+    def _harness_asset_deploy_destination(
+        self, asset: Asset, client_type: ClientType | str, target: Path
+    ) -> Path:
+        if asset.type == "skill":
+            return self._validated_install_destination(target, asset.id)
+        config_root = _client_config_root(client_type, target)
+        if asset.type == "agents_md":
+            return config_root / ("CLAUDE.md" if client_type == "claude_code" else "AGENTS.md")
+        if asset.type == "mcp":
+            if client_type == "codex":
+                return config_root / "config.toml"
+            if client_type == "claude_code":
+                return config_root.parent / ".claude.json"
+            return config_root / "opencode.json"
+        raise ValueError(f"Unsupported asset type: {asset.type}")
+
+    def _deploy_file_asset_to_client(
+        self,
+        harness_id: str,
+        asset: Asset,
+        client_type: ClientType,
+        target: Path,
+        source: Path,
+        destination: Path,
+    ) -> None:
+        _resolve_under(destination, _client_config_root(client_type, target).parent, "Deploy destination")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if asset.type == "agents_md":
+            payload = source / "AGENTS.md"
+            if not payload.is_file():
+                raise FileNotFoundError(payload)
+            _upsert_marked_text_block(destination, harness_id, asset.id, payload.read_text(encoding="utf-8"))
+            return
+        if asset.type == "mcp":
+            payload = source / "mcp.json"
+            if not payload.is_file():
+                json_files = sorted(source.glob("*.json"))
+                if not json_files:
+                    raise FileNotFoundError(payload)
+                payload = json_files[0]
+            mcp_config = json.loads(payload.read_text(encoding="utf-8"))
+            if client_type == "codex":
+                _upsert_codex_mcp(destination, asset.name, mcp_config)
+            elif client_type == "claude_code":
+                _upsert_json_object(destination, ["mcpServers", asset.name], mcp_config)
+            else:
+                _upsert_json_object(destination, ["mcp", asset.name], mcp_config)
+            return
+        raise ValueError(f"Unsupported file asset type: {asset.type}")
 
     def _remove_owned_directory(self, directory: Path, owner_root: Path) -> None:
         _resolve_under(directory, owner_root, "Directory cleanup target")
@@ -965,6 +1068,116 @@ class HarnessService:
         self.harness_deploys.mark_status(record_id, "uninstalled")
         return "uninstalled"
 
+    def _undeploy_harness_file_record(
+        self, record_id: str, installed_path: Path, installed_fingerprint: str
+    ) -> InstallStatus:
+        if not installed_path.exists():
+            self.harness_deploys.mark_status(record_id, "missing")
+            return "missing"
+        if not installed_path.is_file():
+            self.harness_deploys.mark_status(record_id, "modified")
+            return "modified"
+        if _fingerprint_file(installed_path) != installed_fingerprint:
+            self.harness_deploys.mark_status(record_id, "modified")
+            return "modified"
+        self.harness_deploys.mark_status(record_id, "uninstalled")
+        return "uninstalled"
+
+
+
+def _client_config_root(client_type: ClientType | str, skill_target: Path) -> Path:
+    return Path(skill_target).resolve().parent
+
+
+def _fingerprint_file(path: Path | str) -> str:
+    file_path = Path(path)
+    if not file_path.is_file():
+        raise FileNotFoundError(file_path)
+    file_bytes = file_path.read_bytes()
+    digest = hashlib.sha256()
+    digest.update(file_path.name.encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(len(file_bytes).to_bytes(8, "big"))
+    digest.update(file_bytes)
+    return digest.hexdigest()
+
+
+def _marked_block(harness_id: str, asset_id: str, body: str) -> str:
+    start = HARNESS_BLOCK_START.format(harness_id=harness_id, asset_id=asset_id)
+    end = HARNESS_BLOCK_END.format(harness_id=harness_id, asset_id=asset_id)
+    return f"{start}\n{body.strip()}\n{end}\n"
+
+
+def _upsert_marked_text_block(destination: Path, harness_id: str, asset_id: str, body: str) -> None:
+    existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
+    start = HARNESS_BLOCK_START.format(harness_id=harness_id, asset_id=asset_id)
+    end = HARNESS_BLOCK_END.format(harness_id=harness_id, asset_id=asset_id)
+    pattern = re.compile(
+        rf"{re.escape(start)}\n.*?\n{re.escape(end)}\n?",
+        re.DOTALL,
+    )
+    replacement = _marked_block(harness_id, asset_id, body)
+    if pattern.search(existing):
+        updated = pattern.sub(replacement, existing)
+    else:
+        separator = "\n" if existing and not existing.endswith("\n") else ""
+        updated = f"{existing}{separator}\n{replacement}" if existing else replacement
+    destination.write_text(updated, encoding="utf-8")
+
+
+def _upsert_json_object(destination: Path, keys: list[str], value: dict) -> None:
+    data = {}
+    if destination.exists() and destination.read_text(encoding="utf-8").strip():
+        data = json.loads(destination.read_text(encoding="utf-8"))
+    cursor = data
+    for key in keys[:-1]:
+        next_value = cursor.setdefault(key, {})
+        if not isinstance(next_value, dict):
+            raise ValueError(f"JSON config key is not an object: {key}")
+        cursor = next_value
+    cursor[keys[-1]] = value
+    destination.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _upsert_codex_mcp(destination: Path, name: str, value: dict) -> None:
+    existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
+    header = f"[mcp_servers.{name}]"
+    pattern = re.compile(
+        rf"(?ms)^\[mcp_servers\.{re.escape(name)}\]\n.*?(?=^\[|\Z)"
+    )
+    block = _codex_mcp_toml_block(name, value)
+    if pattern.search(existing):
+        updated = pattern.sub(block, existing)
+    else:
+        separator = "\n" if existing and not existing.endswith("\n") else ""
+        updated = f"{existing}{separator}\n{block}" if existing else block
+    destination.write_text(updated, encoding="utf-8")
+
+
+def _codex_mcp_toml_block(name: str, value: dict) -> str:
+    lines = [f"[mcp_servers.{name}]"]
+    for key, item in value.items():
+        lines.append(f"{key} = {_toml_value(item)}")
+    return "\n".join(lines) + "\n"
+
+
+def _toml_value(value: object) -> str:
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(_toml_value(item) for item in value) + "]"
+    if isinstance(value, dict):
+        return "{" + ", ".join(f"{key} = {_toml_value(item)}" for key, item in value.items()) + "}"
+    if value is None:
+        return '""'
+    return json.dumps(str(value), ensure_ascii=False)
 
 
 def _copy_file_asset(service: HarnessService, source_file: Path, asset_type: str, name: str, source_type: str | None, destination_name: str):
