@@ -309,11 +309,6 @@ def test_applications_view_lists_installed_components():
     method = source.split("def _installed_component_row", 1)[1].split("\n    def ", 1)[0]
     assert "asset_name" not in method
     assert "_asset_type_label" not in method
-    assert "target_path" not in method
-    assert 'component["status"]' not in method
-    application_card = source.split("def _application_card", 1)[1].split("\n    def ", 1)[0]
-    assert "configured_path" not in application_card
-    assert "path_status" not in application_card
 
 
 def test_asset_tab_switch_refreshes_visible_library():

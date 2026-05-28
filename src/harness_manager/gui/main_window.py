@@ -114,8 +114,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "component_library": "组件库",
         "component_library_desc": "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。",
         "applications_desc": "从智能体角度查看 Codex、Claude Code、OpenCode 当前安装了哪些组件。",
-        "installed_components": "已安装关系",
+        "installed_components": "已安装组件",
         "installed_empty": "暂无已安装组件",
+        "configured_path": "配置路径",
         "ready": "就绪",
         "missing": "缺失",
         "custom": "自定义",
@@ -236,8 +237,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "component_library": "Component Library",
         "component_library_desc": "Browse all skills, AGENTS.md, and MCP components by type and add them to harnesses.",
         "applications_desc": "View installed components in Codex, Claude Code, and OpenCode from the agent perspective.",
-        "installed_components": "Installed Links",
+        "installed_components": "Installed Components",
         "installed_empty": "No installed components",
+        "configured_path": "Configured Path",
         "ready": "Ready",
         "missing": "Missing",
         "custom": "Custom",
@@ -696,9 +698,17 @@ class MainWindow(QMainWindow):
         )
         count.setFixedWidth(88)
         count.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        status_key = str(application["path_status"])
+        status = self._label(self._t(status_key), f"ClientStatus{status_key.title()}")
         header.addWidget(name, 1)
         header.addWidget(count)
+        header.addWidget(status)
         layout.addLayout(header)
+
+        configured_path = application["configured_path"] or self._t("not_configured_path")
+        path = self._label(f"{self._t('configured_path')}: {configured_path}", "ClientPath")
+        path.setWordWrap(True)
+        layout.addWidget(path)
 
         components = list(application["components"])
         if not components:
@@ -723,9 +733,15 @@ class MainWindow(QMainWindow):
             "ClientName",
         )
         source = self._label(self._t("component_count").format(count=component["asset_count"]), "MutedText")
+        target = self._label(str(component["target_path"]), "ClientPath")
+        target.setWordWrap(True)
         copy.addWidget(title)
         copy.addWidget(source)
+        copy.addWidget(target)
         row_layout.addLayout(copy, 1)
+        status_key = str(component["status"])
+        status = self._label(self._t(status_key), f"ClientStatus{status_key.title()}")
+        row_layout.addWidget(status, 0, Qt.AlignmentFlag.AlignTop)
         return row
 
     def _build_view_switch(self) -> QFrame:
