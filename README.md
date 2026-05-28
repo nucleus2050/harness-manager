@@ -249,3 +249,8 @@ D:\Tools\HarnessManager\
 - AGENTS.md 在一个任务套件中限制为一个。
 - 旧的 Package 相关代码仍有兼容保留，但用户界面统一使用“任务套件”概念。
 
+## 开源协议
+
+本项目采用 MIT License，详见 `LICENSE`。
+
+项目依赖 PySide6 / Qt for Python 等第三方组件，第三方组件遵循其各自许可证；分发应用时需要同时关注相关依赖的许可证要求。
