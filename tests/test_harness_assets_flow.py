@@ -64,6 +64,22 @@ def test_controller_lists_only_harnesses_without_asset(app_root, tmp_path):
     assert [harness.id for harness in available] == [second.id]
 
 
+def test_controller_allows_only_one_agents_md_per_harness(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("单提示词套件", "")
+    first = controller.create_agents_md_asset("规则一", "第一份", "# One")
+    second = controller.create_agents_md_asset("规则二", "第二份", "# Two")
+
+    controller.add_asset_to_harness(harness.id, first.id, first.type)
+
+    with pytest.raises(ValueError, match="只能加入一个 AGENTS.md"):
+        controller.add_asset_to_harness(harness.id, second.id, second.type)
+    assert controller.list_harnesses_available_for_asset(second) == []
+
+
 def test_controller_lists_harnesses_with_asset_and_removes_membership(app_root, tmp_path):
     paths = AppPaths(app_root)
     paths.ensure()

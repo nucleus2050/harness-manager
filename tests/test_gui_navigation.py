@@ -286,8 +286,8 @@ def test_join_harness_prompts_for_target_harness():
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
     assert "choose_harness" in main_source
-    assert "list_harnesses_without_asset(asset.id)" in main_source
-    assert "available_harnesses = self.controller.list_harnesses_without_asset(asset.id)" in main_source
+    assert "list_harnesses_available_for_asset(asset)" in main_source
+    assert "available_harnesses = self.controller.list_harnesses_available_for_asset(asset)" in main_source
     assert "add_button.setEnabled(bool(available_harnesses))" in main_source
     assert 'add_button.setText("已加入" if self.harnesses else "无套件")' in main_source
     assert "remove_button.setEnabled(bool(joined_harnesses))" in main_source
@@ -295,6 +295,17 @@ def test_join_harness_prompts_for_target_harness():
     assert "dialogs.show_info" not in main_source
     assert "选择任务套件" in dialog_source
     assert "请选择要加入的任务套件" in dialog_source
+
+
+def test_agents_md_library_item_shows_description_and_summary_not_technical_ids():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert "_agents_md_description" in source
+    assert "_agents_md_summary" in source
+    assert "AGENTS.md 描述：" in source
+    assert "内容摘要：" in source
+    assert "asset.type == \"agents_md\"" in source
+    assert "类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}" not in source
 
 
 def test_harness_picker_uses_refined_card_style():

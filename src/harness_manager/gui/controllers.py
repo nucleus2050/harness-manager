@@ -65,6 +65,15 @@ class MainController:
     def list_harnesses_with_asset(self, asset_id: str):
         return self.harnesses.list_harnesses_with_asset(asset_id)
 
+    def list_harnesses_available_for_asset(self, asset):
+        if asset.type != "agents_md":
+            return self.harnesses.list_harnesses_without_asset(asset.id)
+        return [
+            harness
+            for harness in self.harnesses.list_harnesses_without_asset(asset.id)
+            if not self.harnesses.list_assets_by_type(harness.id, "agents_md")
+        ]
+
     def list_assets_by_type(self, asset_type: str):
         return self.assets.list_by_type(asset_type)
 
@@ -126,6 +135,8 @@ class MainController:
         current = self.harnesses.list_assets(harness_id)
         if any(asset.id == asset_id for asset in current):
             raise ValueError("该组件已在任务套件中。")
+        if asset_type == "agents_md" and any(asset.type == "agents_md" for asset in current):
+            raise ValueError("一个任务套件只能加入一个 AGENTS.md。")
         with transaction(self.conn):
             self.harnesses.add_asset(harness_id, asset_id, asset_type, len(current) + 1)
 

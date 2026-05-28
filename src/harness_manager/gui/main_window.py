@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import logging
 import sys
 from collections.abc import Callable
@@ -558,14 +559,28 @@ class MainWindow(QMainWindow):
         copy.setAlignment(Qt.AlignmentFlag.AlignTop)
         title = self._label(asset.name, "ClientName")
         title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
-        meta = self._label(
-            f"类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'} - ID：{asset.id}",
-            "MutedText",
-        )
-        meta.setWordWrap(True)
-        meta.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         copy.addWidget(title)
-        copy.addWidget(meta)
+        if asset.type == "agents_md":
+            description = self._label(
+                f"AGENTS.md 描述：{self._agents_md_description(asset)}",
+                "MutedText",
+            )
+            summary = self._label(
+                f"内容摘要：{self._truncate_description(self._agents_md_summary(asset))}",
+                "SkillDescription",
+            )
+            for label in [description, summary]:
+                label.setWordWrap(True)
+                label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+                copy.addWidget(label)
+        else:
+            meta = self._label(
+                f"类型：{self._asset_type_label(asset.type)} - 来源：{asset.source_type or '本地'}",
+                "MutedText",
+            )
+            meta.setWordWrap(True)
+            meta.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+            copy.addWidget(meta)
         if asset.type == "skill":
             description = self._label(
                 f"技能描述：{self._truncate_description(self._skill_description(asset))}",
@@ -578,7 +593,7 @@ class MainWindow(QMainWindow):
             copy.addWidget(description)
         layout.addLayout(copy, 1)
 
-        available_harnesses = self.controller.list_harnesses_without_asset(asset.id)
+        available_harnesses = self.controller.list_harnesses_available_for_asset(asset)
         joined_harnesses = self.controller.list_harnesses_with_asset(asset.id)
 
         actions = QFrame()
@@ -629,6 +644,25 @@ class MainWindow(QMainWindow):
         if asset.type == "skill":
             return 124
         return 118
+
+    def _agents_md_description(self, asset: Asset) -> str:
+        try:
+            metadata = json.loads(asset.metadata_json or "{}")
+        except json.JSONDecodeError:
+            metadata = {}
+        description = metadata.get("description")
+        return description if isinstance(description, str) and description else "暂无描述"
+
+    def _agents_md_summary(self, asset: Asset) -> str:
+        source = self.controller.paths.root / asset.relative_path
+        if not source.is_file():
+            return "文件缺失"
+        lines = [
+            line.strip()
+            for line in source.read_text(encoding="utf-8", errors="replace").splitlines()
+            if line.strip()
+        ]
+        return " ".join(lines) or "暂无内容"
 
     def _skill_description(self, asset: Asset) -> str:
         skill_root = self.controller.paths.root / asset.relative_path
@@ -1545,7 +1579,7 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _add_asset_to_chosen_harness(self, asset: Asset) -> None:
-        available_harnesses = self.controller.list_harnesses_without_asset(asset.id)
+        available_harnesses = self.controller.list_harnesses_available_for_asset(asset)
         if not available_harnesses:
             if self.harnesses:
                 return
