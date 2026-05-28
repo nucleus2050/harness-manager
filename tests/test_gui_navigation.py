@@ -10,9 +10,8 @@ def test_main_window_has_skill_library_and_source_selection_text():
         "技能库",
         "任务套件",
         "加入套件",
-        "添加 AGENTS.md",
-        "添加 MCP",
-        "添加技能",
+        "+ 新增 AGENTS.md",
+        "+ 新增 MCP",
         "导入来源",
         "选择 Skill 来源",
         "全部技能",
@@ -180,7 +179,17 @@ def test_agents_md_creation_dialog_supports_editor_and_file_import():
     assert "self.asset_library_header_layout.addWidget(self._build_agents_toolbar())" in source
     assert "new_agents_button = self._button(\"+ 新增 AGENTS.md\", \"PrimaryButton\")" in agents_toolbar_source
     assert "new_agents_button.clicked.connect(self._guard(self._new_agents_md_asset))" in agents_toolbar_source
-    assert "choose_asset_file" not in source.split("def _import_agents_to_harness", 1)[1].split("\n    def ", 1)[0]
+    for obsolete in [
+        "self.add_agents_button",
+        "self.add_mcp_button",
+        "self.add_skill_asset_button",
+        "def _import_agents_to_harness",
+        "def _import_mcp_to_harness",
+        "def _add_first_skill_to_harness",
+        "asset_actions",
+        "添加技能",
+    ]:
+        assert obsolete not in source
     assert "ask_agents_md" in source
     assert "def _new_agents_md_asset" in source
     assert "create_agents_md_asset" in controller_source

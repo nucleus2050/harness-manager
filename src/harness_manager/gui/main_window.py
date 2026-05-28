@@ -130,9 +130,6 @@ class MainWindow(QMainWindow):
         self.delete_harness_button = self._button("删除", "DangerButton")
         self.import_archive_button = self._button("导入", "CompactButton")
         self.export_archive_button = self._button("导出", "CompactButton")
-        self.add_agents_button = self._button("添加 AGENTS.md", "CompactButton")
-        self.add_mcp_button = self._button("添加 MCP", "CompactButton")
-        self.add_skill_asset_button = self._button("添加技能", "CompactButton")
         self.language_zh_button = self._button("中文", "PrimaryButton")
         self.language_en_button = self._button("English", "CompactButton")
         self.theme_light_button = self._button("浅色", "CompactButton")
@@ -459,16 +456,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.current_harness_meta)
         self.skill_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
         self.skill_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        asset_actions = QFrame()
-        asset_actions.setObjectName("ActionBar")
-        asset_layout = QHBoxLayout(asset_actions)
-        asset_layout.setContentsMargins(10, 10, 10, 10)
-        asset_layout.setSpacing(8)
-        asset_layout.addWidget(self.add_agents_button)
-        asset_layout.addWidget(self.add_mcp_button)
-        asset_layout.addWidget(self.add_skill_asset_button)
-        asset_layout.addStretch(1)
-        layout.addWidget(asset_actions)
         layout.addWidget(self.skill_list, 1)
         return card
 
@@ -791,9 +778,6 @@ class MainWindow(QMainWindow):
         self.new_package_button.clicked.connect(self._guard(self._new_harness))
         self.edit_harness_button.clicked.connect(self._guard(self._edit_harness))
         self.delete_harness_button.clicked.connect(self._guard(self._delete_harness))
-        self.add_agents_button.clicked.connect(self._guard(self._import_agents_to_harness))
-        self.add_mcp_button.clicked.connect(self._guard(self._import_mcp_to_harness))
-        self.add_skill_asset_button.clicked.connect(self._guard(self._add_first_skill_to_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
         self.language_zh_button.clicked.connect(self._guard(lambda: self._save_language("zh-CN")))
@@ -1449,30 +1433,12 @@ class MainWindow(QMainWindow):
         row = self._require_harness_row()
         return self.harnesses[row]
 
-    def _import_agents_to_harness(self) -> None:
-        details = dialogs.ask_agents_md(self, "添加 AGENTS.md")
-        if details is None:
-            return
-        name, description, content = details
-        asset = self.controller.create_agents_md_asset(name, description, content)
-        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
-        self.refresh()
-
     def _new_agents_md_asset(self) -> None:
         details = dialogs.ask_agents_md(self, "添加 AGENTS.md")
         if details is None:
             return
         name, description, content = details
         self.controller.create_agents_md_asset(name, description, content)
-        self.refresh()
-
-    def _import_mcp_to_harness(self) -> None:
-        source = dialogs.choose_asset_file(self, "导入 MCP", "JSON 配置 (*.json);;所有文件 (*)")
-        if source is None:
-            return
-        name = dialogs.ask_text(self, "添加 MCP", "组件名称") or source.stem
-        asset = self.controller.import_mcp_asset(source, name)
-        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
 
     def _new_mcp_config(self) -> None:
@@ -1576,14 +1542,6 @@ class MainWindow(QMainWindow):
         if archive is None:
             return
         self.controller.import_full_config(archive)
-        self.refresh()
-
-    def _add_first_skill_to_harness(self) -> None:
-        skills = self.controller.list_assets_by_type("skill")
-        if not skills:
-            raise ValueError("当前没有可加入的技能，请先从左侧导入技能。")
-        asset = skills[0]
-        self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
 
     def _add_asset_to_chosen_harness(self, asset: Asset) -> None:
