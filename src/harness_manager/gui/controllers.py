@@ -190,6 +190,12 @@ class MainController:
     def export_package_by_row(self, package_row: int) -> Path:
         return self.service.export_package(self._package_by_row(package_row).id)
 
+    def export_harness_by_row(self, harness_row: int) -> Path:
+        harnesses = self.harnesses.list_harnesses()
+        if harness_row < 0 or harness_row >= len(harnesses):
+            raise IndexError("任务套件选择超出范围。")
+        return self.service.export_harness(harnesses[harness_row].id)
+
     def import_offline_package(self, archive_path: Path | str) -> str:
         return self.service.import_offline_package(archive_path)
 

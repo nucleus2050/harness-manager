@@ -148,10 +148,6 @@ class MainWindow(QMainWindow):
         self.back_to_business_button = self._button("返回", "CompactButton")
         self.export_config_button = self._button("导出全部配置", "PrimaryButton")
         self.import_config_button = self._button("导入全部配置", "CompactButton")
-        for button in [self.export_archive_button]:
-            button.setEnabled(False)
-            button.setToolTip("任务套件部署将在组件安装语义确定后接入。")
-
         self._build_layout()
         self._connect_actions()
         self.refresh()
@@ -1574,7 +1570,7 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "导入完成", f"已导入 {archive.name}。")
 
     def _export_archive(self) -> None:
-        archive = self.controller.export_package_by_row(self._require_harness_row())
+        archive = self.controller.export_harness_by_row(self._require_harness_row())
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:

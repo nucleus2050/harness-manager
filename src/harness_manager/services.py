@@ -264,6 +264,64 @@ class HarnessService:
         finally:
             self._remove_owned_directory(staging, staging.parent)
 
+    def export_harness(self, harness_id: str) -> Path:
+        harness = self.harnesses.get(harness_id)
+        assets = self.harnesses.list_assets(harness_id)
+        staging = Path(tempfile.mkdtemp(prefix="harness-manager-export-"))
+        try:
+            manifest_assets = []
+            for asset in assets:
+                source = self.paths.root / asset.relative_path
+                if asset.type == "skill":
+                    source = self._validated_managed_asset_source(asset)
+                    export_relative_path = f"assets/skill/{asset.id}"
+                    copy_directory(source, staging / export_relative_path)
+                else:
+                    if not source.is_file():
+                        raise FileNotFoundError(source)
+                    export_relative_path = f"assets/{asset.type}/{asset.id}/{source.name}"
+                    destination = staging / export_relative_path
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, destination)
+                manifest_assets.append(
+                    {
+                        "id": asset.id,
+                        "type": asset.type,
+                        "name": asset.name,
+                        "relative_path": export_relative_path,
+                        "fingerprint": asset.fingerprint,
+                        "metadata_json": asset.metadata_json,
+                    }
+                )
+
+            manifest = {
+                "schema_version": 2,
+                "harness": {
+                    "id": harness.id,
+                    "name": harness.name,
+                    "description": harness.description,
+                },
+                "assets": manifest_assets,
+            }
+            (staging / "manifest.json").write_text(
+                json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            archive_path = self.paths.exports_dir / f"{_slug(harness.name)}.harness.zip"
+            make_zip(staging, archive_path)
+            with transaction(self.conn):
+                self.logs.add(
+                    "export_harness",
+                    f"Exported harness {harness_id} to {archive_path}",
+                    package_id=harness_id,
+                )
+            logger.info("Exported harness %s to %s", harness_id, archive_path)
+            return archive_path
+        except Exception:
+            logger.exception("Failed to export harness %s", harness_id)
+            raise
+        finally:
+            self._remove_owned_directory(staging, staging.parent)
+
     def import_offline_package(self, archive_path: Path | str) -> str:
         extracted = extract_zip(archive_path)
         try:

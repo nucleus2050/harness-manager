@@ -73,6 +73,30 @@ def test_export_then_import_offline_package_round_trips_sample_skill(
     ]
 
 
+def test_export_harness_writes_harness_manifest_and_assets(app_root, sample_skill, tmp_path):
+    source_service = _service(app_root)
+    skill = source_service.import_skill(sample_skill, "codex")
+    harness = source_service.harnesses.create("frontend-suite", "前端工作流")
+    source_service.harnesses.add_asset(harness.id, skill.id, "skill", 1)
+    agents_file = tmp_path / "AGENTS.md"
+    agents_file.write_text("# Rules\n", encoding="utf-8")
+    agents_asset = source_service.import_agents_md_asset(agents_file, "规则", "custom")
+    source_service.harnesses.add_asset(harness.id, agents_asset.id, "agents_md", 2)
+
+    archive_path = source_service.export_harness(harness.id)
+
+    with zipfile.ZipFile(archive_path) as archive:
+        names = set(archive.namelist())
+        manifest = json.loads(archive.read("manifest.json"))
+    assert archive_path.name == "frontend-suite.harness.zip"
+    assert manifest["schema_version"] == 2
+    assert manifest["harness"]["id"] == harness.id
+    assert manifest["harness"]["name"] == "frontend-suite"
+    assert {asset["type"] for asset in manifest["assets"]} == {"skill", "agents_md"}
+    assert "assets/skill/sample-skill/SKILL.md" in names
+    assert f"assets/agents_md/{agents_asset.id}/AGENTS.md" in names
+
+
 def test_import_offline_package_rejects_manifest_relative_path_escape(tmp_path):
     app_root = tmp_path / "HarnessManager"
     app_root.mkdir()

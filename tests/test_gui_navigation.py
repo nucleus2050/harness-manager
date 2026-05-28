@@ -288,6 +288,16 @@ def test_successful_harness_deploy_uses_icon_state_without_dialog():
     assert "dialogs.show_info" not in method
 
 
+def test_export_harness_button_is_enabled_and_uses_harness_export():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
+
+    assert "export_harness_by_row" in source
+    assert "export_harness_by_row" in controller_source
+    assert "for button in [self.export_archive_button]" not in source
+    assert "export_package_by_row(self._require_harness_row())" not in source
+
+
 def test_asset_library_adds_harness_action_on_each_item():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
