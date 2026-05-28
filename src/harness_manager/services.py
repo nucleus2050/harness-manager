@@ -1046,10 +1046,11 @@ def _normalized_mcp_json(config_json: str) -> str:
     return json.dumps(parsed, ensure_ascii=False, indent=2)
 
 
-def _mcp_metadata(display_name: str) -> str:
+def _mcp_metadata(display_name: str, description: str = "") -> str:
     return json.dumps(
         {
             "display_name": display_name,
+            "description": description.strip(),
             "config_filename": "mcp.json",
         },
         ensure_ascii=False,
@@ -1061,6 +1062,7 @@ def _create_mcp_config_asset(
     title: str,
     display_name: str,
     config_json: str,
+    description: str = "",
 ) -> Asset:
     title = title.strip()
     if not title:
@@ -1084,7 +1086,7 @@ def _create_mcp_config_asset(
                 "custom",
                 destination.relative_to(self.paths.root).as_posix(),
                 fingerprint,
-                _mcp_metadata(display_name),
+                _mcp_metadata(display_name, description),
             )
     except Exception:
         safe_remove_directory(destination_dir)
@@ -1097,6 +1099,7 @@ def _update_mcp_config_asset(
     title: str,
     display_name: str,
     config_json: str,
+    description: str = "",
 ) -> Asset:
     title = title.strip()
     if not title:
@@ -1120,7 +1123,7 @@ def _update_mcp_config_asset(
             "custom",
             destination.relative_to(self.paths.root).as_posix(),
             fingerprint,
-            _mcp_metadata(display_name),
+            _mcp_metadata(display_name, description),
         )
 
 

@@ -55,6 +55,7 @@ def test_create_mcp_config_asset_writes_json_and_metadata(app_root):
     asset = service.create_mcp_config_asset(
         title="fetch",
         display_name="Fetch Server",
+        description="用于网页抓取",
         config_json='{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
     )
 
@@ -62,6 +63,7 @@ def test_create_mcp_config_asset_writes_json_and_metadata(app_root):
     assert asset.name == "fetch"
     assert asset.source_type == "custom"
     assert '"display_name": "Fetch Server"' in asset.metadata_json
+    assert '"description": "用于网页抓取"' in asset.metadata_json
     assert "mcp_kind" not in asset.metadata_json
     assert "enabled_clients" not in asset.metadata_json
     assert (paths.root / asset.relative_path).read_text(encoding="utf-8").startswith("{\n")
@@ -87,6 +89,7 @@ def test_update_mcp_config_asset_rewrites_json_and_metadata(app_root):
     asset = service.create_mcp_config_asset(
         title="fetch",
         display_name="Fetch Server",
+        description="旧描述",
         config_json='{"type":"stdio","command":"uvx"}',
     )
 
@@ -94,11 +97,13 @@ def test_update_mcp_config_asset_rewrites_json_and_metadata(app_root):
         asset_id=asset.id,
         title="fetch-v2",
         display_name="Fetch Server V2",
+        description="新描述",
         config_json='{"type":"stdio","command":"node"}',
     )
 
     assert updated.id == asset.id
     assert updated.name == "fetch-v2"
     assert '"display_name": "Fetch Server V2"' in updated.metadata_json
+    assert '"description": "新描述"' in updated.metadata_json
     assert "enabled_clients" not in updated.metadata_json
     assert '"node"' in (paths.root / updated.relative_path).read_text(encoding="utf-8")

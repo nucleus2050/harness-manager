@@ -590,6 +590,7 @@ class McpConfigDialog(QDialog):
         title: str = "新建 MCP 配置",
         mcp_title: str = "",
         display_name: str = "",
+        description: str = "",
         config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
     ) -> None:
         super().__init__(parent)
@@ -629,6 +630,12 @@ class McpConfigDialog(QDialog):
         self.display_name_input.setText(display_name)
         layout.addWidget(self.display_name_input)
 
+        layout.addWidget(QLabel("描述"))
+        self.description_input = QLineEdit()
+        self.description_input.setPlaceholderText("例如：用于网页抓取、数据库查询或时间服务")
+        self.description_input.setText(description)
+        layout.addWidget(self.description_input)
+
         header = QHBoxLayout()
         header.addWidget(QLabel("完整 JSON 配置"))
         header.addStretch(1)
@@ -657,13 +664,14 @@ class McpConfigDialog(QDialog):
         parsed = json.loads(self.config_input.toPlainText())
         self.config_input.setPlainText(json.dumps(parsed, ensure_ascii=False, indent=2))
 
-    def value(self) -> tuple[str, str, str] | None:
+    def value(self) -> tuple[str, str, str, str] | None:
         title = self.title_input.text().strip()
         if not title:
             return None
         return (
             title,
             self.display_name_input.text().strip(),
+            self.description_input.text().strip(),
             self.config_input.toPlainText(),
         )
 
@@ -770,9 +778,10 @@ def ask_mcp_config(
     title: str = "新建 MCP 配置",
     mcp_title: str = "",
     display_name: str = "",
+    description: str = "",
     config_json: str = '{\n  "type": "stdio",\n  "command": "uvx"\n}',
-) -> tuple[str, str, str] | None:
-    dialog = McpConfigDialog(parent, title, mcp_title, display_name, config_json)
+) -> tuple[str, str, str, str] | None:
+    dialog = McpConfigDialog(parent, title, mcp_title, display_name, description, config_json)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.value()

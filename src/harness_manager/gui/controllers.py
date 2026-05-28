@@ -114,21 +114,25 @@ class MainController:
     def import_mcp_asset(self, source_file: Path | str, name: str):
         return self.service.import_mcp_asset(Path(source_file), name, "custom")
 
-    def create_mcp_config_asset(self, title: str, display_name: str, config_json: str):
+    def create_mcp_config_asset(
+        self, title: str, display_name: str, config_json: str, description: str = ""
+    ):
         return self.service.create_mcp_config_asset(
             title=title,
             display_name=display_name,
             config_json=config_json,
+            description=description,
         )
 
     def update_mcp_config_asset(
-        self, asset_id: str, title: str, display_name: str, config_json: str
+        self, asset_id: str, title: str, display_name: str, config_json: str, description: str = ""
     ):
         return self.service.update_mcp_config_asset(
             asset_id=asset_id,
             title=title,
             display_name=display_name,
             config_json=config_json,
+            description=description,
         )
 
     def add_asset_to_harness(self, harness_id: str, asset_id: str, asset_type: str) -> None:

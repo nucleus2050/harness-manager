@@ -156,11 +156,16 @@ def test_mcp_config_management_text_is_present():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
 
-    for text in ["新增 MCP", "MCP 服务器管理", "已配置", "编辑", "完整 JSON 配置", "格式化", "MCP 标题（唯一）"]:
+    for text in ["新增 MCP", "MCP 服务器管理", "已配置", "编辑", "完整 JSON 配置", "格式化", "MCP 标题（唯一）", "描述"]:
         assert text in source + dialog_source
 
     assert "ask_mcp_config" in source
     assert "McpConfigDialog" in dialog_source
+    assert "MCP 描述：" in source
+    assert "配置摘要：" in source
+    assert "_mcp_description" in source
+    assert "_mcp_config_summary" in source
+    assert "_mcp_display_name(asset)" in source
 
 
 def test_agents_md_creation_dialog_supports_editor_and_file_import():

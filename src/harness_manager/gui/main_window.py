@@ -58,6 +58,7 @@ CLIENT_CARD_MIN_HEIGHT = 92
 CLIENT_SOURCE_VISIBLE_ROWS = 3
 SKILL_DESCRIPTION_MAX_LENGTH = 180
 AGENTS_SUMMARY_MAX_LENGTH = 96
+MCP_SUMMARY_MAX_LENGTH = 96
 
 
 class _WindowsMSG(ctypes.Structure):
@@ -558,7 +559,8 @@ class MainWindow(QMainWindow):
         copy = QVBoxLayout()
         copy.setSpacing(2)
         copy.setAlignment(Qt.AlignmentFlag.AlignTop)
-        title = self._label(asset.name, "ClientName")
+        title_text = self._mcp_display_name(asset) if asset.type == "mcp" else asset.name
+        title = self._label(title_text, "ClientName")
         title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         copy.addWidget(title)
         if asset.type == "agents_md":
@@ -568,6 +570,22 @@ class MainWindow(QMainWindow):
             )
             summary = self._label(
                 f"内容摘要：{self._truncate_text(self._agents_md_summary(asset), AGENTS_SUMMARY_MAX_LENGTH)}",
+                "SkillDescription",
+            )
+            description.setWordWrap(False)
+            description.setMaximumHeight(18)
+            summary.setWordWrap(True)
+            summary.setMaximumHeight(34)
+            for label in [description, summary]:
+                label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+                copy.addWidget(label)
+        elif asset.type == "mcp":
+            description = self._label(
+                f"MCP 描述：{self._mcp_description(asset)}",
+                "MutedText",
+            )
+            summary = self._label(
+                f"配置摘要：{self._truncate_text(self._mcp_config_summary(asset), MCP_SUMMARY_MAX_LENGTH)}",
                 "SkillDescription",
             )
             description.setWordWrap(False)
@@ -650,12 +668,16 @@ class MainWindow(QMainWindow):
         return 118
 
     def _agents_md_description(self, asset: Asset) -> str:
+        metadata = self._asset_metadata(asset)
+        description = metadata.get("description")
+        return description if isinstance(description, str) and description else "暂无描述"
+
+    def _asset_metadata(self, asset: Asset) -> dict:
         try:
             metadata = json.loads(asset.metadata_json or "{}")
         except json.JSONDecodeError:
-            metadata = {}
-        description = metadata.get("description")
-        return description if isinstance(description, str) and description else "暂无描述"
+            return {}
+        return metadata if isinstance(metadata, dict) else {}
 
     def _agents_md_summary(self, asset: Asset) -> str:
         source = self.controller.paths.root / asset.relative_path
@@ -667,6 +689,33 @@ class MainWindow(QMainWindow):
             if line.strip()
         ]
         return " ".join(lines) or "暂无内容"
+
+    def _mcp_display_name(self, asset: Asset) -> str:
+        display_name = self._asset_metadata(asset).get("display_name")
+        return display_name if isinstance(display_name, str) and display_name else asset.name
+
+    def _mcp_description(self, asset: Asset) -> str:
+        description = self._asset_metadata(asset).get("description")
+        return description if isinstance(description, str) and description else "暂无描述"
+
+    def _mcp_config_summary(self, asset: Asset) -> str:
+        source = self.controller.paths.root / asset.relative_path
+        if not source.is_file():
+            return "配置文件缺失"
+        try:
+            parsed = json.loads(source.read_text(encoding="utf-8", errors="replace"))
+        except json.JSONDecodeError:
+            return source.read_text(encoding="utf-8", errors="replace").strip()
+        if isinstance(parsed, dict):
+            command = parsed.get("command")
+            server_type = parsed.get("type")
+            parts = []
+            if isinstance(server_type, str):
+                parts.append(f"类型 {server_type}")
+            if isinstance(command, str):
+                parts.append(f"命令 {command}")
+            return "，".join(parts) or json.dumps(parsed, ensure_ascii=False)
+        return json.dumps(parsed, ensure_ascii=False)
 
     def _skill_description(self, asset: Asset) -> str:
         skill_root = self.controller.paths.root / asset.relative_path
@@ -1486,8 +1535,8 @@ class MainWindow(QMainWindow):
         details = dialogs.ask_mcp_config(self, "新建 MCP 配置")
         if details is None:
             return
-        title, display_name, config_json = details
-        self.controller.create_mcp_config_asset(title, display_name, config_json)
+        title, display_name, description, config_json = details
+        self.controller.create_mcp_config_asset(title, display_name, config_json, description)
         self.refresh()
 
     def _edit_mcp_config(self, asset: Asset) -> None:
@@ -1496,13 +1545,16 @@ class MainWindow(QMainWindow):
             self,
             "编辑 MCP 配置",
             asset.name,
-            asset.name,
+            self._mcp_display_name(asset),
+            self._mcp_description(asset),
             config_path.read_text(encoding="utf-8"),
         )
         if details is None:
             return
-        title, display_name, config_json = details
-        self.controller.update_mcp_config_asset(asset.id, title, display_name, config_json)
+        title, display_name, description, config_json = details
+        self.controller.update_mcp_config_asset(
+            asset.id, title, display_name, config_json, description
+        )
         self.refresh()
 
     def _apply_theme(self, theme: str) -> None:
