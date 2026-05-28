@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import logging
 from pathlib import Path
 
 from harness_manager.app_paths import AppPaths
@@ -17,6 +18,8 @@ from harness_manager.repositories import (
 )
 from harness_manager.services import HarnessService, is_skill_directory
 from harness_manager.settings import SettingsService
+
+logger = logging.getLogger(__name__)
 
 
 class MainController:
@@ -208,7 +211,8 @@ class MainController:
         target_path: Path | str | None = None,
         overwrite: bool = False,
     ) -> list[Path]:
-        target = Path(target_path) if target_path is not None else self._client_target(client_type)
+        target = (Path(target_path) if target_path is not None else self._client_target(client_type)).resolve()
+        logger.info("Deploy harness %s to %s for %s", harness_id, target, client_type)
         target.mkdir(parents=True, exist_ok=True)
         return self.service.deploy_harness(harness_id, client_type, target, overwrite=overwrite)
 
@@ -218,7 +222,7 @@ class MainController:
         client_type: ClientType,
         target_path: Path | str | None = None,
     ) -> bool:
-        target = Path(target_path) if target_path is not None else self._client_target(client_type)
+        target = (Path(target_path) if target_path is not None else self._client_target(client_type)).resolve()
         return self.service.harness_deploy_status(harness_id, client_type, target)
 
     def toggle_harness_deploy(
@@ -227,9 +231,15 @@ class MainController:
         client_type: ClientType,
         target_path: Path | str | None = None,
     ) -> tuple[str, list[Path] | dict[str, InstallStatus]]:
-        target = Path(target_path) if target_path is not None else self._client_target(client_type)
-        if self.service.harness_deploy_status(harness_id, client_type, target):
+        target = (Path(target_path) if target_path is not None else self._client_target(client_type)).resolve()
+        is_deployed = self.service.harness_deploy_status(harness_id, client_type, target)
+        has_invalid_records = self.service.has_invalid_active_harness_deploy(
+            harness_id, client_type, target
+        )
+        if is_deployed or has_invalid_records:
+            logger.info("Toggle undeploy harness %s from %s for %s", harness_id, target, client_type)
             return "undeployed", self.service.undeploy_harness(harness_id, client_type, target)
+        logger.info("Toggle deploy harness %s to %s for %s", harness_id, target, client_type)
         target.mkdir(parents=True, exist_ok=True)
         return "deployed", self.service.deploy_harness(harness_id, client_type, target)
 

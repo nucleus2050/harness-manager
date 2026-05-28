@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import uuid
 import re
@@ -23,6 +24,8 @@ from harness_manager.repositories import (
     PackageRepository,
     SkillRepository,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _slug(value: str) -> str:
@@ -364,7 +367,7 @@ class HarnessService:
         target_path: Path | str,
         overwrite: bool = False,
     ) -> list[Path]:
-        target = Path(target_path)
+        target = Path(target_path).resolve()
         if not target.is_dir():
             raise NotADirectoryError(target)
 
@@ -374,15 +377,45 @@ class HarnessService:
         active_asset_ids = {record["asset_id"] for record in active_records}
         deployed_paths: list[Path] = []
         copied_destinations: list[Path] = []
+        logger.info("Deploying harness %s to %s for %s", harness_id, target, client_type)
         try:
             with transaction(self.conn):
                 for asset in skill_assets:
                     if asset.id in active_asset_ids:
+                        logger.debug("Skipping active deployed asset %s", asset.id)
                         deployed_paths.append(target / asset.id)
                         continue
                     source = self._validated_managed_asset_source(asset)
                     destination = self._validated_install_destination(target, asset.id)
                     destination_preexisted = destination.exists()
+                    if destination_preexisted and not overwrite:
+                        source_fingerprint = fingerprint_directory(source)
+                        destination_fingerprint = fingerprint_directory(destination)
+                        if destination_fingerprint != source_fingerprint:
+                            logger.error(
+                                "Deploy conflict for harness %s asset %s at %s",
+                                harness_id,
+                                asset.id,
+                                destination,
+                            )
+                            raise ValueError(
+                                f"目标已存在且内容不同，无法部署: {destination}"
+                            )
+                        logger.info(
+                            "Adopting existing identical skill %s at %s",
+                            asset.id,
+                            destination,
+                        )
+                        self.harness_deploys.add_deployed(
+                            harness_id,
+                            asset.id,
+                            client_type,
+                            target,
+                            destination,
+                            destination_fingerprint,
+                        )
+                        deployed_paths.append(destination)
+                        continue
                     try:
                         copy_directory(source, destination, overwrite=overwrite)
                     except Exception:
@@ -411,6 +444,7 @@ class HarnessService:
             for destination in reversed(copied_destinations):
                 if destination.exists():
                     self._remove_owned_directory(destination, target)
+            logger.exception("Failed to deploy harness %s to %s", harness_id, target)
             raise
         return deployed_paths
 
@@ -418,14 +452,58 @@ class HarnessService:
         self, harness_id: str, client_type: ClientType, target_path: Path | str
     ) -> bool:
         self.harnesses.get(harness_id)
-        return self.harness_deploys.is_active(harness_id, client_type, Path(target_path))
+        target = Path(target_path).resolve()
+        skill_assets = self.harnesses.list_assets_by_type(harness_id, "skill")
+        if not skill_assets:
+            return False
+        records = self.harness_deploys.list_active(harness_id, client_type, target)
+        records_by_asset = {record["asset_id"]: record for record in records}
+        if set(records_by_asset) != {asset.id for asset in skill_assets}:
+            return False
+        for asset in skill_assets:
+            record = records_by_asset[asset.id]
+            try:
+                installed_path = self._validated_harness_undeploy_path(record)
+            except ValueError:
+                logger.debug("Deploy record for asset %s is invalid", asset.id)
+                return False
+            if not installed_path.is_dir():
+                return False
+            if fingerprint_directory(installed_path) != record["fingerprint"]:
+                return False
+        return True
+
+    def has_active_harness_deploy(
+        self, harness_id: str, client_type: ClientType, target_path: Path | str
+    ) -> bool:
+        self.harnesses.get(harness_id)
+        return self.harness_deploys.is_active(
+            harness_id, client_type, Path(target_path).resolve()
+        )
+
+    def has_invalid_active_harness_deploy(
+        self, harness_id: str, client_type: ClientType, target_path: Path | str
+    ) -> bool:
+        target = Path(target_path).resolve()
+        records = self.harness_deploys.list_active(harness_id, client_type, target)
+        for record in records:
+            try:
+                installed_path = self._validated_harness_undeploy_path(record)
+            except ValueError:
+                return True
+            if not installed_path.is_dir():
+                return True
+            if fingerprint_directory(installed_path) != record["fingerprint"]:
+                return True
+        return False
 
     def undeploy_harness(
         self, harness_id: str, client_type: ClientType, target_path: Path | str
     ) -> dict[str, InstallStatus]:
-        target = Path(target_path)
+        target = Path(target_path).resolve()
         records = self.harness_deploys.list_active(harness_id, client_type, target)
         statuses: dict[str, InstallStatus] = {}
+        logger.info("Undeploying harness %s from %s for %s", harness_id, target, client_type)
         with transaction(self.conn):
             for record in records:
                 asset_id = record["asset_id"]

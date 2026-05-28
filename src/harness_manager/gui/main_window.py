@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ctypes
+import logging
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -31,6 +32,8 @@ from harness_manager.gui.controllers import MainController
 from harness_manager.gui.styles import build_stylesheet
 from harness_manager.models import Asset, ClientConfig, ClientType, Harness, Skill
 from harness_manager.services import skill_description
+
+logger = logging.getLogger(__name__)
 
 
 WM_NCHITTEST = 0x0084
@@ -763,13 +766,16 @@ class MainWindow(QMainWindow):
     def _guard(self, callback: Callable[[], None]) -> Callable[[], None]:
         def wrapped() -> None:
             try:
+                logger.debug("Running GUI action %s", getattr(callback, "__name__", repr(callback)))
                 callback()
             except Exception as exc:
+                logger.exception("GUI action failed")
                 dialogs.show_error(self, "错误", str(exc))
 
         return wrapped
 
     def refresh(self) -> None:
+        logger.debug("Refreshing main window")
         selected_row = self.harness_list.currentRow()
         self._refresh_settings_buttons(self.controller.get_settings())
         self.clients = self.controller.list_clients()
@@ -1572,6 +1578,7 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, "导出完成", f"已导出到 {archive}。")
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
+        logger.info("Toggling harness deployment: harness=%s client=%s", harness_id, client_type)
         target_path = self._deploy_target_path(client_type)
         action, result = self.controller.toggle_harness_deploy(harness_id, client_type, target_path)
         harness = next(item for item in self.harnesses if item.id == harness_id)
@@ -1615,6 +1622,10 @@ class MainWindow(QMainWindow):
 
 
 def run_app(argv: list[str] | None = None) -> int:
+    from harness_manager.logging_config import configure_logging
+
+    configure_logging()
+    logger.info("Starting Harness Manager GUI")
     app = QApplication(argv or sys.argv)
     app_root = Path.cwd()
     paths = AppPaths(app_root)

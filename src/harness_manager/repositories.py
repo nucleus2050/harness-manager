@@ -7,6 +7,10 @@ from pathlib import Path
 from harness_manager.models import Asset, ClientConfig, Harness, Package, Skill
 
 
+def _stored_path(path: Path | str) -> str:
+    return str(Path(path).resolve())
+
+
 def _path_or_none(value: str | None) -> Path | None:
     return Path(value) if value else None
 
@@ -223,8 +227,8 @@ class InstallRepository:
                 package_id,
                 skill_id,
                 client_type,
-                str(target_path),
-                str(installed_path),
+                _stored_path(target_path),
+                _stored_path(installed_path),
                 fingerprint,
             ),
         )
@@ -281,8 +285,8 @@ class HarnessDeployRepository:
                 harness_id,
                 asset_id,
                 client_type,
-                str(target_path),
-                str(installed_path),
+                _stored_path(target_path),
+                _stored_path(installed_path),
                 fingerprint,
             ),
         )
@@ -295,7 +299,7 @@ class HarnessDeployRepository:
         target_filter = ""
         if target_path is not None:
             target_filter = " AND target_path = ?"
-            params.append(str(target_path))
+            params.append(_stored_path(target_path))
         return self.conn.execute(
             f"""
             SELECT id, harness_id, asset_id, client_type, target_path,
@@ -315,7 +319,7 @@ class HarnessDeployRepository:
             WHERE harness_id = ? AND client_type = ? AND target_path = ? AND status = 'installed'
             LIMIT 1
             """,
-            (harness_id, client_type, str(target_path)),
+            (harness_id, client_type, _stored_path(target_path)),
         ).fetchone()
         return row is not None
 

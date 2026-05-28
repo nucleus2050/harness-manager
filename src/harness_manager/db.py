@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import sqlite3
+import logging
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+
+logger = logging.getLogger(__name__)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS clients (
@@ -115,7 +118,12 @@ CREATE TABLE IF NOT EXISTS harness_deploy_records (
   installed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   uninstalled_at TEXT,
   status TEXT NOT NULL
-);"""
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_harness_deploy_active
+ON harness_deploy_records(harness_id, asset_id, client_type, target_path)
+WHERE status = 'installed';
+"""
 
 CLIENT_SEEDS = (
     ("codex", "Codex"),
@@ -125,6 +133,7 @@ CLIENT_SEEDS = (
 
 
 def connect(path: Path | str) -> sqlite3.Connection:
+    logger.info("Connecting SQLite database: %s", path)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -132,6 +141,7 @@ def connect(path: Path | str) -> sqlite3.Connection:
 
 
 def initialize_database(conn: sqlite3.Connection) -> None:
+    logger.info("Initializing database schema")
     conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript(SCHEMA)
     conn.executemany(
@@ -144,9 +154,12 @@ def initialize_database(conn: sqlite3.Connection) -> None:
 @contextmanager
 def transaction(conn: sqlite3.Connection) -> Iterator[None]:
     try:
+        logger.debug("Starting database transaction")
         yield
     except Exception:
+        logger.exception("Rolling back database transaction")
         conn.rollback()
         raise
     else:
+        logger.debug("Committing database transaction")
         conn.commit()

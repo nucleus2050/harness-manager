@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import pytest
+
 from harness_manager.app_paths import AppPaths
 from harness_manager.db import connect
+from harness_manager.fingerprint import fingerprint_directory
 from harness_manager.gui.controllers import MainController
 
 
@@ -160,4 +163,89 @@ def test_controller_does_not_undeploy_modified_harness_skill(app_root, tmp_path,
     assert action == "undeployed"
     assert result == {skill.id: "modified"}
     assert (target / skill.id).exists()
+    assert not controller.harness_deploy_status(harness.id, "codex", target)
+
+
+def test_controller_adopts_existing_identical_skill_as_deployed(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("认领已有技能", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / "codex-skills"
+    target.mkdir()
+    existing = target / skill.id
+    existing.mkdir()
+    (existing / "SKILL.md").write_text("# Sample Skill\n\nBody\n", encoding="utf-8")
+
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "deployed"
+    assert result == [existing]
+    assert controller.harness_deploy_status(harness.id, "codex", target)
+
+
+def test_controller_rejects_existing_different_skill_without_record(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("冲突技能", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    target = tmp_path / "codex-skills"
+    target.mkdir()
+    existing = target / skill.id
+    existing.mkdir()
+    (existing / "SKILL.md").write_text("# Other Skill\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="目标已存在"):
+        controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert not controller.harness_deploy_status(harness.id, "codex", target)
+    assert (existing / "SKILL.md").read_text(encoding="utf-8") == "# Other Skill\n"
+
+
+def test_harness_deploy_status_requires_all_assets_and_matching_fingerprint(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("完整状态", "")
+    first = controller.import_skill_directory(sample_skill, "codex")
+    second_source = tmp_path / "second-skill"
+    second_source.mkdir()
+    (second_source / "SKILL.md").write_text("# Second\n", encoding="utf-8")
+    second = controller.import_skill_directory(second_source, "codex")
+    controller.add_asset_to_harness(harness.id, first.id, "skill")
+    controller.add_asset_to_harness(harness.id, second.id, "skill")
+    target = tmp_path / "codex-skills"
+    target.mkdir()
+    first_target = target / first.id
+    first_target.mkdir()
+    (first_target / "SKILL.md").write_text("# Sample Skill\n\nBody\n", encoding="utf-8")
+    controller.service.harness_deploys.add_deployed(
+        harness.id,
+        first.id,
+        "codex",
+        target,
+        first_target,
+        fingerprint_directory(first_target),
+    )
+    conn.commit()
+
+    assert not controller.harness_deploy_status(harness.id, "codex", target)
+
+    controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert controller.harness_deploy_status(harness.id, "codex", target)
+    (target / first.id / "SKILL.md").write_text("# Changed\n", encoding="utf-8")
     assert not controller.harness_deploy_status(harness.id, "codex", target)
