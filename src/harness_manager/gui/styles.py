@@ -608,6 +608,11 @@ def build_stylesheet(theme: str = "light") -> str:
         border-radius: 0;
     }}
 
+    QFrame#AssetLibraryActions {{
+        background: transparent;
+        border: none;
+    }}
+
     QListWidget {{
         background: transparent;
         border: none;

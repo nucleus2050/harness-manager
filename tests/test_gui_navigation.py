@@ -392,6 +392,7 @@ def test_asset_library_removes_component_from_selected_harness():
 
 def test_asset_library_item_has_safe_height_and_layout():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    stylesheet = Path("src/harness_manager/gui/styles.py").read_text(encoding="utf-8")
 
     assert "QSize" in source
     assert "_asset_library_item_height(asset)" in source
@@ -404,6 +405,8 @@ def test_asset_library_item_has_safe_height_and_layout():
     assert "actions_layout.setSpacing(14)" in source
     assert "actions_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)" in source
     assert "button.setFixedWidth(88)" in source
+    assert "QFrame#AssetLibraryActions" in stylesheet
+    assert "QFrame#AssetLibraryActions {{\n        background: transparent;" in stylesheet
 
 
 def test_skill_library_item_shows_truncated_description_by_default():
