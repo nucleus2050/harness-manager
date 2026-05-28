@@ -61,8 +61,11 @@ def test_controller_lists_installed_harnesses_by_application(app_root, tmp_path,
     applications = controller.list_application_components()
     codex = next(item for item in applications if item["client_type"] == "codex")
     assert codex["component_count"] == 1
-    assert codex["path_status"] == "ready"
     assert codex["components"][0]["component_name"] == "代码审查"
     assert codex["components"][0]["asset_count"] == 1
+    assert "path_status" not in codex
+    assert "configured_path" not in codex
+    assert "status" not in codex["components"][0]
+    assert "target_path" not in codex["components"][0]
     assert "asset_name" not in codex["components"][0]
     assert "asset_type" not in codex["components"][0]

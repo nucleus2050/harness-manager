@@ -109,24 +109,16 @@ class MainController:
                 components_by_harness.setdefault(key, []).append(row)
             components = []
             for (_harness_id, harness_name, target_path), harness_rows in components_by_harness.items():
-                installed_paths = [Path(row["installed_path"]) for row in harness_rows]
                 components.append(
                     {
                         "component_name": harness_name,
                         "asset_count": len(harness_rows),
-                        "target_path": Path(target_path),
-                        "status": "ready" if all(path.exists() for path in installed_paths) else "missing",
                     }
                 )
-            has_ready_component = any(component["status"] == "ready" for component in components)
-            configured_path = client.effective_path
-            path_ready = has_ready_component or bool(configured_path and configured_path.exists())
             applications.append(
                 {
                     "client_type": client.type,
                     "client_name": client.name,
-                    "configured_path": configured_path,
-                    "path_status": "ready" if path_ready else "missing",
                     "component_count": len(components),
                     "components": components,
                 }
