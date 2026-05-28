@@ -164,6 +164,23 @@ def test_mcp_config_management_text_is_present():
     assert "McpConfigDialog" in dialog_source
 
 
+def test_agents_md_creation_dialog_supports_editor_and_file_import():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+    controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
+    service_source = Path("src/harness_manager/services.py").read_text(encoding="utf-8")
+
+    for text in ["添加 AGENTS.md", "名称", "描述", "内容", "选择文件导入", "在此输入提示词内容"]:
+        assert text in dialog_source
+    assert "AgentsMdDialog" in dialog_source
+    assert "ask_agents_md" in dialog_source
+    assert "choose_asset_file" not in source.split("def _import_agents_to_harness", 1)[1].split("\n    def ", 1)[0]
+    assert "ask_agents_md" in source
+    assert "create_agents_md_asset" in controller_source
+    assert "create_agents_md_asset" in service_source
+    assert "metadata_json" in service_source
+
+
 def test_mcp_config_dialog_uses_current_app_theme():
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
     mcp_dialog_source = dialog_source.split("class McpConfigDialog", 1)[1].split("\n\nclass ", 1)[0]

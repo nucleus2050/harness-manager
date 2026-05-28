@@ -490,6 +490,99 @@ class _HarnessDetailsDialog(QDialog):
         return name, self.description_input.toPlainText().strip()
 
 
+class AgentsMdDialog(QDialog):
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str = "添加 AGENTS.md",
+        name: str = "",
+        description: str = "",
+        content: str = "# AGENTS.md\n\n在此输入提示词内容...",
+    ) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setModal(True)
+        self.setMinimumSize(760, 640)
+        self.setStyleSheet(_dialog_stylesheet(parent))
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 22, 24, 20)
+        layout.setSpacing(14)
+
+        title_row = QHBoxLayout()
+        title_label = QLabel(title)
+        title_label.setObjectName("DialogTitle")
+        close = QPushButton("×")
+        close.setObjectName("DialogCloseButton")
+        close.clicked.connect(self.reject)
+        title_row.addWidget(title_label, 1)
+        title_row.addWidget(close)
+        layout.addLayout(title_row)
+
+        layout.addWidget(QLabel("名称"))
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("例如：项目默认提示词")
+        self.name_input.setText(name)
+        layout.addWidget(self.name_input)
+
+        layout.addWidget(QLabel("描述"))
+        self.description_input = QLineEdit()
+        self.description_input.setPlaceholderText("可选的描述信息")
+        self.description_input.setText(description)
+        layout.addWidget(self.description_input)
+
+        content_header = QHBoxLayout()
+        content_header.addWidget(QLabel("内容"))
+        content_header.addStretch(1)
+        import_button = QPushButton("选择文件导入")
+        import_button.setObjectName("GhostDialogButton")
+        import_button.clicked.connect(self._import_file)
+        content_header.addWidget(import_button)
+        layout.addLayout(content_header)
+
+        self.content_input = QPlainTextEdit()
+        self.content_input.setPlainText(content)
+        self.content_input.setMinimumHeight(280)
+        layout.addWidget(self.content_input, 1)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton("取消")
+        save = QPushButton("保存")
+        save.setObjectName("PrimaryDialogButton")
+        cancel.clicked.connect(self.reject)
+        save.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(save)
+        layout.addLayout(buttons)
+
+    def _import_file(self) -> None:
+        value, _ = QFileDialog.getOpenFileName(
+            self,
+            "选择 AGENTS.md 文件",
+            "",
+            "AGENTS.md (AGENTS.md);;Markdown (*.md);;所有文件 (*)",
+        )
+        if not value:
+            return
+        path = Path(value)
+        self.content_input.setPlainText(path.read_text(encoding="utf-8", errors="replace"))
+        if not self.name_input.text().strip():
+            self.name_input.setText(path.stem)
+
+    def value(self) -> tuple[str, str, str] | None:
+        name = self.name_input.text().strip()
+        content = self.content_input.toPlainText().strip()
+        if not name or not content:
+            return None
+        return name, self.description_input.text().strip(), content
+
+
 class McpConfigDialog(QDialog):
     def __init__(
         self,
@@ -654,6 +747,19 @@ def ask_harness_details(
     description: str = "",
 ) -> tuple[str, str] | None:
     dialog = _HarnessDetailsDialog(parent, title, name, description)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.value()
+
+
+def ask_agents_md(
+    parent: QWidget,
+    title: str = "添加 AGENTS.md",
+    name: str = "",
+    description: str = "",
+    content: str = "# AGENTS.md\n\n在此输入提示词内容...",
+) -> tuple[str, str, str] | None:
+    dialog = AgentsMdDialog(parent, title, name, description, content)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.value()

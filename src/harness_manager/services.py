@@ -998,6 +998,41 @@ def _import_agents_md_asset(self: HarnessService, source_file: Path | str, name:
     return _copy_file_asset(self, Path(source_file), "agents_md", name, source_type, "AGENTS.md")
 
 
+def _create_agents_md_asset(
+    self: HarnessService,
+    name: str,
+    description: str,
+    content: str,
+) -> Asset:
+    name = name.strip()
+    content = content.strip()
+    if not name:
+        raise ValueError("AGENTS.md 名称不能为空。")
+    if not content:
+        raise ValueError("AGENTS.md 内容不能为空。")
+    asset_id = uuid.uuid4().hex
+    destination_dir = asset_dir(self.paths, "agents_md", asset_id)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination = destination_dir / "AGENTS.md"
+    metadata_json = json.dumps({"description": description.strip()}, ensure_ascii=False)
+    try:
+        destination.write_text(content + "\n", encoding="utf-8")
+        fingerprint = fingerprint_directory(destination_dir)
+        with transaction(self.conn):
+            return self.assets.upsert(
+                asset_id,
+                "agents_md",
+                name,
+                "custom",
+                destination.relative_to(self.paths.root).as_posix(),
+                fingerprint,
+                metadata_json,
+            )
+    except Exception:
+        safe_remove_directory(destination_dir)
+        raise
+
+
 def _import_mcp_asset(self: HarnessService, source_file: Path | str, name: str, source_type: str | None) -> Asset:
     source_path = Path(source_file)
     return _copy_file_asset(self, source_path, "mcp", name, source_type, source_path.name)
@@ -1090,6 +1125,7 @@ def _update_mcp_config_asset(
 
 
 HarnessService.import_agents_md_asset = _import_agents_md_asset
+HarnessService.create_agents_md_asset = _create_agents_md_asset
 HarnessService.import_mcp_asset = _import_mcp_asset
 HarnessService.create_mcp_config_asset = _create_mcp_config_asset
 HarnessService.update_mcp_config_asset = _update_mcp_config_asset

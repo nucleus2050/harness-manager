@@ -99,6 +99,9 @@ class MainController:
     def import_agents_md_asset(self, source_file: Path | str, name: str):
         return self.service.import_agents_md_asset(Path(source_file), name, "custom")
 
+    def create_agents_md_asset(self, name: str, description: str, content: str):
+        return self.service.create_agents_md_asset(name, description, content)
+
     def import_mcp_asset(self, source_file: Path | str, name: str):
         return self.service.import_mcp_asset(Path(source_file), name, "custom")
 

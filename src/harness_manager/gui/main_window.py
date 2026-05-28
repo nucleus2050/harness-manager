@@ -1420,11 +1420,11 @@ class MainWindow(QMainWindow):
         return self.harnesses[row]
 
     def _import_agents_to_harness(self) -> None:
-        source = dialogs.choose_asset_file(self, "导入 AGENTS.md", "AGENTS.md (AGENTS.md);;Markdown (*.md);;所有文件 (*)")
-        if source is None:
+        details = dialogs.ask_agents_md(self, "添加 AGENTS.md")
+        if details is None:
             return
-        name = dialogs.ask_text(self, "添加 AGENTS.md", "组件名称") or source.stem
-        asset = self.controller.import_agents_md_asset(source, name)
+        name, description, content = details
+        asset = self.controller.create_agents_md_asset(name, description, content)
         self.controller.add_asset_to_harness(self._selected_harness().id, asset.id, asset.type)
         self.refresh()
 

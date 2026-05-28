@@ -25,6 +25,18 @@ def test_import_agents_md_asset(app_root, tmp_path):
     assert (paths.root / asset.relative_path).read_text(encoding="utf-8") == "# Rules\n"
 
 
+def test_create_agents_md_asset_writes_content_and_description(app_root):
+    paths, conn, service = _service(app_root)
+
+    asset = service.create_agents_md_asset("项目提示词", "默认规则", "# CLAUDE.md\n\n规则")
+
+    assert asset.type == "agents_md"
+    assert asset.name == "项目提示词"
+    assert asset.source_type == "custom"
+    assert '"description": "默认规则"' in asset.metadata_json
+    assert (paths.root / asset.relative_path).read_text(encoding="utf-8") == "# CLAUDE.md\n\n规则\n"
+
+
 def test_import_mcp_asset(app_root, tmp_path):
     paths, conn, service = _service(app_root)
     source = tmp_path / "mcp.json"
