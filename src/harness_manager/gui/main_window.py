@@ -1748,7 +1748,7 @@ class MainWindow(QMainWindow):
         source_count = len(self.clients) + len(self.controller.list_custom_import_sources())
         visible_rows = CLIENT_SOURCE_VISIBLE_ROWS if source_count else 1
         height = visible_rows * (CLIENT_CARD_MIN_HEIGHT + 10) + 4
-        self.client_scroll.setMinimumHeight(height)
+        self.client_scroll.setMinimumHeight(CLIENT_CARD_MIN_HEIGHT + 14)
         self.client_scroll.setMaximumHeight(height)
 
     def _add_client_card(self, client: ClientConfig) -> None:

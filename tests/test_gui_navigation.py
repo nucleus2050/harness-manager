@@ -278,6 +278,15 @@ def test_import_source_scroll_height_adapts_to_content():
         assert token in source
 
 
+def test_import_source_scroll_can_shrink_when_window_is_short():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    method = source.split("def _refresh_client_source_scroll_height", 1)[1].split("\n    def ", 1)[0]
+
+    assert "self.client_scroll.setMinimumHeight(CLIENT_CARD_MIN_HEIGHT + 14)" in method
+    assert "self.client_scroll.setMaximumHeight(height)" in method
+    assert "self.client_scroll.setMinimumHeight(height)" not in method
+
+
 def test_applications_view_lists_installed_components():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
     controller_source = Path("src/harness_manager/gui/controllers.py").read_text(encoding="utf-8")
