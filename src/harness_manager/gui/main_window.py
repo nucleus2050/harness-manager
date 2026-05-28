@@ -561,38 +561,47 @@ class MainWindow(QMainWindow):
             copy.addWidget(description)
         layout.addLayout(copy, 1)
 
+        actions = QFrame()
+        actions.setObjectName("AssetLibraryActions")
+        actions.setMaximumWidth(286)
+        actions.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        actions_layout = QHBoxLayout(actions)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(8)
+
         add_button = self._button("加入套件", "CompactButton")
-        add_button.setMinimumWidth(92)
+        add_button.setFixedWidth(82)
         add_button.clicked.connect(
             self._guard(lambda asset=asset: self._add_asset_to_chosen_harness(asset))
         )
-        layout.addWidget(add_button)
+        actions_layout.addWidget(add_button)
 
         if asset.type == "mcp":
             edit_button = self._button("编辑", "CompactButton")
-            edit_button.setMinimumWidth(76)
+            edit_button.setFixedWidth(82)
             edit_button.clicked.connect(self._guard(lambda asset=asset: self._edit_mcp_config(asset)))
-            layout.addWidget(edit_button)
+            actions_layout.addWidget(edit_button)
 
         remove_button = self._button("移出套件", "CompactButton")
-        remove_button.setMinimumWidth(92)
+        remove_button.setFixedWidth(82)
         remove_button.clicked.connect(
             self._guard(lambda asset=asset: self._remove_asset_from_chosen_harness(asset))
         )
-        layout.addWidget(remove_button)
+        actions_layout.addWidget(remove_button)
         if asset.type == "skill":
             delete_button = self._button("删除", "CompactButton")
-            delete_button.setMinimumWidth(76)
+            delete_button.setFixedWidth(82)
             delete_button.clicked.connect(
                 self._guard(lambda asset=asset: self._delete_skill_asset(asset))
             )
-            layout.addWidget(delete_button)
+            actions_layout.addWidget(delete_button)
+        layout.addWidget(actions, 0, Qt.AlignmentFlag.AlignVCenter)
         return row
 
     def _asset_library_item_height(self, asset: Asset) -> int:
         if asset.type == "skill":
             return 124
-        return 86
+        return 118
 
     def _skill_description(self, asset: Asset) -> str:
         skill_root = self.controller.paths.root / asset.relative_path

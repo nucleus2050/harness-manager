@@ -390,8 +390,12 @@ def test_asset_library_item_has_safe_height_and_layout():
 
     assert "QSize" in source
     assert "_asset_library_item_height(asset)" in source
-    assert "return 86" in source
-    assert "add_button.setMinimumWidth(92)" in source
+    assert "return 118" in source
+    assert "actions = QFrame()" in source
+    assert 'actions.setObjectName("AssetLibraryActions")' in source
+    assert "actions.setMaximumWidth(286)" in source
+    assert "actions_layout = QHBoxLayout(actions)" in source
+    assert "button.setFixedWidth(82)" in source
 
 
 def test_skill_library_item_shows_truncated_description_by_default():
