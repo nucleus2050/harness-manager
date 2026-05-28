@@ -166,12 +166,16 @@ def test_mcp_config_management_text_is_present():
 
 def test_mcp_config_dialog_uses_current_app_theme():
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+    mcp_dialog_source = dialog_source.split("class McpConfigDialog", 1)[1].split("\n\nclass ", 1)[0]
 
     assert "_THEME_TOKENS" in dialog_source
     assert "getattr(theme_source, \"current_theme\"" in dialog_source
     assert "self.setStyleSheet(_dialog_stylesheet(parent))" in dialog_source
     assert "QPlainTextEdit" in dialog_source
     assert "tokens['card']" in dialog_source
+    assert "FramelessWindowHint" in mcp_dialog_source
+    assert "DialogCloseButton" in mcp_dialog_source
+    assert "close.clicked.connect(self.reject)" in mcp_dialog_source
 
 
 def test_mcp_page_uses_management_layout_not_full_width_button():

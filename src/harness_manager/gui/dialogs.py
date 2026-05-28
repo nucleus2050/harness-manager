@@ -501,6 +501,11 @@ class McpConfigDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
+        self.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
         self.setModal(True)
         self.setMinimumSize(720, 620)
         self.setStyleSheet(_dialog_stylesheet(parent))
@@ -508,9 +513,16 @@ class McpConfigDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 22, 24, 20)
         layout.setSpacing(14)
+        title_row = QHBoxLayout()
+        title_row.setSpacing(10)
         title_label = QLabel(title)
         title_label.setObjectName("DialogTitle")
-        layout.addWidget(title_label)
+        close = QPushButton("×")
+        close.setObjectName("DialogCloseButton")
+        close.clicked.connect(self.reject)
+        title_row.addWidget(title_label, 1)
+        title_row.addWidget(close)
+        layout.addLayout(title_row)
 
         layout.addWidget(QLabel("MCP 标题（唯一）"))
         self.title_input = QLineEdit()
