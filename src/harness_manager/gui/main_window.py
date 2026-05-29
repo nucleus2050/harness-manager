@@ -135,6 +135,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "add_project": "添加项目",
         "manage_projects": "管理项目",
         "project_selector_placeholder": "选择项目",
+        "delete_project_message": "确认删除项目「{name}」的管理记录？\n\n不会删除项目目录，也不会自动撤销已经部署到该项目的内容。",
         "empty_agents": "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。",
         "empty_mcp": "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。",
         "empty_skills": "暂无技能\n请从左侧选择 Skill 来源并导入技能。",
@@ -260,6 +261,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "add_project": "Add Project",
         "manage_projects": "Manage Projects",
         "project_selector_placeholder": "Select Project",
+        "delete_project_message": "Delete managed project record \"{name}\"?\n\nThis will not delete the project folder or undeploy existing project files.",
         "empty_agents": "No AGENTS.md\nAdd AGENTS.md from the harness details first.",
         "empty_mcp": "No MCP\nAdd an MCP configuration from the harness details first.",
         "empty_skills": "No skills\nSelect a Skill source on the left and import skills.",
@@ -2169,8 +2171,21 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def _manage_projects(self) -> None:
-        project = dialogs.manage_projects_dialog(self, self.controller.list_projects())
-        if project is None:
+        choice = dialogs.manage_projects_dialog(self, self.controller.list_projects())
+        if choice is None:
+            return
+        action, project = choice
+        if action == "delete":
+            if not dialogs.ask_confirm(
+                self,
+                self._t("manage_projects"),
+                self._t("delete_project_message").format(name=project.name),
+            ):
+                return
+            self.controller.delete_project(project.id)
+            if self.selected_project_id == project.id:
+                self.selected_project_id = None
+            self.refresh()
             return
         details = dialogs.ask_project_details(
             self,

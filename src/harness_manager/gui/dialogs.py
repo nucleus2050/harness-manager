@@ -881,6 +881,7 @@ class ProjectManagerDialog(QDialog):
 
         self.list_widget = QListWidget()
         self.list_widget.setObjectName("ProjectManagerDialogList")
+        self.action: str | None = None
         for project in projects:
             self.list_widget.addItem(f"{project.name}\n{project.path}")
         if projects:
@@ -888,11 +889,23 @@ class ProjectManagerDialog(QDialog):
         layout.addWidget(self.list_widget, 1)
 
         buttons = QHBoxLayout()
-        buttons.addStretch(1)
+        edit = QPushButton(_tr(parent, "edit_project"))
+        edit.setObjectName("PrimaryDialogButton")
+        delete = QPushButton(_tr(parent, "confirm_delete"))
+        delete.setObjectName("GhostDialogButton")
         cancel = QPushButton(_tr(parent, "cancel"))
         cancel.clicked.connect(self.reject)
+        edit.clicked.connect(lambda: self._accept_action("edit"))
+        delete.clicked.connect(lambda: self._accept_action("delete"))
+        buttons.addWidget(edit)
+        buttons.addWidget(delete)
+        buttons.addStretch(1)
         buttons.addWidget(cancel)
         layout.addLayout(buttons)
+
+    def _accept_action(self, action: str) -> None:
+        self.action = action
+        self.accept()
 
     def selected_project(self) -> "Project | None":
         row = self.list_widget.currentRow()
@@ -1030,11 +1043,14 @@ def ask_project_details(
     return dialog.value()
 
 
-def manage_projects_dialog(parent: QWidget, projects: list["Project"]) -> "Project | None":
+def manage_projects_dialog(parent: QWidget, projects: list["Project"]) -> "tuple[str, Project] | None":
     dialog = ProjectManagerDialog(parent, projects)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
-    return dialog.selected_project()
+    project = dialog.selected_project()
+    if project is None or dialog.action is None:
+        return None
+    return dialog.action, project
 
 
 def show_error(parent: QWidget, title: str, message: str) -> None:
