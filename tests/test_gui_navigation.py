@@ -367,11 +367,21 @@ def test_harness_deploy_icons_are_stateful_toggles():
     for token in [
         "harness_deploy_status",
         "_toggle_harness_deployment",
-        "HarnessDeployIconActive",
+        "HarnessDeployIconCodex",
+        "HarnessDeployIconCodexActive",
+        "HarnessDeployIconClaude",
+        "HarnessDeployIconClaudeActive",
+        "HarnessDeployIconOpenCode",
+        "HarnessDeployIconOpenCodeActive",
+        "button.setAccessibleName",
         "已部署，点击撤销",
         "未部署，点击部署",
     ]:
         assert token in source + stylesheet
+    for token in ["Cx", "CC", "OC"]:
+        assert token in source
+    assert "deploy_frame.setFixedWidth(218)" in source
+    assert "min-width: 32px" in stylesheet
     assert "_deploy_harness(" not in source
 
 

@@ -575,9 +575,11 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QFrame#HarnessDeployBar {{
-        background: {tokens['soft_card']};
-        border: 1px solid {tokens['soft_border']};
-        border-radius: 18px;
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 {tokens['soft_card']},
+            stop:1 {tokens['button_bg']});
+        border: 1px solid {tokens['compact_border']};
+        border-radius: 19px;
     }}
 
     QFrame#HarnessActions {{
@@ -738,34 +740,59 @@ def build_stylesheet(theme: str = "light") -> str:
         border-color: {tokens['hover_border']};
     }}
 
-    QPushButton#HarnessDeployIcon,
-    QPushButton#HarnessDeployIconActive {{
-        min-width: 24px;
-        max-width: 24px;
-        min-height: 24px;
-        max-height: 24px;
-        border-radius: 12px;
-        background: transparent;
-        border: 1px solid transparent;
+    QPushButton#HarnessDeployIconCodex,
+    QPushButton#HarnessDeployIconCodexActive,
+    QPushButton#HarnessDeployIconClaude,
+    QPushButton#HarnessDeployIconClaudeActive,
+    QPushButton#HarnessDeployIconOpenCode,
+    QPushButton#HarnessDeployIconOpenCodeActive {{
+        min-width: 32px;
+        max-width: 32px;
+        min-height: 28px;
+        max-height: 28px;
+        border-radius: 14px;
+        background: {tokens['button_bg']};
+        border: 1px solid {tokens['compact_border']};
         color: {tokens['muted']};
-        font-size: 13px;
+        font-size: 10px;
         font-weight: 900;
         padding: 0;
     }}
 
-    QPushButton#HarnessDeployIcon:hover {{
+    QPushButton#HarnessDeployIconCodex:hover,
+    QPushButton#HarnessDeployIconClaude:hover,
+    QPushButton#HarnessDeployIconOpenCode:hover {{
         background: {tokens['hover_bg']};
         border-color: {tokens['hover_border']};
         color: {tokens['primary_hover']};
     }}
 
-    QPushButton#HarnessDeployIconActive {{
+    QPushButton#HarnessDeployIconCodex {{
+        color: #38bdf8;
+        border-color: rgba(56, 189, 248, 0.42);
+    }}
+
+    QPushButton#HarnessDeployIconClaude {{
+        color: #f59e0b;
+        border-color: rgba(245, 158, 11, 0.42);
+    }}
+
+    QPushButton#HarnessDeployIconOpenCode {{
+        color: #a78bfa;
+        border-color: rgba(167, 139, 250, 0.42);
+    }}
+
+    QPushButton#HarnessDeployIconCodexActive,
+    QPushButton#HarnessDeployIconClaudeActive,
+    QPushButton#HarnessDeployIconOpenCodeActive {{
         background: {tokens['ready_bg']};
         border: 1px solid {tokens['ready_border']};
         color: {tokens['ready_text']};
     }}
 
-    QPushButton#HarnessDeployIconActive:hover {{
+    QPushButton#HarnessDeployIconCodexActive:hover,
+    QPushButton#HarnessDeployIconClaudeActive:hover,
+    QPushButton#HarnessDeployIconOpenCodeActive:hover {{
         background: {tokens['danger_hover']};
         border-color: {tokens['danger_border']};
         color: {tokens['danger_text']};

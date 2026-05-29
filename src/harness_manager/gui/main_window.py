@@ -1252,7 +1252,7 @@ class MainWindow(QMainWindow):
 
         actions = QFrame()
         actions.setObjectName("HarnessActions")
-        actions.setFixedWidth(258)
+        actions.setFixedWidth(300)
         actions_layout = QHBoxLayout(actions)
         actions_layout.setContentsMargins(0, 0, 0, 0)
         actions_layout.setSpacing(10)
@@ -1263,24 +1263,25 @@ class MainWindow(QMainWindow):
 
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
-        deploy_frame.setFixedWidth(176)
+        deploy_frame.setFixedWidth(218)
         deploy_layout = QHBoxLayout(deploy_frame)
         deploy_layout.setContentsMargins(10, 6, 10, 6)
-        deploy_layout.setSpacing(6)
+        deploy_layout.setSpacing(7)
         scope_text = self._t("global") if self.deploy_scope == "global" else self._t("project")
         scope_label = self._label(scope_text, "HarnessScopeLabel")
         deploy_layout.addWidget(scope_label)
         deploy_layout.addWidget(self._scope_toggle_button())
-        for client_type, icon, tooltip in [
-            ("claude_code", "✹", self._t("deploy_claude")),
-            ("codex", "◎", self._t("deploy_codex")),
-            ("opencode", "✦", self._t("deploy_opencode")),
+        for client_type, icon, tooltip, object_name, accessible_name in [
+            ("claude_code", "CC", self._t("deploy_claude"), "HarnessDeployIconClaude", "Claude Code"),
+            ("codex", "Cx", self._t("deploy_codex"), "HarnessDeployIconCodex", "Codex"),
+            ("opencode", "OC", self._t("deploy_opencode"), "HarnessDeployIconOpenCode", "OpenCode"),
         ]:
             target_path = self._deploy_target_path(client_type)
             active = self.controller.harness_deploy_status(harness.id, client_type, target_path)
             button = self._button(
-                icon, "HarnessDeployIconActive" if active else "HarnessDeployIcon"
+                icon, f"{object_name}Active" if active else object_name
             )
+            button.setAccessibleName(accessible_name)
             action_text = self._t("deployed_action") if active else self._t("undeployed_action")
             button.setToolTip(f"{tooltip} ({self._deploy_scope_label()}): {action_text}")
             button.clicked.connect(
