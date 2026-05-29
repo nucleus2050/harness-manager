@@ -349,6 +349,22 @@ def test_message_dialog_uses_app_like_custom_chrome():
     assert "QMessageBox" not in dialog_source
 
 
+def test_project_management_dialogs_exist():
+    dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
+
+    for token in [
+        "ProjectEditorDialog",
+        "ProjectManagerDialog",
+        "project_name",
+        "project_path",
+        "project_description",
+        "manage_projects",
+        "ask_project_details",
+        "manage_projects_dialog",
+    ]:
+        assert token in dialog_source
+
+
 def test_confirm_dialog_has_no_redundant_title_or_accent():
     dialog_source = Path("src/harness_manager/gui/dialogs.py").read_text(encoding="utf-8")
     confirm_source = dialog_source.split("class _ConfirmDialog", 1)[1].split("\n\nclass ", 1)[0]

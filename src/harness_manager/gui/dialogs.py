@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 from harness_manager.gui.styles import _THEME_TOKENS
 
 if TYPE_CHECKING:
-    from harness_manager.models import Asset, Harness
+    from harness_manager.models import Asset, Harness, Project
 
 DIALOG_TEXT = {
     "zh-CN": {
@@ -64,6 +64,15 @@ DIALOG_TEXT = {
         "export_config": "导出全部配置",
         "choose_harness_export": "选择套件导出目录",
         "choose_project_directory": "选择项目文件夹",
+        "project_name": "项目名称",
+        "project_path": "项目路径",
+        "project_description": "项目描述",
+        "project_name_placeholder": "例如：Harness Manager",
+        "project_path_placeholder": "选择项目根目录",
+        "add_project": "添加项目",
+        "edit_project": "编辑项目",
+        "manage_projects": "管理项目",
+        "browse": "浏览",
         "import_config": "导入全部配置",
     },
     "en-US": {
@@ -104,6 +113,15 @@ DIALOG_TEXT = {
         "export_config": "Export Full Config",
         "choose_harness_export": "Choose Harness Export Folder",
         "choose_project_directory": "Choose Project Folder",
+        "project_name": "Project Name",
+        "project_path": "Project Path",
+        "project_description": "Project Description",
+        "project_name_placeholder": "Example: Harness Manager",
+        "project_path_placeholder": "Choose project root folder",
+        "add_project": "Add Project",
+        "edit_project": "Edit Project",
+        "manage_projects": "Manage Projects",
+        "browse": "Browse",
         "import_config": "Import Full Config",
     },
 }
@@ -767,6 +785,122 @@ class McpConfigDialog(QDialog):
         )
 
 
+class ProjectEditorDialog(QDialog):
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str | None = None,
+        name: str = "",
+        path: Path | str | None = None,
+        description: str = "",
+    ) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title or _tr(parent, "add_project"))
+        self.setModal(True)
+        self.setMinimumWidth(620)
+        self.setStyleSheet(_dialog_stylesheet(parent))
+
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText(_tr(parent, "project_name_placeholder"))
+        self.name_input.setText(name)
+        self.path_input = QLineEdit()
+        self.path_input.setPlaceholderText(_tr(parent, "project_path_placeholder"))
+        self.path_input.setText(str(path) if path else "")
+        self.description_input = QPlainTextEdit()
+        self.description_input.setPlaceholderText(_tr(parent, "description_placeholder"))
+        self.description_input.setPlainText(description)
+        self.description_input.setMinimumHeight(88)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 22, 24, 20)
+        layout.setSpacing(14)
+        title_label = QLabel(self.windowTitle())
+        title_label.setObjectName("DialogTitle")
+        layout.addWidget(title_label)
+        layout.addWidget(QLabel(_tr(parent, "project_name")))
+        layout.addWidget(self.name_input)
+
+        path_row = QHBoxLayout()
+        path_row.setSpacing(10)
+        path_row.addWidget(self.path_input, 1)
+        browse = QPushButton(_tr(parent, "browse"))
+        browse.setObjectName("GhostDialogButton")
+        browse.clicked.connect(self._choose_path)
+        path_row.addWidget(browse)
+        layout.addWidget(QLabel(_tr(parent, "project_path")))
+        layout.addLayout(path_row)
+
+        layout.addWidget(QLabel(_tr(parent, "project_description")))
+        layout.addWidget(self.description_input)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton(_tr(parent, "cancel"))
+        save = QPushButton(_tr(parent, "save"))
+        save.setObjectName("PrimaryDialogButton")
+        cancel.clicked.connect(self.reject)
+        save.clicked.connect(self.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(save)
+        layout.addLayout(buttons)
+
+    def _choose_path(self) -> None:
+        path = choose_project_directory(self)
+        if path is None:
+            return
+        self.path_input.setText(str(path))
+        if not self.name_input.text().strip():
+            self.name_input.setText(path.name)
+
+    def value(self) -> tuple[str, Path, str] | None:
+        path_text = self.path_input.text().strip()
+        if not path_text:
+            return None
+        path = Path(path_text)
+        name = self.name_input.text().strip() or path.name
+        if not name:
+            return None
+        return name, path, self.description_input.toPlainText().strip()
+
+
+class ProjectManagerDialog(QDialog):
+    def __init__(self, parent: QWidget, projects: list["Project"]) -> None:
+        super().__init__(parent)
+        self.projects = projects
+        self.setWindowTitle(_tr(parent, "manage_projects"))
+        self.setModal(True)
+        self.setMinimumSize(620, 460)
+        self.setStyleSheet(_dialog_stylesheet(parent))
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 22, 24, 20)
+        layout.setSpacing(14)
+        title = QLabel(_tr(parent, "manage_projects"))
+        title.setObjectName("DialogTitle")
+        layout.addWidget(title)
+
+        self.list_widget = QListWidget()
+        self.list_widget.setObjectName("ProjectManagerDialogList")
+        for project in projects:
+            self.list_widget.addItem(f"{project.name}\n{project.path}")
+        if projects:
+            self.list_widget.setCurrentRow(0)
+        layout.addWidget(self.list_widget, 1)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel = QPushButton(_tr(parent, "cancel"))
+        cancel.clicked.connect(self.reject)
+        buttons.addWidget(cancel)
+        layout.addLayout(buttons)
+
+    def selected_project(self) -> "Project | None":
+        row = self.list_widget.currentRow()
+        if row < 0 or row >= len(self.projects):
+            return None
+        return self.projects[row]
+
+
 def choose_directory(parent: QWidget, title: str) -> Path | None:
     value = QFileDialog.getExistingDirectory(parent, title)
     return Path(value) if value else None
@@ -881,6 +1015,26 @@ def ask_mcp_config(
     if dialog.exec() != QDialog.DialogCode.Accepted:
         return None
     return dialog.value()
+
+
+def ask_project_details(
+    parent: QWidget,
+    title: str | None = None,
+    name: str = "",
+    path: Path | str | None = None,
+    description: str = "",
+) -> tuple[str, Path, str] | None:
+    dialog = ProjectEditorDialog(parent, title, name, path, description)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.value()
+
+
+def manage_projects_dialog(parent: QWidget, projects: list["Project"]) -> "Project | None":
+    dialog = ProjectManagerDialog(parent, projects)
+    if dialog.exec() != QDialog.DialogCode.Accepted:
+        return None
+    return dialog.selected_project()
 
 
 def show_error(parent: QWidget, title: str, message: str) -> None:
