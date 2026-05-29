@@ -127,8 +127,6 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "deploy_opencode": "部署套件到 OpenCode",
         "deployed_action": "已部署，点击撤销",
         "undeployed_action": "未部署，点击部署",
-        "deploy_scope_label": "部署范围",
-        "scope_toggle": "切换部署范围：全局默认目录 / 当前项目目录",
         "global_scope": "全局默认目录",
         "project_scope": "当前项目目录",
         "choose_project_directory": "选择项目文件夹",
@@ -254,8 +252,6 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "deploy_opencode": "Deploy harness to OpenCode",
         "deployed_action": "Deployed, click to undo",
         "undeployed_action": "Not deployed, click to deploy",
-        "deploy_scope_label": "Deploy scope",
-        "scope_toggle": "Switch deploy scope: global default directory / current project directory",
         "global_scope": "global default directory",
         "project_scope": "current project directory",
         "choose_project_directory": "Choose Project Folder",
@@ -1311,15 +1307,12 @@ class MainWindow(QMainWindow):
 
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
-        deploy_frame.setFixedWidth(292)
+        deploy_frame.setFixedWidth(232)
         deploy_layout = QHBoxLayout(deploy_frame)
         deploy_layout.setContentsMargins(12, 6, 10, 6)
         deploy_layout.setSpacing(8)
-        deploy_layout.addWidget(self._label(self._t("deploy_scope_label"), "MutedText"))
-        scope_text = self._t("global") if self.deploy_scope == "global" else self._t("project")
-        scope_label = self._label(scope_text, "HarnessScopeLabel")
-        deploy_layout.addWidget(scope_label, 1)
-        deploy_layout.addWidget(self._scope_toggle_button())
+        deploy_layout.addWidget(self._label(self._deploy_scope_label(), "MutedText"))
+        deploy_layout.addStretch(1)
         for client_type, icon, tooltip, object_name, accessible_name in [
             ("claude_code", "CC", self._t("deploy_claude"), "HarnessDeployIconClaude", "Claude Code"),
             ("codex", "Cx", self._t("deploy_codex"), "HarnessDeployIconCodex", "Codex"),
@@ -1353,16 +1346,6 @@ class MainWindow(QMainWindow):
         actions_layout.addWidget(deploy_frame)
         layout.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight)
         return card
-
-    def _scope_toggle_button(self) -> QPushButton:
-        button = self._button("⌂" if self.deploy_scope == "global" else "▣", "HarnessScopeIcon")
-        button.setToolTip(f"{self._t('scope_toggle')} - {self._deploy_scope_label()}")
-        button.clicked.connect(self._guard(self._toggle_deploy_scope))
-        return button
-
-    def _toggle_deploy_scope(self) -> None:
-        self.deploy_scope = "project" if self.deploy_scope == "global" else "global"
-        self.refresh()
 
     def _deploy_scope_label(self) -> str:
         if self.deploy_scope == "global":
@@ -2007,15 +1990,14 @@ class MainWindow(QMainWindow):
         current_id = self.selected_project_id
         self.project_selector.blockSignals(True)
         self.project_selector.clear()
-        self.project_selector.addItem(self._t("project_selector_placeholder"), None)
+        self.project_selector.addItem(self._t("global"), None)
         for project in self.projects:
             self.project_selector.addItem(project.name, project.id)
         project_ids = {project.id for project in self.projects}
         if current_id not in project_ids:
             current_id = None
-        if current_id is None and self.projects:
-            current_id = self.projects[0].id
         self.selected_project_id = current_id
+        self.deploy_scope = "project" if self.selected_project_id is not None else "global"
         index = 0
         if current_id is not None:
             for item_index in range(self.project_selector.count()):
@@ -2027,6 +2009,7 @@ class MainWindow(QMainWindow):
 
     def _project_selection_changed(self) -> None:
         self.selected_project_id = self.project_selector.currentData()
+        self.deploy_scope = "project" if self.selected_project_id is not None else "global"
         self.refresh()
 
     def _retranslate_static_ui(self) -> None:
@@ -2159,11 +2142,6 @@ class MainWindow(QMainWindow):
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
         logger.info("Toggling harness deployment: harness=%s client=%s", harness_id, client_type)
-        if self.deploy_scope == "project" and self._selected_project() is None:
-            self._add_project()
-            if self._selected_project() is None:
-                return
-            self.deploy_scope = "project"
         target_path = self._deploy_target_path(client_type)
         self.controller.toggle_harness_deploy(
             harness_id,

@@ -396,7 +396,7 @@ def test_harness_deploy_icons_are_stateful_toggles():
         assert token in source + stylesheet
     for token in ["Cx", "CC", "OC"]:
         assert token in source
-    assert "deploy_frame.setFixedWidth(292)" in source
+    assert "deploy_frame.setFixedWidth(232)" in source
     assert "min-width: 32px" in stylesheet
     assert "_deploy_harness(" not in source
 
@@ -410,10 +410,11 @@ def test_successful_harness_deploy_uses_icon_state_without_dialog():
     assert "dialogs.show_info" not in method
 
 
-def test_project_scope_prompts_for_project_folder_and_passes_scope():
+def test_project_selector_controls_deployment_scope():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
-    toggle_scope_method = source.split("def _toggle_deploy_scope", 1)[1].split("\n    def ", 1)[0]
     toggle_deploy_method = source.split("def _toggle_harness_deployment", 1)[1].split("\n    def ", 1)[0]
+    selector_method = source.split("def _refresh_project_selector", 1)[1].split("\n    def ", 1)[0]
+    list_card = source.split("def _harness_list_card", 1)[1].split("\n    def ", 1)[0]
 
     for token in [
         "self.selected_project_id",
@@ -424,8 +425,15 @@ def test_project_scope_prompts_for_project_folder_and_passes_scope():
         "current_project",
     ]:
         assert token in source
-    assert "ask_project_details" not in toggle_scope_method
-    assert "_selected_project" in toggle_deploy_method
+    assert 'self.project_selector.addItem(self._t("global"), None)' in selector_method
+    assert 'self.deploy_scope = "project" if self.selected_project_id is not None else "global"' in source
+    assert "_selected_project" not in toggle_deploy_method
+    assert "_scope_toggle_button" not in source
+    assert "_toggle_deploy_scope" not in source
+    assert "scope_toggle" not in source
+    assert "HarnessScopeIcon" not in source
+    assert '"deploy_scope_label"' not in source
+    assert "deploy_layout.addWidget(scope_label" not in list_card
 
 
 def test_main_window_uses_persistent_project_selector():
@@ -610,8 +618,8 @@ def test_harness_list_layout_separates_project_controls_and_deploy_status():
     assert "project_group = QFrame()" in actions_source
     assert 'project_group.setObjectName("HarnessProjectActions")' in actions_source
     assert "actions_layout = QVBoxLayout(actions)" in list_card
-    assert "deploy_layout.addWidget(scope_label, 1)" in list_card
-    assert 'self._label(self._t("deploy_scope_label"), "MutedText")' in list_card
+    assert 'self._label(self._deploy_scope_label(), "MutedText")' in list_card
+    assert "deploy_layout.addStretch(1)" in list_card
     assert "QFrame#HarnessProjectActions" in styles_source
     assert "QFrame#HarnessDeployBar" in styles_source
 

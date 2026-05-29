@@ -602,13 +602,6 @@ def build_stylesheet(theme: str = "light") -> str:
         font-weight: 850;
     }}
 
-    QLabel#HarnessScopeLabel {{
-        color: {tokens['muted']};
-        background: transparent;
-        font-size: 11px;
-        font-weight: 850;
-    }}
-
     QFrame#AssetLibraryItem {{
         background: transparent;
         border: none;
@@ -801,25 +794,6 @@ def build_stylesheet(theme: str = "light") -> str:
         background: {tokens['danger_hover']};
         border-color: {tokens['danger_border']};
         color: {tokens['danger_text']};
-    }}
-
-    QPushButton#HarnessScopeIcon {{
-        min-width: 24px;
-        max-width: 24px;
-        min-height: 24px;
-        max-height: 24px;
-        border-radius: 12px;
-        background: transparent;
-        border: 1px solid transparent;
-        color: {tokens['muted']};
-        font-size: 12px;
-        font-weight: 850;
-        padding: 0;
-    }}
-
-    QPushButton#HarnessScopeIcon:hover {{
-        background: {tokens['hover_bg']};
-        border-color: {tokens['hover_border']};
     }}
 
     QPushButton#IconButtonChecked {{
