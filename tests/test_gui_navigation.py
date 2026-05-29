@@ -425,7 +425,9 @@ def test_harness_delete_action_uses_confirm_and_single_row_actions():
     assert "QHBoxLayout(bar)" in action_builder
     assert "archive_row" not in action_builder
     assert action_builder.index("new_package_button") < action_builder.index("edit_harness_button")
-    assert action_builder.index("delete_harness_button") < action_builder.index("import_archive_button")
+    assert action_builder.index("export_archive_button") < action_builder.index("delete_harness_button")
+    assert "_normalize_harness_action_buttons" in action_builder
+    assert "button.setFixedSize(54, 38)" in source
 
 
 def test_asset_library_adds_harness_action_on_each_item():

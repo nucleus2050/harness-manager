@@ -374,7 +374,7 @@ class MainWindow(QMainWindow):
         self.agents_view_button = self._button(self._t("agents"), "SegmentButton")
         self.mcp_view_button = self._button(self._t("mcp"), "SegmentButton")
         self.skills_view_button = self._button(self._t("skills"), "SegmentButton")
-        self.new_package_button = self._button(self._t("new"), "PrimaryButton")
+        self.new_package_button = self._button(self._t("new"), "CompactButton")
         self.edit_harness_button = self._button(self._t("edit"), "CompactButton")
         self.delete_harness_button = self._button(self._t("delete"), "DangerButton")
         self.import_archive_button = self._button(self._t("import"), "CompactButton")
@@ -704,13 +704,24 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
+        self._normalize_harness_action_buttons()
         layout.addWidget(self.new_package_button)
         layout.addWidget(self.edit_harness_button)
-        layout.addWidget(self.delete_harness_button)
         layout.addWidget(self.import_archive_button)
         layout.addWidget(self.export_archive_button)
+        layout.addWidget(self.delete_harness_button)
         layout.addStretch(1)
         return bar
+
+    def _normalize_harness_action_buttons(self) -> None:
+        for button in [
+            self.new_package_button,
+            self.edit_harness_button,
+            self.import_archive_button,
+            self.export_archive_button,
+            self.delete_harness_button,
+        ]:
+            button.setFixedSize(54, 38)
 
     def _build_details_card(self) -> QFrame:
         card = self._card()
