@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QPushButton,
+    QComboBox,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -31,7 +32,7 @@ from harness_manager.db import connect
 from harness_manager.gui import dialogs
 from harness_manager.gui.controllers import MainController
 from harness_manager.gui.styles import build_stylesheet
-from harness_manager.models import Asset, ClientConfig, ClientType, Harness, Skill
+from harness_manager.models import Asset, ClientConfig, ClientType, Harness, Project, Skill
 from harness_manager.services import skill_description
 
 logger = logging.getLogger(__name__)
@@ -131,6 +132,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "project_scope": "当前项目目录",
         "choose_project_directory": "选择项目文件夹",
         "current_project": "当前项目：{name}",
+        "add_project": "添加项目",
+        "manage_projects": "管理项目",
+        "project_selector_placeholder": "选择项目",
         "empty_agents": "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。",
         "empty_mcp": "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。",
         "empty_skills": "暂无技能\n请从左侧选择 Skill 来源并导入技能。",
@@ -251,6 +255,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "project_scope": "current project directory",
         "choose_project_directory": "Choose Project Folder",
         "current_project": "Current project: {name}",
+        "add_project": "Add Project",
+        "manage_projects": "Manage Projects",
+        "project_selector_placeholder": "Select Project",
         "empty_agents": "No AGENTS.md\nAdd AGENTS.md from the harness details first.",
         "empty_mcp": "No MCP\nAdd an MCP configuration from the harness details first.",
         "empty_skills": "No skills\nSelect a Skill source on the left and import skills.",
@@ -337,6 +344,7 @@ class MainWindow(QMainWindow):
         self.controller = controller
         self.clients: list[ClientConfig] = []
         self.harnesses: list[Harness] = []
+        self.projects: list[Project] = []
         self.harness_assets: list[Asset] = []
         self.library_assets: list[Asset] = []
         self.client_cards_layout: QVBoxLayout | None = None
@@ -350,7 +358,7 @@ class MainWindow(QMainWindow):
         self.current_theme = settings.theme
         self.current_language = settings.language
         self.deploy_scope = "global"
-        self.selected_project_root: Path | None = None
+        self.selected_project_id: str | None = None
         self.title_bar: QFrame | None = None
         self.app_shell: QFrame | None = None
         self.shell_layout: QVBoxLayout | None = None
@@ -384,6 +392,10 @@ class MainWindow(QMainWindow):
         self.delete_harness_button = self._button(self._t("delete"), "DangerButton")
         self.import_archive_button = self._button(self._t("import"), "CompactButton")
         self.export_archive_button = self._button(self._t("export"), "CompactButton")
+        self.project_selector = QComboBox()
+        self.project_selector.setObjectName("ProjectSelector")
+        self.add_project_button = self._button(self._t("add_project"), "CompactButton")
+        self.manage_projects_button = self._button(self._t("manage_projects"), "CompactButton")
         self.language_zh_button = self._button(self._t("zh"), "PrimaryButton")
         self.language_en_button = self._button(self._t("en"), "CompactButton")
         self.theme_light_button = self._button(self._t("theme_light"), "CompactButton")
@@ -715,6 +727,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.import_archive_button)
         layout.addWidget(self.export_archive_button)
         layout.addWidget(self.delete_harness_button)
+        layout.addWidget(self.project_selector, 1)
+        layout.addWidget(self.add_project_button)
+        layout.addWidget(self.manage_projects_button)
         layout.addStretch(1)
         return bar
 
@@ -727,6 +742,10 @@ class MainWindow(QMainWindow):
             self.delete_harness_button,
         ]:
             button.setFixedSize(54, 38)
+        self.add_project_button.setFixedSize(86, 38)
+        self.manage_projects_button.setFixedSize(86, 38)
+        self.project_selector.setMinimumWidth(150)
+        self.project_selector.setMinimumHeight(38)
 
     def _build_details_card(self) -> QFrame:
         card = self._card()
@@ -1161,6 +1180,9 @@ class MainWindow(QMainWindow):
         self.delete_harness_button.clicked.connect(self._guard(self._delete_harness))
         self.import_archive_button.clicked.connect(self._guard(self._import_archive))
         self.export_archive_button.clicked.connect(self._guard(self._export_archive))
+        self.project_selector.currentIndexChanged.connect(self._project_selection_changed)
+        self.add_project_button.clicked.connect(self._guard(self._add_project))
+        self.manage_projects_button.clicked.connect(self._guard(self._manage_projects))
         self.language_zh_button.clicked.connect(self._guard(lambda: self._save_language("zh-CN")))
         self.language_en_button.clicked.connect(self._guard(lambda: self._save_language("en-US")))
         self.theme_light_button.clicked.connect(self._guard(lambda: self._save_theme("light")))
@@ -1193,6 +1215,8 @@ class MainWindow(QMainWindow):
         self._refresh_settings_buttons(self.controller.get_settings())
         self.clients = self.controller.list_clients()
         self.harnesses = self.controller.list_harnesses()
+        self.projects = self.controller.list_projects()
+        self._refresh_project_selector()
 
         all_skills = self.controller.list_skills()
         mcp_assets = self.controller.list_assets_by_type("mcp")
@@ -1324,26 +1348,24 @@ class MainWindow(QMainWindow):
     def _deploy_scope_label(self) -> str:
         if self.deploy_scope == "global":
             return self._t("global_scope")
-        project_root = self.selected_project_root
-        if project_root is None:
+        project = self._selected_project()
+        if project is None:
             return self._t("project_scope")
-        return self._t("current_project").format(name=project_root.name)
+        return self._t("current_project").format(name=project.name)
 
     def _deploy_target_path(self, client_type: ClientType) -> Path | None:
         if self.deploy_scope == "project":
-            if self.selected_project_root is None:
-                return None
-            return self._project_deploy_target(client_type)
+            project = self._selected_project()
+            return project.path if project is not None else None
         return None
 
-    def _ensure_project_root(self) -> Path | None:
-        if self.selected_project_root is not None:
-            return self.selected_project_root
-        project_root = dialogs.choose_project_directory(self)
-        if project_root is None:
+    def _selected_project(self) -> Project | None:
+        if self.selected_project_id is None:
             return None
-        self.selected_project_root = project_root.resolve()
-        return self.selected_project_root
+        for project in self.projects:
+            if project.id == self.selected_project_id:
+                return project
+        return None
 
     def _refresh_view_state(self) -> None:
         harness_active = self.current_view == "harnesses"
@@ -1933,6 +1955,32 @@ class MainWindow(QMainWindow):
             button.style().unpolish(button)
             button.style().polish(button)
 
+    def _refresh_project_selector(self) -> None:
+        current_id = self.selected_project_id
+        self.project_selector.blockSignals(True)
+        self.project_selector.clear()
+        self.project_selector.addItem(self._t("project_selector_placeholder"), None)
+        for project in self.projects:
+            self.project_selector.addItem(project.name, project.id)
+        project_ids = {project.id for project in self.projects}
+        if current_id not in project_ids:
+            current_id = None
+        if current_id is None and self.projects:
+            current_id = self.projects[0].id
+        self.selected_project_id = current_id
+        index = 0
+        if current_id is not None:
+            for item_index in range(self.project_selector.count()):
+                if self.project_selector.itemData(item_index) == current_id:
+                    index = item_index
+                    break
+        self.project_selector.setCurrentIndex(index)
+        self.project_selector.blockSignals(False)
+
+    def _project_selection_changed(self) -> None:
+        self.selected_project_id = self.project_selector.currentData()
+        self.refresh()
+
     def _retranslate_static_ui(self) -> None:
         self.setWindowTitle(self._t("window_title"))
         self.title_bar_title.setText(self._t("window_title"))
@@ -1946,6 +1994,8 @@ class MainWindow(QMainWindow):
         self.delete_harness_button.setText(self._t("delete"))
         self.import_archive_button.setText(self._t("import"))
         self.export_archive_button.setText(self._t("export"))
+        self.add_project_button.setText(self._t("add_project"))
+        self.manage_projects_button.setText(self._t("manage_projects"))
         self.add_custom_source_button.setText(self._t("custom_source"))
         self.language_zh_button.setText(self._t("zh"))
         self.language_en_button.setText(self._t("en"))
@@ -2061,8 +2111,11 @@ class MainWindow(QMainWindow):
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
         logger.info("Toggling harness deployment: harness=%s client=%s", harness_id, client_type)
-        if self.deploy_scope == "project" and self._ensure_project_root() is None:
-            return
+        if self.deploy_scope == "project" and self._selected_project() is None:
+            self._add_project()
+            if self._selected_project() is None:
+                return
+            self.deploy_scope = "project"
         target_path = self._deploy_target_path(client_type)
         self.controller.toggle_harness_deploy(
             harness_id,
@@ -2072,11 +2125,33 @@ class MainWindow(QMainWindow):
         )
         self.refresh()
 
-    def _project_deploy_target(self, client_type: ClientType) -> Path:
-        project_root = self.selected_project_root
-        if project_root is None:
-            raise ValueError(self._t("choose_project_directory"))
-        return project_root
+    def _add_project(self) -> None:
+        details = dialogs.ask_project_details(self, self._t("add_project"))
+        if details is None:
+            return
+        name, path, description = details
+        project = self.controller.create_project(name, path, description)
+        self.selected_project_id = project.id
+        self.deploy_scope = "project"
+        self.refresh()
+
+    def _manage_projects(self) -> None:
+        project = dialogs.manage_projects_dialog(self, self.controller.list_projects())
+        if project is None:
+            return
+        details = dialogs.ask_project_details(
+            self,
+            self._t("manage_projects"),
+            project.name,
+            project.path,
+            project.description,
+        )
+        if details is None:
+            return
+        name, path, description = details
+        updated = self.controller.update_project(project.id, name, path, description)
+        self.selected_project_id = updated.id
+        self.refresh()
 
     def _install(self, client_type: ClientType) -> None:
         self.controller.install_package_by_row(

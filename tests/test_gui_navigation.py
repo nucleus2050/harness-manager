@@ -416,16 +416,32 @@ def test_project_scope_prompts_for_project_folder_and_passes_scope():
     toggle_deploy_method = source.split("def _toggle_harness_deployment", 1)[1].split("\n    def ", 1)[0]
 
     for token in [
-        "self.selected_project_root",
-        "choose_project_directory",
-        "_ensure_project_root",
+        "self.selected_project_id",
+        "ask_project_details",
+        "_selected_project",
         "scope=self.deploy_scope",
-        "project_root.name",
+        "project.name",
         "current_project",
     ]:
         assert token in source
-    assert "_ensure_project_root" not in toggle_scope_method
-    assert "_ensure_project_root" in toggle_deploy_method
+    assert "ask_project_details" not in toggle_scope_method
+    assert "_selected_project" in toggle_deploy_method
+
+
+def test_main_window_uses_persistent_project_selector():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "selected_project_id",
+        "project_selector",
+        "add_project_button",
+        "manage_projects_button",
+        "_add_project",
+        "_manage_projects",
+        "_selected_project",
+    ]:
+        assert token in source
+    assert "selected_project_root: Path | None" not in source
 
 
 def test_successful_gui_actions_do_not_show_info_dialogs():
