@@ -4,7 +4,7 @@ Harness Manager 是一个本地 Windows 桌面应用，用来管理完成某项�
 
 当前暂不实现 Hook 管理，因为不同工具的 Hook 标准和安装方式差异较大。
 
-![Harness Manager 主界面](docs/images/harness-manager-main.png)
+![Harness Manager 主界面](docs/images/harness-manager-01-overview.png)
 
 > 截图使用示例数据生成，用于展示任务套件列表、组件统计、导入来源、组件详情和部署入口。
 
@@ -27,6 +27,46 @@ Harness Manager 是一个本地 Windows 桌面应用，用来管理完成某项�
   ↓
 任务结束后可撤销部署，或导出 .harness.zip 离线共享
 ```
+
+## 完整使用流程
+
+下面的截图使用示例数据生成，展示了多个任务套件同时管理的典型流程。
+
+### 1. 查看任务套件总览
+
+左侧展示组件统计和导入来源，中间是多个任务套件，右侧展示当前选中套件已加入的 Skill、AGENTS.md 和 MCP。套件卡片上的图标用于切换部署范围并部署到 Codex、Claude Code 或 OpenCode。
+
+![任务套件总览](docs/images/harness-manager-01-overview.png)
+
+### 2. 选择不同任务套件查看详情
+
+选中某个任务套件后，右侧会按组件类型分组展示具体加入了哪些 Skill、AGENTS.md 和 MCP，避免只看到“1 个、2 个”但不知道具体内容。
+
+![任务套件详情](docs/images/harness-manager-02-harness-detail.png)
+
+### 3. 在技能库维护 Skill
+
+技能库列出当前应用管理的所有 Skill。每个 Skill 都可以从列表中加入任务套件、移出任务套件或删除；加入套件时会选择目标任务套件，已加入的组件不会重复加入。
+
+![技能库](docs/images/harness-manager-03-skill-library.png)
+
+### 4. 管理 AGENTS.md 组件
+
+AGENTS.md 作为独立组件维护，可以直接新建，也可以从文件导入。列表展示名称、描述和内容摘要；一个任务套件最多加入一个 AGENTS.md。
+
+![AGENTS.md 组件库](docs/images/harness-manager-04-agents-library.png)
+
+### 5. 管理 MCP 配置
+
+MCP 页面用于维护 MCP JSON 配置，支持显示名称、描述和配置摘要。MCP 作为组件加入任务套件，而不是直接绑定某个具体客户端。
+
+![MCP 组件库](docs/images/harness-manager-05-mcp-library.png)
+
+### 6. 调整设置和导入导出全量配置
+
+设置页支持中英文切换、主题切换，以及全量配置导入导出。全量配置适合在不同机器之间迁移 Harness Manager 的数据库、组件资产和配置。
+
+![设置页面](docs/images/harness-manager-06-settings.png)
 
 ## 这个项目解决什么实际问题
 
