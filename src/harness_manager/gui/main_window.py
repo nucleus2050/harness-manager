@@ -397,7 +397,7 @@ class MainWindow(QMainWindow):
         self.skills_view_button = self._button(self._t("skills"), "SegmentButton")
         self.new_package_button = self._button(self._t("new"), "CompactButton")
         self.edit_harness_button = self._button(self._t("edit"), "CompactButton")
-        self.delete_harness_button = self._button(self._t("delete"), "DangerButton")
+        self.delete_harness_button = self._button(self._t("delete"), "CompactButton")
         self.import_archive_button = self._button(self._t("import"), "CompactButton")
         self.export_archive_button = self._button(self._t("export"), "CompactButton")
         self.project_selector = QComboBox()
