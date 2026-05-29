@@ -475,6 +475,35 @@ def test_project_undeploy_removes_empty_generated_files_and_directories(
     assert not (project_root / "opencode.json").exists()
 
 
+def test_project_undeploy_preserves_non_empty_agent_directories(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("保留用户目录", "")
+    skill = controller.import_skill_directory(sample_skill, "opencode")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    project_root = tmp_path / "project"
+
+    controller.toggle_harness_deploy(
+        harness.id, "opencode", project_root, scope="project"
+    )
+    user_file = project_root / ".opencode" / "user-tool.json"
+    user_file.write_text('{"owner":"user"}\n', encoding="utf-8")
+
+    action, result = controller.toggle_harness_deploy(
+        harness.id, "opencode", project_root, scope="project"
+    )
+
+    assert action == "undeployed"
+    assert result == {skill.id: "uninstalled"}
+    assert user_file.is_file()
+    assert (project_root / ".opencode").is_dir()
+    assert not (project_root / ".opencode" / "skills" / skill.id).exists()
+
+
 def test_global_codex_deploy_status_and_undeploy_support_multiple_mcp_assets(
     app_root, tmp_path
 ):
