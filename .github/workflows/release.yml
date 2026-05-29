@@ -1,5 +1,5 @@
 name: Release
-# Initial release tag: v0.0.1
+# Current release tag: v0.0.2
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       version:
         description: "Release version without v prefix"
         required: true
-        default: "0.0.1"
+        default: "0.0.2"
 
 permissions:
   contents: write

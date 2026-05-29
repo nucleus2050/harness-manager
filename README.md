@@ -103,11 +103,11 @@ D:\Tools\HarnessManager\
 推送版本标签会自动在 GitHub Actions 中打包 Windows 版本，并生成 Release 附件：
 
 ```powershell
-git tag v0.0.1
-git push origin v0.0.1
+git tag v0.0.2
+git push origin v0.0.2
 ```
 
-也可以在 GitHub 的 Actions 页面手动运行 `Release` workflow，版本号默认 `0.0.1`。
+也可以在 GitHub 的 Actions 页面手动运行 `Release` workflow，版本号默认 `0.0.2`。
 
 ## 技术栈
 

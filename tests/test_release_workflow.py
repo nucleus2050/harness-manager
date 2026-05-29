@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def test_project_version_is_initial_release():
+def test_project_version_matches_current_release():
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
 
-    assert 'version = "0.0.1"' in pyproject
+    assert 'version = "0.0.2"' in pyproject
 
 
 def test_release_workflow_builds_windows_zip_and_release():
@@ -24,6 +24,6 @@ def test_release_workflow_builds_windows_zip_and_release():
         "gh release create",
         "gh release upload",
         "workflow_dispatch",
-        "v0.0.1",
+        "v0.0.2",
     ]:
         assert token in source
