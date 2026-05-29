@@ -127,6 +127,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "deploy_opencode": "部署套件到 OpenCode",
         "deployed_action": "已部署，点击撤销",
         "undeployed_action": "未部署，点击部署",
+        "deploy_scope_label": "部署范围",
         "scope_toggle": "切换部署范围：全局默认目录 / 当前项目目录",
         "global_scope": "全局默认目录",
         "project_scope": "当前项目目录",
@@ -253,6 +254,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "deploy_opencode": "Deploy harness to OpenCode",
         "deployed_action": "Deployed, click to undo",
         "undeployed_action": "Not deployed, click to deploy",
+        "deploy_scope_label": "Deploy scope",
         "scope_toggle": "Switch deploy scope: global default directory / current project directory",
         "global_scope": "global default directory",
         "project_scope": "current project directory",
@@ -725,18 +727,32 @@ class MainWindow(QMainWindow):
         bar = QFrame()
         bar.setObjectName("ActionBar")
         layout = QHBoxLayout(bar)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(8)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(10)
         self._normalize_harness_action_buttons()
-        layout.addWidget(self.new_package_button)
-        layout.addWidget(self.edit_harness_button)
-        layout.addWidget(self.import_archive_button)
-        layout.addWidget(self.export_archive_button)
-        layout.addWidget(self.delete_harness_button)
-        layout.addWidget(self.project_selector, 1)
-        layout.addWidget(self.add_project_button)
-        layout.addWidget(self.manage_projects_button)
+
+        primary_group = QFrame()
+        primary_group.setObjectName("HarnessPrimaryActions")
+        primary_layout = QHBoxLayout(primary_group)
+        primary_layout.setContentsMargins(8, 8, 8, 8)
+        primary_layout.setSpacing(8)
+        primary_layout.addWidget(self.new_package_button)
+        primary_layout.addWidget(self.edit_harness_button)
+        primary_layout.addWidget(self.import_archive_button)
+        primary_layout.addWidget(self.export_archive_button)
+        primary_layout.addWidget(self.delete_harness_button)
+        layout.addWidget(primary_group, 0)
+
         layout.addStretch(1)
+        project_group = QFrame()
+        project_group.setObjectName("HarnessProjectActions")
+        project_layout = QHBoxLayout(project_group)
+        project_layout.setContentsMargins(8, 8, 8, 8)
+        project_layout.setSpacing(8)
+        project_layout.addWidget(self.project_selector, 1)
+        project_layout.addWidget(self.add_project_button)
+        project_layout.addWidget(self.manage_projects_button)
+        layout.addWidget(project_group, 0)
         return bar
 
     def _normalize_harness_action_buttons(self) -> None:
@@ -751,6 +767,7 @@ class MainWindow(QMainWindow):
         self.add_project_button.setFixedSize(86, 38)
         self.manage_projects_button.setFixedSize(86, 38)
         self.project_selector.setMinimumWidth(150)
+        self.project_selector.setMaximumWidth(210)
         self.project_selector.setMinimumHeight(38)
 
     def _build_details_card(self) -> QFrame:
@@ -1246,7 +1263,7 @@ class MainWindow(QMainWindow):
             for index, harness in enumerate(self.harnesses):
                 assets = self.controller.list_harness_assets(harness.id)
                 item = QListWidgetItem()
-                item.setSizeHint(QSize(0, 116))
+                item.setSizeHint(QSize(0, 136))
                 self.harness_list.addItem(item)
                 self.harness_list.setItemWidget(
                     item, self._harness_list_card(index, harness, assets)
@@ -1268,43 +1285,40 @@ class MainWindow(QMainWindow):
         card.mousePressEvent = lambda _event, row=row: self.harness_list.setCurrentRow(row)
 
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(18, 14, 18, 14)
+        layout.setSpacing(12)
 
         header = QHBoxLayout()
-        header.setSpacing(14)
+        header.setSpacing(12)
 
         copy = QVBoxLayout()
         copy.setSpacing(6)
-        title_row = QHBoxLayout()
-        title_row.setSpacing(10)
         title = self._label(harness.name, "ClientName")
         title.setWordWrap(True)
-        title_row.addWidget(title, 1)
-        copy.addLayout(title_row)
-
+        copy.addWidget(title)
         header.addLayout(copy, 1)
-
-        actions = QFrame()
-        actions.setObjectName("HarnessActions")
-        actions.setFixedWidth(300)
-        actions_layout = QHBoxLayout(actions)
-        actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(10)
         count_label = self._label(self._t("component_count").format(count=len(assets)), "HarnessCountPill")
         count_label.setFixedWidth(72)
         count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        actions_layout.addWidget(count_label)
+        header.addWidget(count_label, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        layout.addLayout(header)
+
+        actions = QFrame()
+        actions.setObjectName("HarnessActions")
+        actions_layout = QVBoxLayout(actions)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(0)
 
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
-        deploy_frame.setFixedWidth(218)
+        deploy_frame.setFixedWidth(292)
         deploy_layout = QHBoxLayout(deploy_frame)
-        deploy_layout.setContentsMargins(10, 6, 10, 6)
-        deploy_layout.setSpacing(7)
+        deploy_layout.setContentsMargins(12, 6, 10, 6)
+        deploy_layout.setSpacing(8)
+        deploy_layout.addWidget(self._label(self._t("deploy_scope_label"), "MutedText"))
         scope_text = self._t("global") if self.deploy_scope == "global" else self._t("project")
         scope_label = self._label(scope_text, "HarnessScopeLabel")
-        deploy_layout.addWidget(scope_label)
+        deploy_layout.addWidget(scope_label, 1)
         deploy_layout.addWidget(self._scope_toggle_button())
         for client_type, icon, tooltip, object_name, accessible_name in [
             ("claude_code", "CC", self._t("deploy_claude"), "HarnessDeployIconClaude", "Claude Code"),
@@ -1337,8 +1351,7 @@ class MainWindow(QMainWindow):
             )
             deploy_layout.addWidget(button)
         actions_layout.addWidget(deploy_frame)
-        header.addWidget(actions, 0, Qt.AlignmentFlag.AlignTop)
-        layout.addLayout(header)
+        layout.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight)
         return card
 
     def _scope_toggle_button(self) -> QPushButton:

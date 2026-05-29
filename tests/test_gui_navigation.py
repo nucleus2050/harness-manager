@@ -396,7 +396,7 @@ def test_harness_deploy_icons_are_stateful_toggles():
         assert token in source + stylesheet
     for token in ["Cx", "CC", "OC"]:
         assert token in source
-    assert "deploy_frame.setFixedWidth(218)" in source
+    assert "deploy_frame.setFixedWidth(292)" in source
     assert "min-width: 32px" in stylesheet
     assert "_deploy_harness(" not in source
 
@@ -596,6 +596,23 @@ def test_harness_form_supports_description_and_editing():
     assert "harness.description or \"暂无描述\"" not in list_card
     assert "description_prefix" in details_refresh
     assert "component_count" in details_refresh
+
+
+def test_harness_list_layout_separates_project_controls_and_deploy_status():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    styles_source = Path("src/harness_manager/gui/styles.py").read_text(encoding="utf-8")
+    actions_source = source.split("def _build_harness_actions", 1)[1].split("\n    def ", 1)[0]
+    list_card = source.split("def _harness_list_card", 1)[1].split("\n    def ", 1)[0]
+
+    assert "primary_group = QFrame()" in actions_source
+    assert 'primary_group.setObjectName("HarnessPrimaryActions")' in actions_source
+    assert "project_group = QFrame()" in actions_source
+    assert 'project_group.setObjectName("HarnessProjectActions")' in actions_source
+    assert "actions_layout = QVBoxLayout(actions)" in list_card
+    assert "deploy_layout.addWidget(scope_label, 1)" in list_card
+    assert 'self._label(self._t("deploy_scope_label"), "MutedText")' in list_card
+    assert "QFrame#HarnessProjectActions" in styles_source
+    assert "QFrame#HarnessDeployBar" in styles_source
 
 
 def test_harness_details_show_components_grouped_by_type():

@@ -515,6 +515,13 @@ def build_stylesheet(theme: str = "light") -> str:
         border-radius: 0;
     }}
 
+    QFrame#HarnessPrimaryActions,
+    QFrame#HarnessProjectActions {{
+        background: {tokens['soft_card']};
+        border: 1px solid {tokens['soft_border']};
+        border-radius: 16px;
+    }}
+
     QFrame#ClientPill {{
         background: {tokens['pill_bg']};
         border: 1px solid {tokens['pill_border']};
@@ -575,11 +582,9 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QFrame#HarnessDeployBar {{
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-            stop:0 {tokens['soft_card']},
-            stop:1 {tokens['button_bg']});
+        background: {tokens['button_bg']};
         border: 1px solid {tokens['compact_border']};
-        border-radius: 19px;
+        border-radius: 16px;
     }}
 
     QFrame#HarnessActions {{
