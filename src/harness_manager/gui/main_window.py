@@ -143,6 +143,8 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "joined_skills": "已加入的技能",
         "joined_agents": "已加入的 AGENTS.md",
         "joined_mcp": "已加入的 MCP",
+        "deployment_locations_title": "部署位置",
+        "deployment_locations_empty": "暂无部署记录",
         "asset_group_empty": "{title}\n0 个组件 - {empty}",
         "asset_group": "{title}\n{count} 个组件：{names}",
         "skill_label": "技能",
@@ -266,6 +268,8 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "joined_skills": "Joined skills",
         "joined_agents": "Joined AGENTS.md",
         "joined_mcp": "Joined MCP",
+        "deployment_locations_title": "Deployment Locations",
+        "deployment_locations_empty": "No deployments yet",
         "asset_group_empty": "{title}\n0 components - {empty}",
         "asset_group": "{title}\n{count} components: {names}",
         "skill_label": "Skill",
@@ -1740,6 +1744,35 @@ class MainWindow(QMainWindow):
             self._t("joined_mcp"),
             self.controller.list_harness_assets_by_type(harness.id, "mcp"),
             self._t("empty_mcp").split("\n", 1)[0],
+        )
+        self._add_deployment_locations(harness.id)
+
+    def _add_deployment_locations(self, harness_id: str) -> None:
+        deployment_locations = self.controller.harness_deployment_locations(harness_id)
+        if not deployment_locations:
+            self._add_wrapped_harness_asset_group(
+                self._t("asset_group_empty").format(
+                    title=self._t("deployment_locations_title"),
+                    empty=self._t("deployment_locations_empty"),
+                )
+            )
+            return
+        lines = []
+        for location in deployment_locations:
+            clients = location["clients"]
+            active_names = [
+                name
+                for key, name in [
+                    ("claude_code", "Claude Code"),
+                    ("codex", "Codex"),
+                    ("opencode", "OpenCode"),
+                ]
+                if clients.get(key)
+            ]
+            prefix = self._t("global") if location["scope"] == "global" else location["name"]
+            lines.append(f"{prefix}: {', '.join(active_names)}")
+        self._add_wrapped_harness_asset_group(
+            f"{self._t('deployment_locations_title')}\n" + "\n".join(lines)
         )
 
     def _add_asset_group(self, title: str, assets: list[Asset], empty_text: str) -> None:

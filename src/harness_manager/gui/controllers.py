@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import logging
 from pathlib import Path
+from typing import Any
 
 from harness_manager.app_paths import AppPaths
 from harness_manager.client_detection import detect_default_paths
@@ -71,6 +72,40 @@ class MainController:
 
     def get_project(self, project_id: str) -> Project:
         return self.projects.get(project_id)
+
+    def harness_deployment_locations(self, harness_id: str) -> list[dict[str, Any]]:
+        project_by_path = {
+            project.path.resolve(): project for project in self.projects.list_all()
+        }
+        grouped: dict[tuple[str, str], dict[str, Any]] = {}
+        for record in self.service.harness_deploys.list_active_for_harness(harness_id):
+            target = Path(record["target_path"]).resolve()
+            project = project_by_path.get(target)
+            if project is None:
+                key = ("global", str(target))
+                name = "全局"
+                path = target
+                scope = "global"
+            else:
+                key = ("project", project.id)
+                name = project.name
+                path = project.path
+                scope = "project"
+            item = grouped.setdefault(
+                key,
+                {
+                    "scope": scope,
+                    "name": name,
+                    "path": path,
+                    "clients": {
+                        "codex": False,
+                        "claude_code": False,
+                        "opencode": False,
+                    },
+                },
+            )
+            item["clients"][record["client_type"]] = True
+        return list(grouped.values())
 
 
     def create_harness(self, name: str, description: str = ""):

@@ -61,3 +61,29 @@ def test_controller_tracks_harness_deployments_per_project(app_root, tmp_path, s
 
     assert controller.harness_deploy_status(harness.id, "codex", first.path, scope="project")
     assert not controller.harness_deploy_status(harness.id, "codex", second.path, scope="project")
+
+
+def test_controller_lists_harness_deployment_locations(app_root, tmp_path, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    project_path = tmp_path / "project"
+    project_path.mkdir()
+    project = controller.create_project("Project A", project_path, "")
+    harness = controller.create_harness("部署摘要", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+
+    controller.toggle_harness_deploy(harness.id, "codex", project.path, scope="project")
+
+    locations = controller.harness_deployment_locations(harness.id)
+
+    assert locations == [
+        {
+            "scope": "project",
+            "name": "Project A",
+            "path": project.path,
+            "clients": {"codex": True, "claude_code": False, "opencode": False},
+        }
+    ]

@@ -444,6 +444,17 @@ def test_main_window_uses_persistent_project_selector():
     assert "selected_project_root: Path | None" not in source
 
 
+def test_harness_details_show_deployment_locations():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "deployment_locations",
+        "harness_deployment_locations",
+        "deployment_locations_title",
+    ]:
+        assert token in source
+
+
 def test_successful_gui_actions_do_not_show_info_dialogs():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 

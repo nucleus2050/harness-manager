@@ -387,6 +387,18 @@ class HarnessDeployRepository:
             params,
         ).fetchall()
 
+    def list_active_for_harness(self, harness_id: str) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            """
+            SELECT id, harness_id, asset_id, client_type, target_path,
+                   installed_path, fingerprint, status
+            FROM harness_deploy_records
+            WHERE harness_id = ? AND status = 'installed'
+            ORDER BY target_path, client_type, installed_at
+            """,
+            (harness_id,),
+        ).fetchall()
+
     def is_active(self, harness_id: str, client_type: str, target_path: Path) -> bool:
         row = self.conn.execute(
             """
