@@ -129,6 +129,8 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "scope_toggle": "切换部署范围：全局默认目录 / 当前项目目录",
         "global_scope": "全局默认目录",
         "project_scope": "当前项目目录",
+        "choose_project_directory": "选择项目文件夹",
+        "current_project": "当前项目：{name}",
         "empty_agents": "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。",
         "empty_mcp": "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。",
         "empty_skills": "暂无技能\n请从左侧选择 Skill 来源并导入技能。",
@@ -247,6 +249,8 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "scope_toggle": "Switch deploy scope: global default directory / current project directory",
         "global_scope": "global default directory",
         "project_scope": "current project directory",
+        "choose_project_directory": "Choose Project Folder",
+        "current_project": "Current project: {name}",
         "empty_agents": "No AGENTS.md\nAdd AGENTS.md from the harness details first.",
         "empty_mcp": "No MCP\nAdd an MCP configuration from the harness details first.",
         "empty_skills": "No skills\nSelect a Skill source on the left and import skills.",
@@ -346,6 +350,7 @@ class MainWindow(QMainWindow):
         self.current_theme = settings.theme
         self.current_language = settings.language
         self.deploy_scope = "global"
+        self.selected_project_root: Path | None = None
         self.title_bar: QFrame | None = None
         self.app_shell: QFrame | None = None
         self.shell_layout: QVBoxLayout | None = None
@@ -1277,7 +1282,16 @@ class MainWindow(QMainWindow):
             ("opencode", "OC", self._t("deploy_opencode"), "HarnessDeployIconOpenCode", "OpenCode"),
         ]:
             target_path = self._deploy_target_path(client_type)
-            active = self.controller.harness_deploy_status(harness.id, client_type, target_path)
+            active = (
+                False
+                if self.deploy_scope == "project" and target_path is None
+                else self.controller.harness_deploy_status(
+                    harness.id,
+                    client_type,
+                    target_path,
+                    scope=self.deploy_scope,
+                )
+            )
             button = self._button(
                 icon, f"{object_name}Active" if active else object_name
             )
@@ -1299,21 +1313,43 @@ class MainWindow(QMainWindow):
 
     def _scope_toggle_button(self) -> QPushButton:
         button = self._button("⌂" if self.deploy_scope == "global" else "▣", "HarnessScopeIcon")
-        button.setToolTip(self._t("scope_toggle"))
+        button.setToolTip(f"{self._t('scope_toggle')} - {self._deploy_scope_label()}")
         button.clicked.connect(self._guard(self._toggle_deploy_scope))
         return button
 
     def _toggle_deploy_scope(self) -> None:
-        self.deploy_scope = "project" if self.deploy_scope == "global" else "global"
+        if self.deploy_scope == "global":
+            project_root = self._ensure_project_root()
+            if project_root is None:
+                return
+            self.deploy_scope = "project"
+        else:
+            self.deploy_scope = "global"
         self.refresh()
 
     def _deploy_scope_label(self) -> str:
-        return self._t("global_scope") if self.deploy_scope == "global" else self._t("project_scope")
+        if self.deploy_scope == "global":
+            return self._t("global_scope")
+        project_root = self.selected_project_root
+        if project_root is None:
+            return self._t("project_scope")
+        return self._t("current_project").format(name=project_root.name)
 
     def _deploy_target_path(self, client_type: ClientType) -> Path | None:
         if self.deploy_scope == "project":
+            if self.selected_project_root is None:
+                return None
             return self._project_deploy_target(client_type)
         return None
+
+    def _ensure_project_root(self) -> Path | None:
+        if self.selected_project_root is not None:
+            return self.selected_project_root
+        project_root = dialogs.choose_project_directory(self)
+        if project_root is None:
+            return None
+        self.selected_project_root = project_root.resolve()
+        return self.selected_project_root
 
     def _refresh_view_state(self) -> None:
         harness_active = self.current_view == "harnesses"
@@ -2031,17 +2067,22 @@ class MainWindow(QMainWindow):
 
     def _toggle_harness_deployment(self, harness_id: str, client_type: ClientType) -> None:
         logger.info("Toggling harness deployment: harness=%s client=%s", harness_id, client_type)
+        if self.deploy_scope == "project" and self._ensure_project_root() is None:
+            return
         target_path = self._deploy_target_path(client_type)
-        self.controller.toggle_harness_deploy(harness_id, client_type, target_path)
+        self.controller.toggle_harness_deploy(
+            harness_id,
+            client_type,
+            target_path,
+            scope=self.deploy_scope,
+        )
         self.refresh()
 
     def _project_deploy_target(self, client_type: ClientType) -> Path:
-        base = self.controller.paths.root
-        if client_type == "codex":
-            return base / ".codex" / "skills"
-        if client_type == "claude_code":
-            return base / ".claude" / "skills"
-        return base / ".opencode" / "skills"
+        project_root = self.selected_project_root
+        if project_root is None:
+            raise ValueError(self._t("choose_project_directory"))
+        return project_root
 
     def _install(self, client_type: ClientType) -> None:
         self.controller.install_package_by_row(

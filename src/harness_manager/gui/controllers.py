@@ -238,39 +238,52 @@ class MainController:
         harness_id: str,
         client_type: ClientType,
         target_path: Path | str | None = None,
+        scope: str = "global",
         overwrite: bool = False,
     ) -> list[Path]:
         target = (Path(target_path) if target_path is not None else self._client_target(client_type)).resolve()
         logger.info("Deploy harness %s to %s for %s", harness_id, target, client_type)
         target.mkdir(parents=True, exist_ok=True)
-        return self.service.deploy_harness(harness_id, client_type, target, overwrite=overwrite)
+        return self.service.deploy_harness(
+            harness_id, client_type, target, scope=scope, overwrite=overwrite
+        )
 
     def harness_deploy_status(
         self,
         harness_id: str,
         client_type: ClientType,
         target_path: Path | str | None = None,
+        scope: str = "global",
     ) -> bool:
         target = (Path(target_path) if target_path is not None else self._client_target(client_type)).resolve()
-        return self.service.harness_deploy_status(harness_id, client_type, target)
+        return self.service.harness_deploy_status(
+            harness_id, client_type, target, scope=scope
+        )
 
     def toggle_harness_deploy(
         self,
         harness_id: str,
         client_type: ClientType,
         target_path: Path | str | None = None,
+        scope: str = "global",
     ) -> tuple[str, list[Path] | dict[str, InstallStatus]]:
         target = (Path(target_path) if target_path is not None else self._client_target(client_type)).resolve()
-        is_deployed = self.service.harness_deploy_status(harness_id, client_type, target)
+        is_deployed = self.service.harness_deploy_status(
+            harness_id, client_type, target, scope=scope
+        )
         has_invalid_records = self.service.has_invalid_active_harness_deploy(
-            harness_id, client_type, target
+            harness_id, client_type, target, scope=scope
         )
         if is_deployed or has_invalid_records:
             logger.info("Toggle undeploy harness %s from %s for %s", harness_id, target, client_type)
-            return "undeployed", self.service.undeploy_harness(harness_id, client_type, target)
+            return "undeployed", self.service.undeploy_harness(
+                harness_id, client_type, target, scope=scope
+            )
         logger.info("Toggle deploy harness %s to %s for %s", harness_id, target, client_type)
         target.mkdir(parents=True, exist_ok=True)
-        return "deployed", self.service.deploy_harness(harness_id, client_type, target)
+        return "deployed", self.service.deploy_harness(
+            harness_id, client_type, target, scope=scope
+        )
 
     def uninstall_package_by_row(
         self, package_row: int, client_type: ClientType

@@ -8,6 +8,7 @@ import re
 import sqlite3
 import tempfile
 import hashlib
+from dataclasses import dataclass
 from pathlib import Path
 
 from harness_manager.app_paths import AppPaths
@@ -30,6 +31,15 @@ logger = logging.getLogger(__name__)
 
 HARNESS_BLOCK_START = "<!-- harness-manager:start:{harness_id}:{asset_id} -->"
 HARNESS_BLOCK_END = "<!-- harness-manager:end:{harness_id}:{asset_id} -->"
+DeployScope = str
+
+
+@dataclass(frozen=True)
+class DeployLayout:
+    root: Path
+    skill_root: Path
+    agents_file: Path
+    mcp_file: Path
 
 
 def _slug(value: str) -> str:
@@ -508,12 +518,15 @@ class HarnessService:
         harness_id: str,
         client_type: ClientType,
         target_path: Path | str,
+        scope: DeployScope = "global",
         overwrite: bool = False,
     ) -> list[Path]:
         target = Path(target_path).resolve()
         if not target.is_dir():
             raise NotADirectoryError(target)
 
+        layout = _deploy_layout(client_type, target, scope)
+        layout.skill_root.mkdir(parents=True, exist_ok=True)
         self.harnesses.get(harness_id)
         harness_assets = self.harnesses.list_assets(harness_id)
         active_records = self.harness_deploys.list_active(harness_id, client_type, target)
@@ -526,13 +539,19 @@ class HarnessService:
                 for asset in harness_assets:
                     if asset.id in active_asset_ids:
                         logger.debug("Skipping active deployed asset %s", asset.id)
-                        deployed_paths.append(self._harness_asset_deploy_destination(asset, client_type, target))
+                        deployed_paths.append(
+                            self._harness_asset_deploy_destination(
+                                asset, client_type, target, scope
+                            )
+                        )
                         continue
-                    destination = self._harness_asset_deploy_destination(asset, client_type, target)
+                    destination = self._harness_asset_deploy_destination(
+                        asset, client_type, target, scope
+                    )
                     if asset.type != "skill":
                         source = self._validated_managed_asset_source(asset)
                         self._deploy_file_asset_to_client(
-                            harness_id, asset, client_type, target, source, destination
+                            harness_id, asset, client_type, target, scope, source, destination
                         )
                         deployed_fingerprint = fingerprint_directory(source)
                         self.harness_deploys.add_deployed(
@@ -576,6 +595,7 @@ class HarnessService:
                         deployed_paths.append(destination)
                         continue
                     try:
+                        destination.parent.mkdir(parents=True, exist_ok=True)
                         copy_directory(source, destination, overwrite=overwrite)
                     except Exception:
                         if not destination_preexisted and destination.exists():
@@ -608,7 +628,11 @@ class HarnessService:
         return deployed_paths
 
     def harness_deploy_status(
-        self, harness_id: str, client_type: ClientType, target_path: Path | str
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str,
+        scope: DeployScope = "global",
     ) -> bool:
         self.harnesses.get(harness_id)
         target = Path(target_path).resolve()
@@ -622,7 +646,7 @@ class HarnessService:
         for asset in harness_assets:
             record = records_by_asset[asset.id]
             try:
-                installed_path = self._validated_harness_undeploy_path(record, asset)
+                installed_path = self._validated_harness_undeploy_path(record, asset, scope)
             except ValueError:
                 logger.debug("Deploy record for asset %s is invalid", asset.id)
                 return False
@@ -640,7 +664,10 @@ class HarnessService:
         return True
 
     def has_active_harness_deploy(
-        self, harness_id: str, client_type: ClientType, target_path: Path | str
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str,
     ) -> bool:
         self.harnesses.get(harness_id)
         return self.harness_deploys.is_active(
@@ -648,7 +675,11 @@ class HarnessService:
         )
 
     def has_invalid_active_harness_deploy(
-        self, harness_id: str, client_type: ClientType, target_path: Path | str
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str,
+        scope: DeployScope = "global",
     ) -> bool:
         target = Path(target_path).resolve()
         records = self.harness_deploys.list_active(harness_id, client_type, target)
@@ -656,7 +687,7 @@ class HarnessService:
         for record in records:
             try:
                 installed_path = self._validated_harness_undeploy_path(
-                    record, assets.get(record["asset_id"])
+                    record, assets.get(record["asset_id"]), scope
                 )
             except ValueError:
                 return True
@@ -677,7 +708,11 @@ class HarnessService:
         return False
 
     def undeploy_harness(
-        self, harness_id: str, client_type: ClientType, target_path: Path | str
+        self,
+        harness_id: str,
+        client_type: ClientType,
+        target_path: Path | str,
+        scope: DeployScope = "global",
     ) -> dict[str, InstallStatus]:
         target = Path(target_path).resolve()
         records = self.harness_deploys.list_active(harness_id, client_type, target)
@@ -689,14 +724,14 @@ class HarnessService:
                 asset_id = record["asset_id"]
                 asset = assets.get(asset_id)
                 try:
-                    installed_path = self._validated_harness_undeploy_path(record, asset)
+                    installed_path = self._validated_harness_undeploy_path(record, asset, scope)
                 except ValueError:
                     self.harness_deploys.mark_status(record["id"], "modified")
                     status = "modified"
                 else:
                     if asset is not None and asset.type != "skill":
                         status = self._undeploy_harness_file_record(
-                            record, asset, installed_path
+                            record, asset, installed_path, scope
                         )
                     else:
                         status = self._undeploy_harness_record(
@@ -963,7 +998,10 @@ class HarnessService:
         return expected_path
 
     def _validated_harness_undeploy_path(
-        self, record: sqlite3.Row, asset: Asset | None = None
+        self,
+        record: sqlite3.Row,
+        asset: Asset | None = None,
+        scope: DeployScope = "global",
     ) -> Path:
         asset_id = record["asset_id"]
         if asset is None or asset.type == "skill":
@@ -971,7 +1009,9 @@ class HarnessService:
         target = Path(record["target_path"])
         installed_path = Path(record["installed_path"])
         expected_path = (
-            self._harness_asset_deploy_destination(asset, record["client_type"], target)
+            self._harness_asset_deploy_destination(
+                asset, record["client_type"], target, scope
+            )
             if asset is not None
             else target / asset_id
         )
@@ -979,25 +1019,31 @@ class HarnessService:
             raise ValueError(
                 f"Deploy record path for {asset_id!r} does not match expected target path"
             )
-        owner_root = target if asset is not None and asset.type == "skill" else _client_config_root(record["client_type"], target).parent
+        owner_root = (
+            _deploy_layout(record["client_type"], target, scope).root
+            if asset is not None
+            else target
+        )
         if not _is_resolved_under(installed_path, owner_root):
             raise ValueError(f"Deploy record path for {asset_id!r} escapes target")
         return expected_path
 
     def _harness_asset_deploy_destination(
-        self, asset: Asset, client_type: ClientType | str, target: Path
+        self,
+        asset: Asset,
+        client_type: ClientType | str,
+        target: Path,
+        scope: DeployScope = "global",
     ) -> Path:
+        layout = _deploy_layout(client_type, target, scope)
         if asset.type == "skill":
-            return self._validated_install_destination(target, asset.id)
-        config_root = _client_config_root(client_type, target)
+            destination = layout.skill_root / asset.id
+            _resolve_under(destination, layout.skill_root, "Install destination")
+            return destination
         if asset.type == "agents_md":
-            return config_root / ("CLAUDE.md" if client_type == "claude_code" else "AGENTS.md")
+            return layout.agents_file
         if asset.type == "mcp":
-            if client_type == "codex":
-                return config_root / "config.toml"
-            if client_type == "claude_code":
-                return config_root.parent / ".claude.json"
-            return config_root / "opencode.json"
+            return layout.mcp_file
         raise ValueError(f"Unsupported asset type: {asset.type}")
 
     def _deploy_file_asset_to_client(
@@ -1006,16 +1052,20 @@ class HarnessService:
         asset: Asset,
         client_type: ClientType,
         target: Path,
+        scope: DeployScope,
         source: Path,
         destination: Path,
     ) -> None:
-        _resolve_under(destination, _client_config_root(client_type, target).parent, "Deploy destination")
+        layout = _deploy_layout(client_type, target, scope)
+        _resolve_under(destination, layout.root, "Deploy destination")
         destination.parent.mkdir(parents=True, exist_ok=True)
         if asset.type == "agents_md":
             payload = source / "AGENTS.md"
             if not payload.is_file():
                 raise FileNotFoundError(payload)
             _upsert_marked_text_block(destination, harness_id, asset.id, payload.read_text(encoding="utf-8"))
+            if scope == "project" and client_type == "opencode":
+                _append_json_list_item(layout.mcp_file, "instructions", "AGENTS.md")
             return
         if asset.type == "mcp":
             payload = source / "mcp.json"
@@ -1073,7 +1123,11 @@ class HarnessService:
         return "uninstalled"
 
     def _undeploy_harness_file_record(
-        self, record: sqlite3.Row, asset: Asset, installed_path: Path
+        self,
+        record: sqlite3.Row,
+        asset: Asset,
+        installed_path: Path,
+        scope: DeployScope = "global",
     ) -> InstallStatus:
         record_id = record["id"]
         if not installed_path.exists():
@@ -1091,6 +1145,9 @@ class HarnessService:
             return "modified"
         if asset.type == "agents_md":
             _remove_marked_text_block(installed_path, record["harness_id"], asset.id)
+            if scope == "project" and record["client_type"] == "opencode":
+                layout = _deploy_layout(record["client_type"], Path(record["target_path"]), scope)
+                _remove_json_list_item(layout.mcp_file, "instructions", "AGENTS.md")
         elif asset.type == "mcp":
             client_type = record["client_type"]
             if client_type == "codex":
@@ -1155,6 +1212,50 @@ class HarnessService:
 
 def _client_config_root(client_type: ClientType | str, skill_target: Path) -> Path:
     return Path(skill_target).resolve().parent
+
+
+def _deploy_layout(
+    client_type: ClientType | str, target: Path | str, scope: DeployScope = "global"
+) -> DeployLayout:
+    resolved = Path(target).resolve()
+    if scope == "project":
+        project_root = resolved
+        if client_type == "codex":
+            return DeployLayout(
+                root=project_root,
+                skill_root=project_root / ".agents" / "skills",
+                agents_file=project_root / "AGENTS.md",
+                mcp_file=project_root / ".codex" / "config.toml",
+            )
+        if client_type == "claude_code":
+            return DeployLayout(
+                root=project_root,
+                skill_root=project_root / ".claude" / "skills",
+                agents_file=project_root / "CLAUDE.md",
+                mcp_file=project_root / ".mcp.json",
+            )
+        return DeployLayout(
+            root=project_root,
+            skill_root=project_root / ".opencode" / "skills",
+            agents_file=project_root / "AGENTS.md",
+            mcp_file=project_root / "opencode.json",
+        )
+    config_root = _client_config_root(client_type, resolved)
+    if client_type == "claude_code":
+        agents_file = config_root / "CLAUDE.md"
+        mcp_file = config_root.parent / ".claude.json"
+    elif client_type == "codex":
+        agents_file = config_root / "AGENTS.md"
+        mcp_file = config_root / "config.toml"
+    else:
+        agents_file = config_root / "AGENTS.md"
+        mcp_file = config_root / "opencode.json"
+    return DeployLayout(
+        root=config_root.parent,
+        skill_root=resolved,
+        agents_file=agents_file,
+        mcp_file=mcp_file,
+    )
 
 
 def _fingerprint_file(path: Path | str) -> str:
@@ -1244,6 +1345,37 @@ def _get_json_object(destination: Path, keys: list[str]) -> object | None:
             return None
         cursor = cursor[key]
     return cursor
+
+
+def _append_json_list_item(destination: Path, key: str, value: str) -> None:
+    data = {}
+    if destination.exists() and destination.read_text(encoding="utf-8").strip():
+        data = json.loads(destination.read_text(encoding="utf-8"))
+    current = data.setdefault(key, [])
+    if not isinstance(current, list):
+        raise ValueError(f"JSON config key is not a list: {key}")
+    if value not in current:
+        current.append(value)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _remove_json_list_item(destination: Path, key: str, value: str) -> None:
+    if not destination.exists() or not destination.read_text(encoding="utf-8").strip():
+        return
+    data = json.loads(destination.read_text(encoding="utf-8"))
+    current = data.get(key)
+    if isinstance(current, list) and value in current:
+        data[key] = [item for item in current if item != value]
+        if not data[key]:
+            data.pop(key, None)
+    destination.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _remove_json_object(destination: Path, keys: list[str]) -> None:

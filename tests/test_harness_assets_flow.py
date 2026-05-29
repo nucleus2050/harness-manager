@@ -228,6 +228,119 @@ def test_global_opencode_deploy_writes_agents_and_mcp_config(app_root, tmp_path)
     assert controller.harness_deploy_status(harness.id, "opencode", target)
 
 
+def test_project_codex_deploy_writes_project_level_assets(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("Codex 项目", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    agents = controller.create_agents_md_asset("项目规则", "", "# Project Rules")
+    mcp = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
+    )
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    for asset in [agents, mcp]:
+        controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+    project_root = tmp_path / "project"
+
+    installed = controller.deploy_harness_by_id(
+        harness.id, "codex", project_root, scope="project"
+    )
+
+    skill_root = project_root / ".agents" / "skills"
+    assert skill_root / skill.id in installed
+    assert project_root / "AGENTS.md" in installed
+    assert project_root / ".codex" / "config.toml" in installed
+    assert (skill_root / skill.id / "SKILL.md").is_file()
+    assert "# Project Rules" in (project_root / "AGENTS.md").read_text(encoding="utf-8")
+    config_text = (project_root / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert "[mcp_servers.fetch]" in config_text
+    assert controller.harness_deploy_status(
+        harness.id, "codex", project_root, scope="project"
+    )
+
+
+def test_project_claude_deploy_writes_project_level_assets(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("Claude 项目", "")
+    skill = controller.import_skill_directory(sample_skill, "claude_code")
+    agents = controller.create_agents_md_asset("项目规则", "", "# Claude Project Rules")
+    mcp = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
+    )
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    for asset in [agents, mcp]:
+        controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+    project_root = tmp_path / "project"
+
+    installed = controller.deploy_harness_by_id(
+        harness.id, "claude_code", project_root, scope="project"
+    )
+
+    skill_root = project_root / ".claude" / "skills"
+    assert skill_root / skill.id in installed
+    assert project_root / "CLAUDE.md" in installed
+    assert project_root / ".mcp.json" in installed
+    assert (skill_root / skill.id / "SKILL.md").is_file()
+    assert "# Claude Project Rules" in (project_root / "CLAUDE.md").read_text(
+        encoding="utf-8"
+    )
+    config = json.loads((project_root / ".mcp.json").read_text(encoding="utf-8"))
+    assert config["mcpServers"]["fetch"]["command"] == "uvx"
+    assert controller.harness_deploy_status(
+        harness.id, "claude_code", project_root, scope="project"
+    )
+
+
+def test_project_opencode_deploy_writes_project_level_assets(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("OpenCode 项目", "")
+    skill = controller.import_skill_directory(sample_skill, "opencode")
+    agents = controller.create_agents_md_asset("项目规则", "", "# OpenCode Project Rules")
+    mcp = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
+    )
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    for asset in [agents, mcp]:
+        controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+    project_root = tmp_path / "project"
+
+    installed = controller.deploy_harness_by_id(
+        harness.id, "opencode", project_root, scope="project"
+    )
+
+    skill_root = project_root / ".opencode" / "skills"
+    assert skill_root / skill.id in installed
+    assert project_root / "AGENTS.md" in installed
+    assert project_root / "opencode.json" in installed
+    assert (skill_root / skill.id / "SKILL.md").is_file()
+    config = json.loads((project_root / "opencode.json").read_text(encoding="utf-8"))
+    assert config["mcp"]["fetch"]["command"] == "uvx"
+    assert "AGENTS.md" in config["instructions"]
+    assert controller.harness_deploy_status(
+        harness.id, "opencode", project_root, scope="project"
+    )
+
+
 def test_controller_tracks_and_toggles_harness_deployment(app_root, tmp_path, sample_skill):
     paths = AppPaths(app_root)
     paths.ensure()

@@ -394,6 +394,20 @@ def test_successful_harness_deploy_uses_icon_state_without_dialog():
     assert "dialogs.show_info" not in method
 
 
+def test_project_scope_prompts_for_project_folder_and_passes_scope():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    for token in [
+        "self.selected_project_root",
+        "choose_project_directory",
+        "_ensure_project_root",
+        "scope=self.deploy_scope",
+        "project_root.name",
+        "current_project",
+    ]:
+        assert token in source
+
+
 def test_successful_gui_actions_do_not_show_info_dialogs():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 

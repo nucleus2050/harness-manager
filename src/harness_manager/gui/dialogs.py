@@ -63,6 +63,7 @@ DIALOG_TEXT = {
         "zip_filter": "Zip 压缩包 (*.zip);;所有文件 (*)",
         "export_config": "导出全部配置",
         "choose_harness_export": "选择套件导出目录",
+        "choose_project_directory": "选择项目文件夹",
         "import_config": "导入全部配置",
     },
     "en-US": {
@@ -102,6 +103,7 @@ DIALOG_TEXT = {
         "zip_filter": "Zip archive (*.zip);;All Files (*)",
         "export_config": "Export Full Config",
         "choose_harness_export": "Choose Harness Export Folder",
+        "choose_project_directory": "Choose Project Folder",
         "import_config": "Import Full Config",
     },
 }
@@ -792,6 +794,11 @@ def choose_export_zip(parent: QWidget, title: str | None = None) -> Path | None:
 
 def choose_harness_export_directory(parent: QWidget) -> Path | None:
     value = QFileDialog.getExistingDirectory(parent, _tr(parent, "choose_harness_export"))
+    return Path(value) if value else None
+
+
+def choose_project_directory(parent: QWidget) -> Path | None:
+    value = QFileDialog.getExistingDirectory(parent, _tr(parent, "choose_project_directory"))
     return Path(value) if value else None
 
 
