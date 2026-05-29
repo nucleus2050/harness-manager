@@ -1,4 +1,0 @@
-interface:
-  display_name: "SMClaw HSM C SDK助手"
-  short_description: "HSM C SDK/SDF任务分发器：配置、安装集成、单接口示例、场景示例、测试用例路由"
-  default_prompt: "当用户明确要求 HSM C SDK、SDF 或 SDIF 的配置、安装集成、C代码示例、场景示例或 C SDK 测试用例时使用本技能。不做Java SDK，不做CSP/CHSM。若用户只是询问参数是什么意思、返回值含义、结构体字段说明或排障咨询，不要使用本技能，应转为RAG问答。SDK事实必须来自本地RAG或用户提供的官方HSM C SDK文档并引用来源。"

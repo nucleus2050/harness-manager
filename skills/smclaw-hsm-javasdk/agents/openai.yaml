@@ -1,4 +1,0 @@
-interface:
-  display_name: "SMClaw HSM Java SDK助手"
-  short_description: "HSM Java SDK任务分发器：配置、安装集成、单接口示例、场景示例、测试用例路由"
-  default_prompt: "当用户明确要求 HSM Java SDK 的配置、安装集成、Java代码示例、场景示例或 Java SDK 测试用例时使用本技能。不做C SDK，不做CSP/CHSM，不做Maven/Gradle自动改造。若用户只是询问参数是什么意思、返回值含义、VO字段说明或排障咨询，不要使用本技能，应转为RAG问答。Java SDK事实必须来自本地RAG、用户提供的官方HSM Java SDK文档，或/javasdk_init生成的api.md与javap文件并引用来源。"

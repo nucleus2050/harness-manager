@@ -1,4 +1,0 @@
-interface:
-  display_name: "SMClawRAG使用规范"
-  short_description: "密码产品相关问题必须先确认产品与版本再检索本地RAG"
-  default_prompt: "当用户询问密码产品接口、配置、安装、售后或排障问题时，先确认具体产品和版本，再调用本地RAG检索并引用来源。"
