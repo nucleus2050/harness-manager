@@ -38,3 +38,26 @@ def test_project_repository_rejects_duplicate_paths(app_root, tmp_path):
 
     with pytest.raises(ValueError, match="项目路径已存在"):
         repo.create("Other", project_path, "")
+
+from harness_manager.gui.controllers import MainController
+
+
+def test_controller_tracks_harness_deployments_per_project(app_root, tmp_path, sample_skill):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    first_path = tmp_path / "first"
+    second_path = tmp_path / "second"
+    first_path.mkdir()
+    second_path.mkdir()
+    first = controller.create_project("First", first_path, "")
+    second = controller.create_project("Second", second_path, "")
+    harness = controller.create_harness("项目套件", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+
+    controller.toggle_harness_deploy(harness.id, "codex", first.path, scope="project")
+
+    assert controller.harness_deploy_status(harness.id, "codex", first.path, scope="project")
+    assert not controller.harness_deploy_status(harness.id, "codex", second.path, scope="project")

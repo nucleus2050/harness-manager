@@ -7,13 +7,14 @@ from pathlib import Path
 from harness_manager.app_paths import AppPaths
 from harness_manager.client_detection import detect_default_paths
 from harness_manager.db import initialize_database, transaction
-from harness_manager.models import ClientConfig, ClientType, InstallStatus, Package, Skill
+from harness_manager.models import ClientConfig, ClientType, InstallStatus, Package, Project, Skill
 from harness_manager.repositories import (
     ClientRepository,
     ImportSourceRepository,
     AssetRepository,
     HarnessRepository,
     PackageRepository,
+    ProjectRepository,
     SkillRepository,
 )
 from harness_manager.services import HarnessService, is_skill_directory
@@ -34,6 +35,7 @@ class MainController:
         self.assets = AssetRepository(conn)
         self.skills = SkillRepository(conn)
         self.packages = PackageRepository(conn)
+        self.projects = ProjectRepository(conn)
         self.service = HarnessService(self.paths, conn)
         self.settings = SettingsService(self.paths)
         self.refresh_default_paths()
@@ -43,6 +45,32 @@ class MainController:
         with transaction(self.conn):
             for client_type, default_path in detected.items():
                 self.clients.set_default_path(client_type, default_path)
+
+    def create_project(self, name: str, path: Path | str, description: str = "") -> Project:
+        project_path = Path(path)
+        if not project_path.is_dir():
+            raise NotADirectoryError(project_path)
+        with transaction(self.conn):
+            return self.projects.create(name, project_path, description)
+
+    def update_project(
+        self, project_id: str, name: str, path: Path | str, description: str = ""
+    ) -> Project:
+        project_path = Path(path)
+        if not project_path.is_dir():
+            raise NotADirectoryError(project_path)
+        with transaction(self.conn):
+            return self.projects.update(project_id, name, project_path, description)
+
+    def delete_project(self, project_id: str) -> None:
+        with transaction(self.conn):
+            self.projects.delete(project_id)
+
+    def list_projects(self) -> list[Project]:
+        return self.projects.list_all()
+
+    def get_project(self, project_id: str) -> Project:
+        return self.projects.get(project_id)
 
 
     def create_harness(self, name: str, description: str = ""):
