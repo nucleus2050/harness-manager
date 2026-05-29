@@ -396,6 +396,8 @@ def test_successful_harness_deploy_uses_icon_state_without_dialog():
 
 def test_project_scope_prompts_for_project_folder_and_passes_scope():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+    toggle_scope_method = source.split("def _toggle_deploy_scope", 1)[1].split("\n    def ", 1)[0]
+    toggle_deploy_method = source.split("def _toggle_harness_deployment", 1)[1].split("\n    def ", 1)[0]
 
     for token in [
         "self.selected_project_root",
@@ -406,6 +408,8 @@ def test_project_scope_prompts_for_project_folder_and_passes_scope():
         "current_project",
     ]:
         assert token in source
+    assert "_ensure_project_root" not in toggle_scope_method
+    assert "_ensure_project_root" in toggle_deploy_method
 
 
 def test_successful_gui_actions_do_not_show_info_dialogs():

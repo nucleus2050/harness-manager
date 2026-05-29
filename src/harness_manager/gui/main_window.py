@@ -1318,13 +1318,7 @@ class MainWindow(QMainWindow):
         return button
 
     def _toggle_deploy_scope(self) -> None:
-        if self.deploy_scope == "global":
-            project_root = self._ensure_project_root()
-            if project_root is None:
-                return
-            self.deploy_scope = "project"
-        else:
-            self.deploy_scope = "global"
+        self.deploy_scope = "project" if self.deploy_scope == "global" else "global"
         self.refresh()
 
     def _deploy_scope_label(self) -> str:
