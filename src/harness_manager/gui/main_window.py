@@ -1259,7 +1259,7 @@ class MainWindow(QMainWindow):
             for index, harness in enumerate(self.harnesses):
                 assets = self.controller.list_harness_assets(harness.id)
                 item = QListWidgetItem()
-                item.setSizeHint(QSize(0, 136))
+                item.setSizeHint(QSize(0, 92))
                 self.harness_list.addItem(item)
                 self.harness_list.setItemWidget(
                     item, self._harness_list_card(index, harness, assets)
@@ -1281,11 +1281,11 @@ class MainWindow(QMainWindow):
         card.mousePressEvent = lambda _event, row=row: self.harness_list.setCurrentRow(row)
 
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(18, 14, 18, 14)
-        layout.setSpacing(12)
+        layout.setContentsMargins(18, 12, 18, 12)
+        layout.setSpacing(0)
 
         header = QHBoxLayout()
-        header.setSpacing(12)
+        header.setSpacing(14)
 
         copy = QVBoxLayout()
         copy.setSpacing(6)
@@ -1293,17 +1293,18 @@ class MainWindow(QMainWindow):
         title.setWordWrap(True)
         copy.addWidget(title)
         header.addLayout(copy, 1)
-        count_label = self._label(self._t("component_count").format(count=len(assets)), "HarnessCountPill")
-        count_label.setFixedWidth(72)
-        count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        header.addWidget(count_label, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        layout.addLayout(header)
+        header.addStretch(1)
 
         actions = QFrame()
         actions.setObjectName("HarnessActions")
-        actions_layout = QVBoxLayout(actions)
+        actions_layout = QHBoxLayout(actions)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(0)
+        actions_layout.setSpacing(10)
+
+        count_label = self._label(self._t("component_count").format(count=len(assets)), "HarnessCountPill")
+        count_label.setFixedWidth(72)
+        count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        actions_layout.addWidget(count_label, 0, Qt.AlignmentFlag.AlignVCenter)
 
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
@@ -1344,7 +1345,8 @@ class MainWindow(QMainWindow):
             )
             deploy_layout.addWidget(button)
         actions_layout.addWidget(deploy_frame)
-        layout.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight)
+        header.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        layout.addLayout(header)
         return card
 
     def _deploy_scope_label(self) -> str:

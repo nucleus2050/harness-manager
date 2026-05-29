@@ -617,7 +617,9 @@ def test_harness_list_layout_separates_project_controls_and_deploy_status():
     assert 'primary_group.setObjectName("HarnessPrimaryActions")' in actions_source
     assert "project_group = QFrame()" in actions_source
     assert 'project_group.setObjectName("HarnessProjectActions")' in actions_source
-    assert "actions_layout = QVBoxLayout(actions)" in list_card
+    assert "actions_layout = QHBoxLayout(actions)" in list_card
+    assert "header.addStretch(1)" in list_card
+    assert "header.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)" in list_card
     assert 'self._label(self._deploy_scope_label(), "MutedText")' in list_card
     assert "deploy_layout.addStretch(1)" in list_card
     assert "QFrame#HarnessProjectActions" in styles_source
