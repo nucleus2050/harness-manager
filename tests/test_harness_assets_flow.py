@@ -255,6 +255,118 @@ def test_controller_tracks_and_toggles_harness_deployment(app_root, tmp_path, sa
     assert not (target / skill.id).exists()
 
 
+def test_toggle_harness_undeploy_removes_global_codex_file_assets(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("完整撤销", "")
+    skill = controller.import_skill_directory(sample_skill, "codex")
+    agents = controller.create_agents_md_asset("全局规则", "", "# Codex Rules")
+    mcp = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
+    )
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    for asset in [agents, mcp]:
+        controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+    target = tmp_path / ".codex" / "skills"
+
+    controller.toggle_harness_deploy(harness.id, "codex", target)
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "undeployed"
+    assert result == {
+        skill.id: "uninstalled",
+        agents.id: "uninstalled",
+        mcp.id: "uninstalled",
+    }
+    codex_home = target.parent
+    assert not (target / skill.id).exists()
+    assert "<!-- harness-manager:start:" not in (codex_home / "AGENTS.md").read_text(
+        encoding="utf-8"
+    )
+    assert "[mcp_servers.fetch]" not in (codex_home / "config.toml").read_text(
+        encoding="utf-8"
+    )
+    assert not controller.harness_deploy_status(harness.id, "codex", target)
+
+
+def test_toggle_harness_undeploy_removes_global_json_mcp_assets(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("MCP 撤销", "")
+    claude_mcp = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
+    )
+    controller.add_asset_to_harness(harness.id, claude_mcp.id, claude_mcp.type)
+    claude_target = tmp_path / ".claude" / "skills"
+    controller.toggle_harness_deploy(harness.id, "claude_code", claude_target)
+
+    action, _ = controller.toggle_harness_deploy(
+        harness.id, "claude_code", claude_target
+    )
+
+    assert action == "undeployed"
+    claude_config = json.loads((tmp_path / ".claude.json").read_text(encoding="utf-8"))
+    assert "fetch" not in claude_config.get("mcpServers", {})
+
+    opencode_target = tmp_path / ".config" / "opencode" / "skills"
+    controller.toggle_harness_deploy(harness.id, "opencode", opencode_target)
+
+    action, _ = controller.toggle_harness_deploy(
+        harness.id, "opencode", opencode_target
+    )
+
+    assert action == "undeployed"
+    opencode_config = json.loads(
+        (opencode_target.parent / "opencode.json").read_text(encoding="utf-8")
+    )
+    assert "fetch" not in opencode_config.get("mcp", {})
+
+
+def test_global_codex_deploy_status_and_undeploy_support_multiple_mcp_assets(
+    app_root, tmp_path
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("多 MCP", "")
+    fetch = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
+    )
+    browser = controller.create_mcp_config_asset(
+        "browser",
+        "Browser",
+        '{"type":"stdio","command":"npx","args":["@playwright/mcp"]}',
+    )
+    for asset in [fetch, browser]:
+        controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+    target = tmp_path / ".codex" / "skills"
+
+    controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert controller.harness_deploy_status(harness.id, "codex", target)
+
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "undeployed"
+    assert result == {fetch.id: "uninstalled", browser.id: "uninstalled"}
+    config_text = (target.parent / "config.toml").read_text(encoding="utf-8")
+    assert "[mcp_servers.fetch]" not in config_text
+    assert "[mcp_servers.browser]" not in config_text
+
+
 def test_controller_does_not_undeploy_modified_harness_skill(app_root, tmp_path, sample_skill):
     paths = AppPaths(app_root)
     paths.ensure()

@@ -534,7 +534,7 @@ class HarnessService:
                         self._deploy_file_asset_to_client(
                             harness_id, asset, client_type, target, source, destination
                         )
-                        deployed_fingerprint = _fingerprint_file(destination)
+                        deployed_fingerprint = fingerprint_directory(source)
                         self.harness_deploys.add_deployed(
                             harness_id,
                             asset.id,
@@ -630,12 +630,13 @@ class HarnessService:
                 if not installed_path.is_dir():
                     return False
                 fingerprint = fingerprint_directory(installed_path)
+                if fingerprint != record["fingerprint"]:
+                    return False
             else:
                 if not installed_path.is_file():
                     return False
-                fingerprint = _fingerprint_file(installed_path)
-            if fingerprint != record["fingerprint"]:
-                return False
+                if not self._harness_file_asset_matches(record, asset, installed_path):
+                    return False
         return True
 
     def has_active_harness_deploy(
@@ -654,7 +655,9 @@ class HarnessService:
         assets = {asset.id: asset for asset in self.harnesses.list_assets(harness_id)}
         for record in records:
             try:
-                installed_path = self._validated_harness_undeploy_path(record, assets.get(record["asset_id"]))
+                installed_path = self._validated_harness_undeploy_path(
+                    record, assets.get(record["asset_id"])
+                )
             except ValueError:
                 return True
             asset = assets.get(record["asset_id"])
@@ -664,12 +667,13 @@ class HarnessService:
                 if not installed_path.is_dir():
                     return True
                 fingerprint = fingerprint_directory(installed_path)
+                if fingerprint != record["fingerprint"]:
+                    return True
             else:
                 if not installed_path.is_file():
                     return True
-                fingerprint = _fingerprint_file(installed_path)
-            if fingerprint != record["fingerprint"]:
-                return True
+                if not self._harness_file_asset_matches(record, asset, installed_path):
+                    return True
         return False
 
     def undeploy_harness(
@@ -692,7 +696,7 @@ class HarnessService:
                 else:
                     if asset is not None and asset.type != "skill":
                         status = self._undeploy_harness_file_record(
-                            record["id"], installed_path, record["fingerprint"]
+                            record, asset, installed_path
                         )
                     else:
                         status = self._undeploy_harness_record(
@@ -1069,19 +1073,83 @@ class HarnessService:
         return "uninstalled"
 
     def _undeploy_harness_file_record(
-        self, record_id: str, installed_path: Path, installed_fingerprint: str
+        self, record: sqlite3.Row, asset: Asset, installed_path: Path
     ) -> InstallStatus:
+        record_id = record["id"]
         if not installed_path.exists():
             self.harness_deploys.mark_status(record_id, "missing")
             return "missing"
         if not installed_path.is_file():
             self.harness_deploys.mark_status(record_id, "modified")
             return "modified"
-        if _fingerprint_file(installed_path) != installed_fingerprint:
+        file_status = self._harness_file_asset_status(record, asset, installed_path)
+        if file_status == "missing":
+            self.harness_deploys.mark_status(record_id, "missing")
+            return "missing"
+        if file_status == "modified":
+            self.harness_deploys.mark_status(record_id, "modified")
+            return "modified"
+        if asset.type == "agents_md":
+            _remove_marked_text_block(installed_path, record["harness_id"], asset.id)
+        elif asset.type == "mcp":
+            client_type = record["client_type"]
+            if client_type == "codex":
+                _remove_codex_mcp(installed_path, asset.name)
+            elif client_type == "claude_code":
+                _remove_json_object(installed_path, ["mcpServers", asset.name])
+            else:
+                _remove_json_object(installed_path, ["mcp", asset.name])
+        else:
             self.harness_deploys.mark_status(record_id, "modified")
             return "modified"
         self.harness_deploys.mark_status(record_id, "uninstalled")
         return "uninstalled"
+
+    def _harness_file_asset_matches(
+        self, record: sqlite3.Row, asset: Asset, installed_path: Path
+    ) -> bool:
+        return self._harness_file_asset_status(record, asset, installed_path) == "installed"
+
+    def _harness_file_asset_status(
+        self, record: sqlite3.Row, asset: Asset, installed_path: Path
+    ) -> InstallStatus:
+        source = self._validated_managed_asset_source(asset)
+        if asset.type == "agents_md":
+            payload = source / "AGENTS.md"
+            if not payload.is_file():
+                return "modified"
+            block = _extract_marked_text_block(
+                installed_path, record["harness_id"], asset.id
+            )
+            if block is None:
+                return "missing"
+            payload_text = payload.read_text(encoding="utf-8").strip()
+            return "installed" if block.strip() == payload_text else "modified"
+        if asset.type == "mcp":
+            try:
+                expected = _mcp_payload_config(source)
+            except (FileNotFoundError, json.JSONDecodeError):
+                return "modified"
+            client_type = record["client_type"]
+            try:
+                if client_type == "codex":
+                    current = _extract_codex_mcp(installed_path, asset.name)
+                    if current is None:
+                        return "missing"
+                    expected_block = _codex_mcp_toml_block(asset.name, expected).strip()
+                    return "installed" if current.strip() == expected_block else "modified"
+                keys = (
+                    ["mcpServers", asset.name]
+                    if client_type == "claude_code"
+                    else ["mcp", asset.name]
+                )
+                current_json = _get_json_object(installed_path, keys)
+            except (json.JSONDecodeError, ValueError):
+                return "modified"
+            if current_json is None:
+                return "missing"
+            return "installed" if current_json == expected else "modified"
+        return "modified"
 
 
 
@@ -1125,6 +1193,30 @@ def _upsert_marked_text_block(destination: Path, harness_id: str, asset_id: str,
     destination.write_text(updated, encoding="utf-8")
 
 
+def _remove_marked_text_block(destination: Path, harness_id: str, asset_id: str) -> None:
+    existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
+    start = HARNESS_BLOCK_START.format(harness_id=harness_id, asset_id=asset_id)
+    end = HARNESS_BLOCK_END.format(harness_id=harness_id, asset_id=asset_id)
+    pattern = re.compile(
+        rf"\n?{re.escape(start)}\n.*?\n{re.escape(end)}\n?",
+        re.DOTALL,
+    )
+    updated = pattern.sub("\n", existing).strip()
+    destination.write_text((updated + "\n") if updated else "", encoding="utf-8")
+
+
+def _extract_marked_text_block(destination: Path, harness_id: str, asset_id: str) -> str | None:
+    existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
+    start = HARNESS_BLOCK_START.format(harness_id=harness_id, asset_id=asset_id)
+    end = HARNESS_BLOCK_END.format(harness_id=harness_id, asset_id=asset_id)
+    pattern = re.compile(
+        rf"{re.escape(start)}\n(.*?)\n{re.escape(end)}",
+        re.DOTALL,
+    )
+    match = pattern.search(existing)
+    return match.group(1) if match else None
+
+
 def _upsert_json_object(destination: Path, keys: list[str], value: dict) -> None:
     data = {}
     if destination.exists() and destination.read_text(encoding="utf-8").strip():
@@ -1136,6 +1228,46 @@ def _upsert_json_object(destination: Path, keys: list[str], value: dict) -> None
             raise ValueError(f"JSON config key is not an object: {key}")
         cursor = next_value
     cursor[keys[-1]] = value
+    destination.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _get_json_object(destination: Path, keys: list[str]) -> object | None:
+    if not destination.exists() or not destination.read_text(encoding="utf-8").strip():
+        return None
+    data = json.loads(destination.read_text(encoding="utf-8"))
+    cursor: object = data
+    for key in keys:
+        if not isinstance(cursor, dict) or key not in cursor:
+            return None
+        cursor = cursor[key]
+    return cursor
+
+
+def _remove_json_object(destination: Path, keys: list[str]) -> None:
+    if not destination.exists() or not destination.read_text(encoding="utf-8").strip():
+        destination.write_text("{}\n", encoding="utf-8")
+        return
+    data = json.loads(destination.read_text(encoding="utf-8"))
+    cursor = data
+    parents: list[tuple[dict, str]] = []
+    for key in keys[:-1]:
+        next_value = cursor.get(key)
+        if not isinstance(next_value, dict):
+            destination.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            return
+        parents.append((cursor, key))
+        cursor = next_value
+    cursor.pop(keys[-1], None)
+    for parent, key in reversed(parents):
+        child = parent.get(key)
+        if isinstance(child, dict) and not child:
+            parent.pop(key, None)
     destination.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -1155,6 +1287,37 @@ def _upsert_codex_mcp(destination: Path, name: str, value: dict) -> None:
         separator = "\n" if existing and not existing.endswith("\n") else ""
         updated = f"{existing}{separator}\n{block}" if existing else block
     destination.write_text(updated, encoding="utf-8")
+
+
+def _extract_codex_mcp(destination: Path, name: str) -> str | None:
+    existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
+    pattern = re.compile(
+        rf"(?ms)^\[mcp_servers\.{re.escape(name)}\]\n.*?(?=^\[|\Z)"
+    )
+    match = pattern.search(existing)
+    return match.group(0) if match else None
+
+
+def _remove_codex_mcp(destination: Path, name: str) -> None:
+    existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
+    pattern = re.compile(
+        rf"(?ms)^\[mcp_servers\.{re.escape(name)}\]\n.*?(?=^\[|\Z)"
+    )
+    updated = pattern.sub("", existing).strip()
+    destination.write_text((updated + "\n") if updated else "", encoding="utf-8")
+
+
+def _mcp_payload_config(source: Path) -> dict:
+    payload = source / "mcp.json"
+    if not payload.is_file():
+        json_files = sorted(source.glob("*.json"))
+        if not json_files:
+            raise FileNotFoundError(payload)
+        payload = json_files[0]
+    data = json.loads(payload.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("MCP config payload must be a JSON object")
+    return data
 
 
 def _codex_mcp_toml_block(name: str, value: dict) -> str:

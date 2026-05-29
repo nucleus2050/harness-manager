@@ -15,6 +15,10 @@ assets/
 skills/
 exports/
 config/
+.claude/
+.codex/
+.opencode/
+.claude.json
 
 # Superpowers temporary visual companion files
 .superpowers/
