@@ -71,6 +71,14 @@ class Harness:
 
 
 @dataclass(frozen=True)
+class Project:
+    id: str
+    name: str
+    path: Path
+    description: str
+
+
+@dataclass(frozen=True)
 class HarnessAsset:
     harness_id: str
     asset_id: str

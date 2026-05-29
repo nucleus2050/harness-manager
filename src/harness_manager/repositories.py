@@ -4,7 +4,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from harness_manager.models import Asset, ClientConfig, Harness, Package, Skill
+from harness_manager.models import Asset, ClientConfig, Harness, Package, Project, Skill
 
 
 def _stored_path(path: Path | str) -> str:
@@ -27,6 +27,15 @@ def _skill_from_row(row: sqlite3.Row) -> Skill:
 
 def _package_from_row(row: sqlite3.Row) -> Package:
     return Package(id=row["id"], name=row["name"], description=row["description"])
+
+
+def _project_from_row(row: sqlite3.Row) -> Project:
+    return Project(
+        id=row["id"],
+        name=row["name"],
+        path=Path(row["path"]),
+        description=row["description"],
+    )
 
 
 class ClientRepository:
@@ -72,6 +81,73 @@ class ClientRepository:
             """,
             (str(path) if path else None, client_type),
         )
+
+
+class ProjectRepository:
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self.conn = conn
+
+    def create(self, name: str, path: Path | str, description: str = "") -> Project:
+        project_id = uuid.uuid4().hex
+        stored_path = _stored_path(path)
+        try:
+            self.conn.execute(
+                """
+                INSERT INTO projects(id, name, path, description)
+                VALUES (?, ?, ?, ?)
+                """,
+                (project_id, name.strip() or Path(path).name, stored_path, description),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("项目路径已存在") from exc
+        return self.get(project_id)
+
+    def get(self, project_id: str) -> Project:
+        row = self.conn.execute(
+            """
+            SELECT id, name, path, description
+            FROM projects
+            WHERE id = ?
+            """,
+            (project_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(project_id)
+        return _project_from_row(row)
+
+    def list_all(self) -> list[Project]:
+        rows = self.conn.execute(
+            """
+            SELECT id, name, path, description
+            FROM projects
+            ORDER BY updated_at DESC, created_at DESC
+            """
+        ).fetchall()
+        return [_project_from_row(row) for row in rows]
+
+    def update(
+        self, project_id: str, name: str, path: Path | str, description: str = ""
+    ) -> Project:
+        stored_path = _stored_path(path)
+        try:
+            cursor = self.conn.execute(
+                """
+                UPDATE projects
+                SET name = ?, path = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (name.strip() or Path(path).name, stored_path, description, project_id),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("项目路径已存在") from exc
+        if cursor.rowcount == 0:
+            raise KeyError(project_id)
+        return self.get(project_id)
+
+    def delete(self, project_id: str) -> None:
+        cursor = self.conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+        if cursor.rowcount == 0:
+            raise KeyError(project_id)
 
 
 class SkillRepository:
