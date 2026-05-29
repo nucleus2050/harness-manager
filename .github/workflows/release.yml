@@ -1,0 +1,92 @@
+name: Release
+# Initial release tag: v0.0.1
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without v prefix"
+        required: true
+        default: "0.0.1"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows release
+    runs-on: windows-latest
+    env:
+      APP_NAME: HarnessManager
+      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+
+      - name: Verify
+        run: |
+          pytest -q
+          python -m compileall -q src tests
+          python -c "from harness_manager.gui.main_window import MainWindow; print('gui import ok')"
+
+      - name: Build executable
+        shell: pwsh
+        run: .\scripts\build.ps1
+
+      - name: Normalize release version
+        shell: pwsh
+        run: |
+          $version = "${{ env.RELEASE_VERSION }}"
+          if ($version.StartsWith("v")) {
+            $version = $version.Substring(1)
+          }
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RELEASE_TAG=v$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Package zip
+        shell: pwsh
+        run: |
+          $zip = "HarnessManager-${{ env.RELEASE_VERSION }}-windows-x64.zip"
+          Compress-Archive -Path dist\HarnessManager\* -DestinationPath $zip -Force
+          "RELEASE_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HarnessManager-${{ env.RELEASE_VERSION }}-windows-x64
+          path: ${{ env.RELEASE_ZIP }}
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ env.RELEASE_TAG }}"
+          $zip = "${{ env.RELEASE_ZIP }}"
+          $title = "Harness Manager $tag"
+          $notes = @"
+          Windows desktop build for Harness Manager.
+
+          Download `$zip`, extract it to a writable directory, and run `HarnessManager.exe`.
+          "@
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $zip --clobber
+          } else {
+            gh release create $tag $zip --target $env:GITHUB_SHA --title $title --notes $notes
+          }
