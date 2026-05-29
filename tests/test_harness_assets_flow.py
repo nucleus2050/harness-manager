@@ -399,12 +399,8 @@ def test_toggle_harness_undeploy_removes_global_codex_file_assets(
     }
     codex_home = target.parent
     assert not (target / skill.id).exists()
-    assert "<!-- harness-manager:start:" not in (codex_home / "AGENTS.md").read_text(
-        encoding="utf-8"
-    )
-    assert "[mcp_servers.fetch]" not in (codex_home / "config.toml").read_text(
-        encoding="utf-8"
-    )
+    assert not (codex_home / "AGENTS.md").exists()
+    assert not (codex_home / "config.toml").exists()
     assert not controller.harness_deploy_status(harness.id, "codex", target)
 
 
@@ -428,8 +424,7 @@ def test_toggle_harness_undeploy_removes_global_json_mcp_assets(app_root, tmp_pa
     )
 
     assert action == "undeployed"
-    claude_config = json.loads((tmp_path / ".claude.json").read_text(encoding="utf-8"))
-    assert "fetch" not in claude_config.get("mcpServers", {})
+    assert not (tmp_path / ".claude.json").exists()
 
     opencode_target = tmp_path / ".config" / "opencode" / "skills"
     controller.toggle_harness_deploy(harness.id, "opencode", opencode_target)
@@ -439,10 +434,45 @@ def test_toggle_harness_undeploy_removes_global_json_mcp_assets(app_root, tmp_pa
     )
 
     assert action == "undeployed"
-    opencode_config = json.loads(
-        (opencode_target.parent / "opencode.json").read_text(encoding="utf-8")
+    assert not (opencode_target.parent / "opencode.json").exists()
+
+
+def test_project_undeploy_removes_empty_generated_files_and_directories(
+    app_root, tmp_path, sample_skill
+):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("项目撤销", "")
+    skill = controller.import_skill_directory(sample_skill, "opencode")
+    agents = controller.create_agents_md_asset("项目规则", "", "# Project Rules")
+    mcp = controller.create_mcp_config_asset(
+        "fetch",
+        "Fetch",
+        '{"type":"stdio","command":"uvx","args":["mcp-server-fetch"]}',
     )
-    assert "fetch" not in opencode_config.get("mcp", {})
+    controller.add_asset_to_harness(harness.id, skill.id, "skill")
+    for asset in [agents, mcp]:
+        controller.add_asset_to_harness(harness.id, asset.id, asset.type)
+    project_root = tmp_path / "project"
+
+    controller.toggle_harness_deploy(
+        harness.id, "opencode", project_root, scope="project"
+    )
+    action, result = controller.toggle_harness_deploy(
+        harness.id, "opencode", project_root, scope="project"
+    )
+
+    assert action == "undeployed"
+    assert result == {
+        skill.id: "uninstalled",
+        agents.id: "uninstalled",
+        mcp.id: "uninstalled",
+    }
+    assert not (project_root / ".opencode").exists()
+    assert not (project_root / "AGENTS.md").exists()
+    assert not (project_root / "opencode.json").exists()
 
 
 def test_global_codex_deploy_status_and_undeploy_support_multiple_mcp_assets(
@@ -475,9 +505,7 @@ def test_global_codex_deploy_status_and_undeploy_support_multiple_mcp_assets(
 
     assert action == "undeployed"
     assert result == {fetch.id: "uninstalled", browser.id: "uninstalled"}
-    config_text = (target.parent / "config.toml").read_text(encoding="utf-8")
-    assert "[mcp_servers.fetch]" not in config_text
-    assert "[mcp_servers.browser]" not in config_text
+    assert not (target.parent / "config.toml").exists()
 
 
 def test_controller_does_not_undeploy_modified_harness_skill(app_root, tmp_path, sample_skill):

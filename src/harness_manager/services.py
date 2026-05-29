@@ -734,8 +734,16 @@ class HarnessService:
                             record, asset, installed_path, scope
                         )
                     else:
+                        cleanup_root = (
+                            _deploy_layout(client_type, target, scope).root
+                            if asset is not None
+                            else target
+                        )
                         status = self._undeploy_harness_record(
-                            record["id"], installed_path, record["fingerprint"]
+                            record["id"],
+                            installed_path,
+                            record["fingerprint"],
+                            cleanup_root,
                         )
                 statuses[asset_id] = status
             self.logs.add(
@@ -1106,7 +1114,11 @@ class HarnessService:
         return "uninstalled"
 
     def _undeploy_harness_record(
-        self, record_id: str, installed_path: Path, installed_fingerprint: str
+        self,
+        record_id: str,
+        installed_path: Path,
+        installed_fingerprint: str,
+        cleanup_root: Path | None = None,
     ) -> InstallStatus:
         if not installed_path.exists():
             self.harness_deploys.mark_status(record_id, "missing")
@@ -1119,6 +1131,8 @@ class HarnessService:
             return "modified"
 
         safe_remove_directory(installed_path)
+        if cleanup_root is not None:
+            _prune_empty_parents(installed_path.parent, cleanup_root)
         self.harness_deploys.mark_status(record_id, "uninstalled")
         return "uninstalled"
 
@@ -1159,6 +1173,8 @@ class HarnessService:
         else:
             self.harness_deploys.mark_status(record_id, "modified")
             return "modified"
+        layout = _deploy_layout(record["client_type"], Path(record["target_path"]), scope)
+        _prune_empty_parents(installed_path.parent, layout.root)
         self.harness_deploys.mark_status(record_id, "uninstalled")
         return "uninstalled"
 
@@ -1212,6 +1228,17 @@ class HarnessService:
 
 def _client_config_root(client_type: ClientType | str, skill_target: Path) -> Path:
     return Path(skill_target).resolve().parent
+
+
+def _prune_empty_parents(start: Path, stop_root: Path) -> None:
+    current = start.resolve()
+    root = stop_root.resolve()
+    while current != root and _is_resolved_under(current, root):
+        try:
+            current.rmdir()
+        except OSError:
+            break
+        current = current.parent
 
 
 def _deploy_layout(
@@ -1303,7 +1330,10 @@ def _remove_marked_text_block(destination: Path, harness_id: str, asset_id: str)
         re.DOTALL,
     )
     updated = pattern.sub("\n", existing).strip()
-    destination.write_text((updated + "\n") if updated else "", encoding="utf-8")
+    if not updated:
+        destination.unlink(missing_ok=True)
+        return
+    destination.write_text(updated + "\n", encoding="utf-8")
 
 
 def _extract_marked_text_block(destination: Path, harness_id: str, asset_id: str) -> str | None:
@@ -1372,6 +1402,9 @@ def _remove_json_list_item(destination: Path, key: str, value: str) -> None:
         data[key] = [item for item in current if item != value]
         if not data[key]:
             data.pop(key, None)
+    if not data:
+        destination.unlink(missing_ok=True)
+        return
     destination.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -1380,7 +1413,7 @@ def _remove_json_list_item(destination: Path, key: str, value: str) -> None:
 
 def _remove_json_object(destination: Path, keys: list[str]) -> None:
     if not destination.exists() or not destination.read_text(encoding="utf-8").strip():
-        destination.write_text("{}\n", encoding="utf-8")
+        destination.unlink(missing_ok=True)
         return
     data = json.loads(destination.read_text(encoding="utf-8"))
     cursor = data
@@ -1400,6 +1433,9 @@ def _remove_json_object(destination: Path, keys: list[str]) -> None:
         child = parent.get(key)
         if isinstance(child, dict) and not child:
             parent.pop(key, None)
+    if not data:
+        destination.unlink(missing_ok=True)
+        return
     destination.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -1436,7 +1472,10 @@ def _remove_codex_mcp(destination: Path, name: str) -> None:
         rf"(?ms)^\[mcp_servers\.{re.escape(name)}\]\n.*?(?=^\[|\Z)"
     )
     updated = pattern.sub("", existing).strip()
-    destination.write_text((updated + "\n") if updated else "", encoding="utf-8")
+    if not updated:
+        destination.unlink(missing_ok=True)
+        return
+    destination.write_text(updated + "\n", encoding="utf-8")
 
 
 def _mcp_payload_config(source: Path) -> dict:
