@@ -4,6 +4,30 @@ Harness Manager 是一个本地 Windows 桌面应用，用来管理完成某项�
 
 当前暂不实现 Hook 管理，因为不同工具的 Hook 标准和安装方式差异较大。
 
+![Harness Manager 主界面](docs/images/harness-manager-main.png)
+
+> 截图使用示例数据生成，用于展示任务套件列表、组件统计、导入来源、组件详情和部署入口。
+
+## 适合谁使用
+
+- 同时使用 Codex、Claude Code、OpenCode，并希望复用同一套任务上下文的用户。
+- 经常为不同任务准备不同 Skill、MCP 和 `AGENTS.md` 的开发者。
+- 希望把某项工作需要的工具组件整理成可导入、可导出、可部署集合的团队。
+
+## 推荐工作流
+
+```text
+导入或新建组件
+  ↓
+在组件库中维护 Skill / AGENTS.md / MCP
+  ↓
+创建任务套件并把组件加入套件
+  ↓
+按全局或项目范围部署到 Codex / Claude Code / OpenCode
+  ↓
+任务结束后可撤销部署，或导出 .harness.zip 离线共享
+```
+
 ## 这个项目解决什么实际问题
 
 在使用多个 AI 编程工具时，同一类任务往往需要重复准备相同资源：
@@ -20,6 +44,37 @@ Harness Manager 的目标是把这些资源抽象成“任务套件”：
 - 最后把任务套件一键部署到目标工具。
 
 这样可以减少重复配置，也能让某项工作的上下文、提示词和工具依赖更清晰。
+
+## 快速开始
+
+### 从源码启动
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e .[dev]
+python -m harness_manager
+```
+
+### 使用已安装命令启动
+
+```powershell
+harness-manager
+```
+
+### 打包 Windows 可执行文件
+
+```powershell
+.\scripts\build.ps1
+```
+
+打包完成后运行：
+
+```text
+dist/HarnessManager/HarnessManager.exe
+```
+
+应用需要对运行目录有写权限，因为 SQLite 数据库、组件资产、导出包和配置文件都会写入运行目录。
 
 ## 当前核心功能
 
