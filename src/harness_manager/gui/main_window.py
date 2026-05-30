@@ -775,11 +775,11 @@ class MainWindow(QMainWindow):
             self.export_archive_button,
             self.delete_harness_button,
         ]:
-            button.setFixedSize(54, 38)
-        self.add_project_button.setFixedSize(86, 38)
-        self.manage_projects_button.setFixedSize(86, 38)
-        self.project_selector.setMinimumWidth(150)
-        self.project_selector.setMaximumWidth(210)
+            button.setFixedSize(50, 38)
+        self.add_project_button.setFixedSize(78, 38)
+        self.manage_projects_button.setFixedSize(78, 38)
+        self.project_selector.setMinimumWidth(120)
+        self.project_selector.setMaximumWidth(150)
         self.project_selector.setMinimumHeight(38)
 
     def _build_details_card(self) -> QFrame:
@@ -1341,22 +1341,25 @@ class MainWindow(QMainWindow):
 
         actions = QFrame()
         actions.setObjectName("HarnessActions")
+        actions.setFixedWidth(220)
         actions_layout = QHBoxLayout(actions)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(10)
+        actions_layout.setSpacing(8)
 
         count_label = self._label(self._t("component_count").format(count=len(assets)), "HarnessCountPill")
-        count_label.setFixedWidth(72)
+        count_label.setFixedWidth(58)
         count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         actions_layout.addWidget(count_label, 0, Qt.AlignmentFlag.AlignVCenter)
 
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
-        deploy_frame.setFixedWidth(232)
+        deploy_frame.setFixedWidth(154)
         deploy_layout = QHBoxLayout(deploy_frame)
-        deploy_layout.setContentsMargins(12, 6, 10, 6)
-        deploy_layout.setSpacing(8)
-        deploy_layout.addWidget(self._label(self._deploy_scope_label(), "MutedText"))
+        deploy_layout.setContentsMargins(8, 6, 6, 6)
+        deploy_layout.setSpacing(4)
+        scope_label = self._label(self._deploy_scope_label(), "MutedText")
+        scope_label.setMaximumWidth(48)
+        deploy_layout.addWidget(scope_label)
         deploy_layout.addStretch(1)
         for client_type, icon, tooltip, object_name, accessible_name in [
             ("claude_code", "CC", self._t("deploy_claude"), "HarnessDeployIconClaude", "Claude Code"),
@@ -1395,11 +1398,11 @@ class MainWindow(QMainWindow):
 
     def _deploy_scope_label(self) -> str:
         if self.deploy_scope == "global":
-            return self._t("global_scope")
+            return self._t("global")
         project = self._selected_project()
         if project is None:
-            return self._t("project_scope")
-        return self._t("current_project").format(name=project.name)
+            return self._t("project")
+        return project.name
 
     def _deploy_target_path(self, client_type: ClientType) -> Path | None:
         if self.deploy_scope == "project":

@@ -744,11 +744,11 @@ def build_stylesheet(theme: str = "light") -> str:
     QPushButton#HarnessDeployIconClaudeActive,
     QPushButton#HarnessDeployIconOpenCode,
     QPushButton#HarnessDeployIconOpenCodeActive {{
-        min-width: 32px;
-        max-width: 32px;
-        min-height: 28px;
-        max-height: 28px;
-        border-radius: 14px;
+        max-width: 24px;
+        min-width: 24px;
+        min-height: 24px;
+        max-height: 24px;
+        border-radius: 12px;
         background: {tokens['button_bg']};
         border: 1px solid {tokens['compact_border']};
         color: {tokens['muted']};

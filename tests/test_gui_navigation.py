@@ -396,8 +396,8 @@ def test_harness_deploy_icons_are_stateful_toggles():
         assert token in source + stylesheet
     for token in ["Cx", "CC", "OC"]:
         assert token in source
-    assert "deploy_frame.setFixedWidth(232)" in source
-    assert "min-width: 32px" in stylesheet
+    assert "deploy_frame.setFixedWidth(154)" in source
+    assert "min-width: 24px" in stylesheet
     assert "_deploy_harness(" not in source
 
 
@@ -433,7 +433,7 @@ def test_project_selector_controls_deployment_scope():
     assert "scope_toggle" not in source
     assert "HarnessScopeIcon" not in source
     assert '"deploy_scope_label"' not in source
-    assert "deploy_layout.addWidget(scope_label" not in list_card
+    assert "deploy_layout.addWidget(scope_label, 1)" not in list_card
 
 
 def test_main_window_uses_persistent_project_selector():
@@ -507,7 +507,7 @@ def test_harness_delete_action_uses_confirm_and_single_row_actions():
     assert action_builder.index("new_package_button") < action_builder.index("edit_harness_button")
     assert action_builder.index("export_archive_button") < action_builder.index("delete_harness_button")
     assert "_normalize_harness_action_buttons" in action_builder
-    assert "button.setFixedSize(54, 38)" in source
+    assert "button.setFixedSize(50, 38)" in source
 
 
 def test_asset_library_adds_harness_action_on_each_item():
@@ -622,6 +622,11 @@ def test_harness_list_layout_separates_project_controls_and_deploy_status():
     assert "header.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)" in list_card
     assert 'self._label(self._deploy_scope_label(), "MutedText")' in list_card
     assert "deploy_layout.addStretch(1)" in list_card
+    assert "actions.setFixedWidth(220)" in list_card
+    assert "deploy_frame.setFixedWidth(154)" in list_card
+    assert "scope_label.setMaximumWidth(48)" in list_card
+    assert 'return self._t("global")' in source
+    assert 'return project.name' in source
     assert "QFrame#HarnessProjectActions" in styles_source
     assert "QFrame#HarnessDeployBar" in styles_source
 
