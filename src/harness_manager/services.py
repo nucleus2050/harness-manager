@@ -1095,11 +1095,21 @@ class HarnessService:
                 payload = json_files[0]
             mcp_config = json.loads(payload.read_text(encoding="utf-8"))
             if client_type == "codex":
-                _upsert_codex_mcp(destination, asset.name, mcp_config)
+                _upsert_codex_mcp(
+                    destination, asset.name, _mcp_config_for_client(client_type, mcp_config)
+                )
             elif client_type == "claude_code":
-                _upsert_json_object(destination, ["mcpServers", asset.name], mcp_config)
+                _upsert_json_object(
+                    destination,
+                    ["mcpServers", asset.name],
+                    _mcp_config_for_client(client_type, mcp_config),
+                )
             else:
-                _upsert_json_object(destination, ["mcp", asset.name], mcp_config)
+                _upsert_json_object(
+                    destination,
+                    ["mcp", asset.name],
+                    _mcp_config_for_client(client_type, mcp_config),
+                )
             return
         if asset.type == "agent":
             payload = source / _agent_entry_filename(asset)
@@ -1228,6 +1238,7 @@ class HarnessService:
             except (FileNotFoundError, json.JSONDecodeError):
                 return "modified"
             client_type = record["client_type"]
+            expected = _mcp_config_for_client(client_type, expected)
             try:
                 if client_type == "codex":
                     current = _extract_codex_mcp(installed_path, asset.name)
@@ -1540,6 +1551,44 @@ def _mcp_payload_config(source: Path) -> dict:
     if not isinstance(data, dict):
         raise ValueError("MCP config payload must be a JSON object")
     return data
+
+
+def _mcp_config_for_client(client_type: ClientType | str, value: dict) -> dict:
+    if client_type == "opencode":
+        return _opencode_mcp_config(value)
+    if client_type == "codex":
+        return _codex_mcp_config(value)
+    return dict(value)
+
+
+def _codex_mcp_config(value: dict) -> dict:
+    config = dict(value)
+    if config.get("type") in {"stdio", "local"}:
+        config.pop("type", None)
+    if "environment" in config and "env" not in config:
+        config["env"] = config.pop("environment")
+    return config
+
+
+def _opencode_mcp_config(value: dict) -> dict:
+    config = dict(value)
+    args = config.pop("args", [])
+    if "env" in config and "environment" not in config:
+        config["environment"] = config.pop("env")
+    command = config.get("command")
+    if isinstance(command, str):
+        config["command"] = [command, *_list_value(args)]
+    elif isinstance(command, list) and args:
+        config["command"] = [*command, *_list_value(args)]
+    if config.get("type") in {None, "stdio", "local"}:
+        config["type"] = "local"
+    return config
+
+
+def _list_value(value: object) -> list:
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
 
 
 def _codex_mcp_toml_block(name: str, value: dict) -> str:

@@ -169,6 +169,7 @@ def test_global_codex_deploy_installs_skill_agents_and_mcp_assets(
     assert "[mcp_servers.fetch]" in config_text
     assert 'command = "uvx"' in config_text
     assert 'args = ["mcp-server-fetch"]' in config_text
+    assert 'type = "stdio"' not in config_text
     assert controller.harness_deploy_status(harness.id, "codex", target)
 
 
@@ -224,7 +225,10 @@ def test_global_opencode_deploy_writes_agents_and_mcp_config(app_root, tmp_path)
     assert opencode_home / "opencode.json" in installed
     assert "# OpenCode Rules" in (opencode_home / "AGENTS.md").read_text(encoding="utf-8")
     config = json.loads((opencode_home / "opencode.json").read_text(encoding="utf-8"))
-    assert config["mcp"]["fetch"]["command"] == "uvx"
+    assert config["mcp"]["fetch"] == {
+        "type": "local",
+        "command": ["uvx", "mcp-server-fetch"],
+    }
     assert controller.harness_deploy_status(harness.id, "opencode", target)
 
 
@@ -334,7 +338,10 @@ def test_project_opencode_deploy_writes_project_level_assets(
     assert project_root / "opencode.json" in installed
     assert (skill_root / skill.id / "SKILL.md").is_file()
     config = json.loads((project_root / "opencode.json").read_text(encoding="utf-8"))
-    assert config["mcp"]["fetch"]["command"] == "uvx"
+    assert config["mcp"]["fetch"] == {
+        "type": "local",
+        "command": ["uvx", "mcp-server-fetch"],
+    }
     assert "AGENTS.md" in config["instructions"]
     assert controller.harness_deploy_status(
         harness.id, "opencode", project_root, scope="project"
