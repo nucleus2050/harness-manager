@@ -396,7 +396,7 @@ def test_harness_deploy_icons_are_stateful_toggles():
         assert token in source + stylesheet
     for token in ["Cx", "CC", "OC"]:
         assert token in source
-    assert "deploy_frame.setFixedWidth(154)" in source
+    assert "deploy_frame.setFixedWidth(96)" in source
     assert "min-width: 24px" in stylesheet
     assert "_deploy_harness(" not in source
 
@@ -620,15 +620,18 @@ def test_harness_list_layout_separates_project_controls_and_deploy_status():
     assert "actions_layout = QHBoxLayout(actions)" in list_card
     assert "header.addStretch(1)" in list_card
     assert "header.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)" in list_card
-    assert 'self._label(self._deploy_scope_label(), "MutedText")' in list_card
-    assert "deploy_layout.addStretch(1)" in list_card
-    assert "actions.setFixedWidth(220)" in list_card
-    assert "deploy_frame.setFixedWidth(154)" in list_card
-    assert "scope_label.setMaximumWidth(48)" in list_card
+    assert "deploy_buttons = QFrame()" in list_card
+    assert 'deploy_buttons.setObjectName("HarnessDeployButtons")' in list_card
+    assert "deploy_buttons_layout.addWidget(button)" in list_card
+    assert "actions.setFixedWidth(166)" in list_card
+    assert "deploy_frame.setFixedWidth(96)" in list_card
+    assert "HarnessDeployTarget" not in list_card
     assert 'return self._t("global")' in source
     assert 'return project.name' in source
     assert "QFrame#HarnessProjectActions" in styles_source
     assert "QFrame#HarnessDeployBar" in styles_source
+    assert "QFrame#HarnessDeployButtons" in styles_source
+    assert "QLabel#HarnessDeployTarget" not in styles_source
 
 
 def test_harness_details_show_components_grouped_by_type():

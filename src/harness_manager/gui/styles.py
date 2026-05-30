@@ -582,15 +582,22 @@ def build_stylesheet(theme: str = "light") -> str:
     }}
 
     QFrame#HarnessDeployBar {{
+        background: transparent;
+        border: none;
+        border-radius: 16px;
+    }}
+
+    QFrame#HarnessDeployButtons {{
         background: {tokens['button_bg']};
         border: 1px solid {tokens['compact_border']};
-        border-radius: 16px;
+        border-radius: 15px;
     }}
 
     QFrame#HarnessActions {{
         background: transparent;
         border: none;
     }}
+
 
     QLabel#HarnessCountPill {{
         color: {tokens['ready_text']};

@@ -1341,10 +1341,10 @@ class MainWindow(QMainWindow):
 
         actions = QFrame()
         actions.setObjectName("HarnessActions")
-        actions.setFixedWidth(220)
+        actions.setFixedWidth(166)
         actions_layout = QHBoxLayout(actions)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(8)
+        actions_layout.setSpacing(12)
 
         count_label = self._label(self._t("component_count").format(count=len(assets)), "HarnessCountPill")
         count_label.setFixedWidth(58)
@@ -1353,14 +1353,15 @@ class MainWindow(QMainWindow):
 
         deploy_frame = QFrame()
         deploy_frame.setObjectName("HarnessDeployBar")
-        deploy_frame.setFixedWidth(154)
+        deploy_frame.setFixedWidth(96)
         deploy_layout = QHBoxLayout(deploy_frame)
-        deploy_layout.setContentsMargins(8, 6, 6, 6)
-        deploy_layout.setSpacing(4)
-        scope_label = self._label(self._deploy_scope_label(), "MutedText")
-        scope_label.setMaximumWidth(48)
-        deploy_layout.addWidget(scope_label)
-        deploy_layout.addStretch(1)
+        deploy_layout.setContentsMargins(0, 0, 0, 0)
+        deploy_layout.setSpacing(0)
+        deploy_buttons = QFrame()
+        deploy_buttons.setObjectName("HarnessDeployButtons")
+        deploy_buttons_layout = QHBoxLayout(deploy_buttons)
+        deploy_buttons_layout.setContentsMargins(4, 2, 4, 2)
+        deploy_buttons_layout.setSpacing(4)
         for client_type, icon, tooltip, object_name, accessible_name in [
             ("claude_code", "CC", self._t("deploy_claude"), "HarnessDeployIconClaude", "Claude Code"),
             ("codex", "Cx", self._t("deploy_codex"), "HarnessDeployIconCodex", "Codex"),
@@ -1390,7 +1391,8 @@ class MainWindow(QMainWindow):
                     )
                 )
             )
-            deploy_layout.addWidget(button)
+            deploy_buttons_layout.addWidget(button)
+        deploy_layout.addWidget(deploy_buttons, 0, Qt.AlignmentFlag.AlignVCenter)
         actions_layout.addWidget(deploy_frame)
         header.addWidget(actions, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         layout.addLayout(header)
