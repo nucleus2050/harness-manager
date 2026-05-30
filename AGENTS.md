@@ -7,6 +7,7 @@
 任务套件管理器是一个本地 Windows 桌面应用，用来管理完成某项任务所需的资源集合。一个任务套件是可复用的任务工具包。当前设计方向中，一个任务套件可以包含：
 
 - `AGENTS.md` 指令
+- Agent 智能体配置资产
 - MCP 配置资产
 - Skill 资产
 
@@ -25,6 +26,7 @@ Hook 支持暂缓实现，因为 Codex、Claude Code、OpenCode 以及其他工�
 组件（Asset）是工具管理的可复用资源。第一阶段升级包含以下组件类型：
 
 - `agents_md`：以 AGENTS.md 内容形式保存的项目或任务指令。
+- `agent`：Codex、Claude Code 或 OpenCode 的单个 Agent / Subagent 定义文件。
 - `mcp`：MCP server 配置片段或配置文件。
 - `skill`：现有的 Skill 目录资产。
 
@@ -78,6 +80,9 @@ HarnessManager/
   assets/
     agents/
       <asset_id>/AGENTS.md
+    agent_configs/
+      <asset_id>/agent.toml
+      <asset_id>/agent.md
     mcp/
       <asset_id>/mcp.json
     skills/

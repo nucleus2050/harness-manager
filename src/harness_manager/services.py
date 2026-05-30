@@ -40,6 +40,7 @@ class DeployLayout:
     skill_root: Path
     agents_file: Path
     mcp_file: Path
+    agent_root: Path
 
 
 def _slug(value: str) -> str:
@@ -553,14 +554,13 @@ class HarnessService:
                         self._deploy_file_asset_to_client(
                             harness_id, asset, client_type, target, scope, source, destination
                         )
-                        deployed_fingerprint = fingerprint_directory(source)
                         self.harness_deploys.add_deployed(
                             harness_id,
                             asset.id,
                             client_type,
                             target,
                             destination,
-                            deployed_fingerprint,
+                            self._harness_deployed_fingerprint(asset, destination),
                         )
                         deployed_paths.append(destination)
                         continue
@@ -626,6 +626,13 @@ class HarnessService:
             logger.exception("Failed to deploy harness %s to %s", harness_id, target)
             raise
         return deployed_paths
+
+    def _harness_deployed_fingerprint(self, asset: Asset, destination: Path) -> str:
+        if asset.type == "agent":
+            return _fingerprint_file_content(destination)
+        if asset.type == "skill":
+            return fingerprint_directory(destination)
+        return fingerprint_directory(self._validated_managed_asset_source(asset))
 
     def harness_deploy_status(
         self,
@@ -877,7 +884,7 @@ class HarnessService:
             asset_type = _required_non_empty_string(
                 entry, "type", f"manifest.assets[{index}]"
             )
-            if asset_type not in {"skill", "agents_md", "mcp"}:
+            if asset_type not in {"skill", "agents_md", "mcp", "agent"}:
                 raise ValueError(f"Unsupported offline asset type: {asset_type}")
             _required_non_empty_string(entry, "name", f"manifest.assets[{index}]")
             relative_path = _required_non_empty_string(
@@ -1052,6 +1059,10 @@ class HarnessService:
             return layout.agents_file
         if asset.type == "mcp":
             return layout.mcp_file
+        if asset.type == "agent":
+            destination = layout.agent_root / _agent_deploy_filename(asset)
+            _resolve_under(destination, layout.agent_root, "Agent deploy destination")
+            return destination
         raise ValueError(f"Unsupported asset type: {asset.type}")
 
     def _deploy_file_asset_to_client(
@@ -1089,6 +1100,17 @@ class HarnessService:
                 _upsert_json_object(destination, ["mcpServers", asset.name], mcp_config)
             else:
                 _upsert_json_object(destination, ["mcp", asset.name], mcp_config)
+            return
+        if asset.type == "agent":
+            payload = source / _agent_entry_filename(asset)
+            if not payload.is_file():
+                candidates = sorted(
+                    child for child in source.iterdir() if child.is_file()
+                )
+                if not candidates:
+                    raise FileNotFoundError(payload)
+                payload = candidates[0]
+            shutil.copy2(payload, destination)
             return
         raise ValueError(f"Unsupported file asset type: {asset.type}")
 
@@ -1170,6 +1192,8 @@ class HarnessService:
                 _remove_json_object(installed_path, ["mcpServers", asset.name])
             else:
                 _remove_json_object(installed_path, ["mcp", asset.name])
+        elif asset.type == "agent":
+            installed_path.unlink(missing_ok=True)
         else:
             self.harness_deploys.mark_status(record_id, "modified")
             return "modified"
@@ -1222,6 +1246,17 @@ class HarnessService:
             if current_json is None:
                 return "missing"
             return "installed" if current_json == expected else "modified"
+        if asset.type == "agent":
+            payload = source / _agent_entry_filename(asset)
+            if not payload.is_file():
+                return "modified"
+            if not installed_path.is_file():
+                return "missing"
+            return (
+                "installed"
+                if _fingerprint_file_content(installed_path) == _fingerprint_file_content(payload)
+                else "modified"
+            )
         return "modified"
 
 
@@ -1253,6 +1288,7 @@ def _deploy_layout(
                 skill_root=project_root / ".agents" / "skills",
                 agents_file=project_root / "AGENTS.md",
                 mcp_file=project_root / ".codex" / "config.toml",
+                agent_root=project_root / ".codex" / "agents",
             )
         if client_type == "claude_code":
             return DeployLayout(
@@ -1260,28 +1296,34 @@ def _deploy_layout(
                 skill_root=project_root / ".claude" / "skills",
                 agents_file=project_root / "CLAUDE.md",
                 mcp_file=project_root / ".mcp.json",
+                agent_root=project_root / ".claude" / "agents",
             )
         return DeployLayout(
             root=project_root,
             skill_root=project_root / ".opencode" / "skills",
             agents_file=project_root / "AGENTS.md",
             mcp_file=project_root / "opencode.json",
+            agent_root=project_root / ".opencode" / "agents",
         )
     config_root = _client_config_root(client_type, resolved)
     if client_type == "claude_code":
         agents_file = config_root / "CLAUDE.md"
         mcp_file = config_root.parent / ".claude.json"
+        agent_root = config_root / "agents"
     elif client_type == "codex":
         agents_file = config_root / "AGENTS.md"
         mcp_file = config_root / "config.toml"
+        agent_root = config_root / "agents"
     else:
         agents_file = config_root / "AGENTS.md"
         mcp_file = config_root / "opencode.json"
+        agent_root = config_root / "agents"
     return DeployLayout(
         root=config_root.parent,
         skill_root=resolved,
         agents_file=agents_file,
         mcp_file=mcp_file,
+        agent_root=agent_root,
     )
 
 
@@ -1295,6 +1337,15 @@ def _fingerprint_file(path: Path | str) -> str:
     digest.update(b"\0")
     digest.update(len(file_bytes).to_bytes(8, "big"))
     digest.update(file_bytes)
+    return digest.hexdigest()
+
+
+def _fingerprint_file_content(path: Path | str) -> str:
+    file_path = Path(path)
+    if not file_path.is_file():
+        raise FileNotFoundError(file_path)
+    digest = hashlib.sha256()
+    digest.update(file_path.read_bytes())
     return digest.hexdigest()
 
 
@@ -1604,6 +1655,148 @@ def _mcp_metadata(display_name: str, description: str = "") -> str:
     )
 
 
+def _agent_file_extension(agent_format: str) -> str:
+    if agent_format == "codex_toml":
+        return ".toml"
+    if agent_format in {"claude_md", "opencode_md"}:
+        return ".md"
+    if agent_format == "opencode_json":
+        return ".json"
+    raise ValueError(f"不支持的 Agent 格式: {agent_format}")
+
+
+def _safe_agent_name(agent_name: str) -> str:
+    sanitized = _slug(agent_name.strip())
+    if not sanitized:
+        raise ValueError("Agent 名称不能为空。")
+    return sanitized
+
+
+def _agent_metadata(
+    client_type: str,
+    agent_format: str,
+    agent_name: str,
+    description: str,
+) -> str:
+    safe_name = _safe_agent_name(agent_name)
+    extension = _agent_file_extension(agent_format)
+    return json.dumps(
+        {
+            "client_type": client_type,
+            "agent_format": agent_format,
+            "agent_name": safe_name,
+            "description": description.strip(),
+            "entry_filename": f"agent{extension}",
+            "deploy_filename": f"{safe_name}{extension}",
+        },
+        ensure_ascii=False,
+    )
+
+
+def _agent_metadata_dict(metadata_json: str) -> dict:
+    try:
+        metadata = json.loads(metadata_json or "{}")
+    except json.JSONDecodeError:
+        metadata = {}
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def _agent_entry_filename(asset: Asset) -> str:
+    metadata = _agent_metadata_dict(asset.metadata_json)
+    filename = metadata.get("entry_filename")
+    return filename if isinstance(filename, str) and filename else "agent.md"
+
+
+def _agent_deploy_filename(asset: Asset) -> str:
+    metadata = _agent_metadata_dict(asset.metadata_json)
+    filename = metadata.get("deploy_filename")
+    if isinstance(filename, str) and filename:
+        return Path(filename).name
+    agent_name = metadata.get("agent_name")
+    agent_format = metadata.get("agent_format")
+    if isinstance(agent_name, str) and isinstance(agent_format, str):
+        return f"{_safe_agent_name(agent_name)}{_agent_file_extension(agent_format)}"
+    return f"{_safe_agent_name(asset.name)}.md"
+
+
+def _import_agent_asset(
+    self: HarnessService,
+    source_file: Path | str,
+    name: str,
+    source_type: str | None,
+    client_type: str,
+    agent_format: str,
+    agent_name: str,
+    description: str = "",
+) -> Asset:
+    source_path = Path(source_file)
+    metadata_json = _agent_metadata(client_type, agent_format, agent_name, description)
+    entry_filename = str(_agent_metadata_dict(metadata_json)["entry_filename"])
+    if not source_path.is_file():
+        raise FileNotFoundError(source_path)
+    asset_id = uuid.uuid4().hex
+    destination_dir = asset_dir(self.paths, "agent", asset_id)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination = destination_dir / entry_filename
+    try:
+        shutil.copy2(source_path, destination)
+        fingerprint = fingerprint_directory(destination_dir)
+        with transaction(self.conn):
+            asset = self.assets.upsert(
+                asset_id,
+                "agent",
+                name.strip(),
+                source_type,
+                destination.relative_to(self.paths.root).as_posix(),
+                fingerprint,
+                metadata_json,
+            )
+            self.logs.add("import_asset", f"Imported agent asset {name}")
+        return asset
+    except Exception:
+        safe_remove_directory(destination_dir)
+        raise
+
+
+def _create_agent_asset(
+    self: HarnessService,
+    name: str,
+    client_type: str,
+    agent_format: str,
+    agent_name: str,
+    description: str,
+    content: str,
+) -> Asset:
+    name = name.strip()
+    content = content.strip()
+    if not name:
+        raise ValueError("Agent 标题不能为空。")
+    if not content:
+        raise ValueError("Agent 内容不能为空。")
+    metadata_json = _agent_metadata(client_type, agent_format, agent_name, description)
+    entry_filename = str(_agent_metadata_dict(metadata_json)["entry_filename"])
+    asset_id = uuid.uuid4().hex
+    destination_dir = asset_dir(self.paths, "agent", asset_id)
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination = destination_dir / entry_filename
+    try:
+        destination.write_text(content + "\n", encoding="utf-8")
+        fingerprint = fingerprint_directory(destination_dir)
+        with transaction(self.conn):
+            return self.assets.upsert(
+                asset_id,
+                "agent",
+                name,
+                "custom",
+                destination.relative_to(self.paths.root).as_posix(),
+                fingerprint,
+                metadata_json,
+            )
+    except Exception:
+        safe_remove_directory(destination_dir)
+        raise
+
+
 def _create_mcp_config_asset(
     self: HarnessService,
     title: str,
@@ -1679,3 +1872,5 @@ HarnessService.create_agents_md_asset = _create_agents_md_asset
 HarnessService.import_mcp_asset = _import_mcp_asset
 HarnessService.create_mcp_config_asset = _create_mcp_config_asset
 HarnessService.update_mcp_config_asset = _update_mcp_config_asset
+HarnessService.import_agent_asset = _import_agent_asset
+HarnessService.create_agent_asset = _create_agent_asset

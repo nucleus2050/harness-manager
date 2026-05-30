@@ -141,6 +141,42 @@ def test_export_then_import_harness_round_trips_assets(app_root, sample_skill, t
     assert (fresh_root / imported_assets[1].relative_path).read_text(encoding="utf-8") == "# Rules\n"
 
 
+def test_export_then_import_harness_round_trips_agent_assets(app_root, tmp_path):
+    source_service = _service(app_root)
+    harness = source_service.harnesses.create("agent-suite", "Agent 工作流")
+    agent = source_service.create_agent_asset(
+        name="Codex Reviewer",
+        client_type="codex",
+        agent_format="codex_toml",
+        agent_name="reviewer",
+        description="Review code",
+        content='name = "reviewer"\ndescription = "Review code"\ndeveloper_instructions = "Be strict."',
+    )
+    source_service.harnesses.add_asset(harness.id, agent.id, "agent", 1)
+
+    archive_path = source_service.export_harness(harness.id)
+
+    with zipfile.ZipFile(archive_path) as archive:
+        names = set(archive.namelist())
+        manifest = json.loads(archive.read("manifest.json"))
+    assert {asset["type"] for asset in manifest["assets"]} == {"agent"}
+    assert f"assets/agent/{agent.id}/agent.toml" in names
+
+    fresh_root = tmp_path / "FreshHarnessManager"
+    fresh_root.mkdir()
+    fresh_service = _service(fresh_root)
+    imported_harness_id = fresh_service.import_offline_package(archive_path)
+
+    imported_assets = fresh_service.harnesses.list_assets(imported_harness_id)
+    assert [(asset.type, asset.name) for asset in imported_assets] == [
+        ("agent", "Codex Reviewer")
+    ]
+    assert json.loads(imported_assets[0].metadata_json)["deploy_filename"] == "reviewer.toml"
+    assert (fresh_root / imported_assets[0].relative_path).read_text(
+        encoding="utf-8"
+    ).startswith('name = "reviewer"')
+
+
 def test_import_offline_package_rejects_manifest_relative_path_escape(tmp_path):
     app_root = tmp_path / "HarnessManager"
     app_root.mkdir()

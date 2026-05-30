@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from harness_manager.app_paths import AppPaths
 from harness_manager.db import connect, initialize_database
 from harness_manager.services import HarnessService
@@ -107,3 +109,58 @@ def test_update_mcp_config_asset_rewrites_json_and_metadata(app_root):
     assert '"description": "新描述"' in updated.metadata_json
     assert "enabled_clients" not in updated.metadata_json
     assert '"node"' in (paths.root / updated.relative_path).read_text(encoding="utf-8")
+
+
+def test_import_agent_asset_stores_metadata(app_root, tmp_path):
+    paths, conn, service = _service(app_root)
+    source = tmp_path / "reviewer.toml"
+    source.write_text(
+        'name = "reviewer"\ndescription = "Review code"\ndeveloper_instructions = "Be strict."\n',
+        encoding="utf-8",
+    )
+
+    asset = service.import_agent_asset(
+        source,
+        name="代码审查 Agent",
+        source_type="custom",
+        client_type="codex",
+        agent_format="codex_toml",
+        agent_name="reviewer",
+        description="Review code",
+    )
+
+    metadata = json.loads(asset.metadata_json)
+    assert asset.type == "agent"
+    assert asset.name == "代码审查 Agent"
+    assert asset.source_type == "custom"
+    assert asset.relative_path.startswith("assets/agent_configs/")
+    assert (paths.root / asset.relative_path).name == "agent.toml"
+    assert metadata["client_type"] == "codex"
+    assert metadata["agent_format"] == "codex_toml"
+    assert metadata["agent_name"] == "reviewer"
+    assert metadata["description"] == "Review code"
+    assert metadata["entry_filename"] == "agent.toml"
+    assert metadata["deploy_filename"] == "reviewer.toml"
+
+
+def test_create_agent_asset_writes_content_and_metadata(app_root):
+    paths, conn, service = _service(app_root)
+
+    asset = service.create_agent_asset(
+        name="Claude Reviewer",
+        client_type="claude_code",
+        agent_format="claude_md",
+        agent_name="reviewer",
+        description="审查代码",
+        content="---\nname: reviewer\ndescription: 审查代码\n---\n\n你是代码审查员。",
+    )
+
+    metadata = json.loads(asset.metadata_json)
+    assert asset.type == "agent"
+    assert asset.name == "Claude Reviewer"
+    assert metadata["client_type"] == "claude_code"
+    assert metadata["agent_format"] == "claude_md"
+    assert metadata["deploy_filename"] == "reviewer.md"
+    assert (paths.root / asset.relative_path).read_text(encoding="utf-8").endswith(
+        "你是代码审查员。\n"
+    )

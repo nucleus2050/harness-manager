@@ -12,4 +12,6 @@ def asset_dir(paths: AppPaths, asset_type: str, asset_id: str) -> Path:
         return paths.root / "assets" / "mcp" / asset_id
     if asset_type == "skill":
         return paths.root / "assets" / "skills" / asset_id
+    if asset_type == "agent":
+        return paths.root / "assets" / "agent_configs" / asset_id
     raise ValueError(f"Unsupported asset type: {asset_type}")

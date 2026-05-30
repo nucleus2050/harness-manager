@@ -629,12 +629,26 @@ def test_harness_list_layout_separates_project_controls_and_deploy_status():
 def test_harness_details_show_components_grouped_by_type():
     source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
 
-    for text in ["已加入的技能", "已加入的 AGENTS.md", "已加入的 MCP"]:
+    for text in ["已加入的技能", "已加入的 AGENTS.md", "已加入的 Agent", "已加入的 MCP"]:
         assert text in source
 
     assert "list_harness_assets_by_type(harness.id, \"skill\")" in source
     assert "list_harness_assets_by_type(harness.id, \"agents_md\")" in source
+    assert "list_harness_assets_by_type(harness.id, \"agent\")" in source
     assert "list_harness_assets_by_type(harness.id, \"mcp\")" in source
+
+
+def test_agent_library_view_is_available():
+    source = Path("src/harness_manager/gui/main_window.py").read_text(encoding="utf-8")
+
+    assert 'self.agent_view_button = self._button(self._t("agent"), "SegmentButton")' in source
+    assert 'self.agent_view_button.clicked.connect(lambda: self._show_asset_view("agent"))' in source
+    assert 'self.current_view == "agent"' in source
+    assert 'self.controller.list_assets_by_type("agent")' in source
+    assert "_build_agent_toolbar" in source
+    assert "_build_agent_summary" in source
+    assert "Agent 智能体" in source
+    assert "configured_agent" in source
 
 
 def test_empty_harness_asset_group_uses_single_list_item():

@@ -437,6 +437,77 @@ def test_toggle_harness_undeploy_removes_global_json_mcp_assets(app_root, tmp_pa
     assert not (opencode_target.parent / "opencode.json").exists()
 
 
+def test_deploy_and_undeploy_global_agent_assets(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    harness = controller.create_harness("Agent 套件", "")
+    agent = controller.service.create_agent_asset(
+        name="Codex Reviewer",
+        client_type="codex",
+        agent_format="codex_toml",
+        agent_name="reviewer",
+        description="Review code",
+        content='name = "reviewer"\ndescription = "Review code"\ndeveloper_instructions = "Be strict."',
+    )
+    controller.add_asset_to_harness(harness.id, agent.id, "agent")
+    target = tmp_path / ".codex" / "skills"
+
+    action, deployed = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    deployed_agent = tmp_path / ".codex" / "agents" / "reviewer.toml"
+    assert action == "deployed"
+    assert deployed == [deployed_agent]
+    assert deployed_agent.read_text(encoding="utf-8").startswith('name = "reviewer"')
+    assert controller.harness_deploy_status(harness.id, "codex", target)
+
+    action, result = controller.toggle_harness_deploy(harness.id, "codex", target)
+
+    assert action == "undeployed"
+    assert result == {agent.id: "uninstalled"}
+    assert not deployed_agent.exists()
+    assert not (tmp_path / ".codex" / "agents").exists()
+
+
+def test_project_agent_assets_deploy_to_client_agent_directories(app_root, tmp_path):
+    paths = AppPaths(app_root)
+    paths.ensure()
+    conn = connect(paths.db_path)
+    controller = MainController(app_root, conn)
+    project_root = tmp_path / "project"
+
+    cases = [
+        ("codex", "codex_toml", ".toml", project_root / ".codex" / "agents" / "reviewer.toml"),
+        ("claude_code", "claude_md", ".md", project_root / ".claude" / "agents" / "reviewer.md"),
+        ("opencode", "opencode_md", ".md", project_root / ".opencode" / "agents" / "reviewer.md"),
+    ]
+    for client_type, agent_format, extension, expected_path in cases:
+        harness = controller.create_harness(f"{client_type} Agent", "")
+        content = (
+            'name = "reviewer"\ndescription = "Review code"\ndeveloper_instructions = "Be strict."'
+            if extension == ".toml"
+            else "---\ndescription: Review code\n---\n\nReview code."
+        )
+        agent = controller.service.create_agent_asset(
+            name=f"{client_type} Reviewer",
+            client_type=client_type,
+            agent_format=agent_format,
+            agent_name="reviewer",
+            description="Review code",
+            content=content,
+        )
+        controller.add_asset_to_harness(harness.id, agent.id, "agent")
+
+        action, deployed = controller.toggle_harness_deploy(
+            harness.id, client_type, project_root, scope="project"
+        )
+
+        assert action == "deployed"
+        assert deployed == [expected_path]
+        assert expected_path.is_file()
+
+
 def test_project_undeploy_removes_empty_generated_files_and_directories(
     app_root, tmp_path, sample_skill
 ):

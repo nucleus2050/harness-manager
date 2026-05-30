@@ -68,6 +68,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "settings_tip": "设置",
         "harnesses": "任务套件",
         "agents": "AGENTS.md",
+        "agent": "Agent",
         "mcp": "MCP",
         "skills": "技能库 Skills",
         "new": "新建",
@@ -110,9 +111,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "agents_management_desc": "维护可复用的提示词文件，可直接编辑或从文件导入。",
         "new_agents": "+ 新增 AGENTS.md",
         "configured_agents": "已配置 {count} 个 AGENTS.md",
+        "agent_management": "Agent 智能体",
+        "agent_management_desc": "维护可复用的 Codex、Claude Code、OpenCode Agent 配置。",
+        "configured_agent": "已配置 {count} 个 Agent",
         "configured_mcp": "已配置 {count} 个 MCP",
         "component_library": "组件库",
-        "component_library_desc": "按类型查看全部技能、AGENTS.md 与 MCP，并加入任务套件。",
+        "component_library_desc": "按类型查看全部技能、AGENTS.md、Agent 与 MCP，并加入任务套件。",
         "ready": "就绪",
         "missing": "缺失",
         "custom": "自定义",
@@ -136,18 +140,21 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "project_selector_placeholder": "选择项目",
         "delete_project_message": "确认删除项目「{name}」的管理记录？\n\n不会删除项目目录，也不会自动撤销已经部署到该项目的内容。",
         "empty_agents": "暂无 AGENTS.md\n请先在任务套件详情中添加 AGENTS.md。",
+        "empty_agent": "暂无 Agent\n请先创建或导入 Agent 智能体配置。",
         "empty_mcp": "暂无 MCP\n请先在任务套件详情中添加 MCP 配置。",
         "empty_skills": "暂无技能\n请从左侧选择 Skill 来源并导入技能。",
         "not_selected_harness": "未选择任务套件\n请从左侧列表选择一个任务套件。",
         "description_prefix": "描述",
         "joined_skills": "已加入的技能",
         "joined_agents": "已加入的 AGENTS.md",
+        "joined_agent": "已加入的 Agent",
         "joined_mcp": "已加入的 MCP",
         "deployment_locations_title": "部署位置",
         "deployment_locations_empty": "暂无部署记录",
         "asset_group_empty": "{title}\n0 个组件 - {empty}",
         "asset_group": "{title}\n{count} 个组件：{names}",
         "skill_label": "技能",
+        "agent_label": "Agent",
         "component_label": "组件",
         "choose_harness_first": "请先选择一个任务套件。",
         "current_app": "当前应用",
@@ -193,6 +200,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "settings_tip": "Settings",
         "harnesses": "Harnesses",
         "agents": "AGENTS.md",
+        "agent": "Agent",
         "mcp": "MCP",
         "skills": "Skills",
         "new": "New",
@@ -235,9 +243,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "agents_management_desc": "Maintain reusable instruction files by editing directly or importing a file.",
         "new_agents": "+ New AGENTS.md",
         "configured_agents": "{count} AGENTS.md configured",
+        "agent_management": "Agent Management",
+        "agent_management_desc": "Maintain reusable Codex, Claude Code, and OpenCode agent configurations.",
+        "configured_agent": "{count} Agent configured",
         "configured_mcp": "{count} MCP configured",
         "component_library": "Component Library",
-        "component_library_desc": "Browse all skills, AGENTS.md, and MCP components by type and add them to harnesses.",
+        "component_library_desc": "Browse all skills, AGENTS.md, Agent, and MCP components by type and add them to harnesses.",
         "ready": "Ready",
         "missing": "Missing",
         "custom": "Custom",
@@ -261,18 +272,21 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "project_selector_placeholder": "Select Project",
         "delete_project_message": "Delete managed project record \"{name}\"?\n\nThis will not delete the project folder or undeploy existing project files.",
         "empty_agents": "No AGENTS.md\nAdd AGENTS.md from the harness details first.",
+        "empty_agent": "No Agent\nCreate or import an Agent configuration first.",
         "empty_mcp": "No MCP\nAdd an MCP configuration from the harness details first.",
         "empty_skills": "No skills\nSelect a Skill source on the left and import skills.",
         "not_selected_harness": "No harness selected\nSelect a harness from the list.",
         "description_prefix": "Description",
         "joined_skills": "Joined skills",
         "joined_agents": "Joined AGENTS.md",
+        "joined_agent": "Joined Agent",
         "joined_mcp": "Joined MCP",
         "deployment_locations_title": "Deployment Locations",
         "deployment_locations_empty": "No deployments yet",
         "asset_group_empty": "{title}\n0 components - {empty}",
         "asset_group": "{title}\n{count} components: {names}",
         "skill_label": "Skill",
+        "agent_label": "Agent",
         "component_label": "Component",
         "choose_harness_first": "Select a harness first.",
         "current_app": "Current app",
@@ -389,6 +403,7 @@ class MainWindow(QMainWindow):
         self.settings_button.setToolTip(self._t("settings_tip"))
         self.harnesses_view_button = self._button(self._t("harnesses"), "SegmentButtonChecked")
         self.agents_view_button = self._button(self._t("agents"), "SegmentButton")
+        self.agent_view_button = self._button(self._t("agent"), "SegmentButton")
         self.mcp_view_button = self._button(self._t("mcp"), "SegmentButton")
         self.skills_view_button = self._button(self._t("skills"), "SegmentButton")
         self.new_package_button = self._button(self._t("new"), "CompactButton")
@@ -674,6 +689,7 @@ class MainWindow(QMainWindow):
         layout.setSpacing(4)
         layout.addWidget(self.harnesses_view_button)
         layout.addWidget(self.agents_view_button)
+        layout.addWidget(self.agent_view_button)
         layout.addWidget(self.mcp_view_button)
         layout.addWidget(self.skills_view_button)
         layout.addStretch(1)
@@ -827,12 +843,36 @@ class MainWindow(QMainWindow):
         layout.addWidget(new_agents_button)
         return toolbar
 
+    def _build_agent_toolbar(self) -> QWidget:
+        toolbar = QFrame()
+        toolbar.setObjectName("AgentToolbar")
+        layout = QHBoxLayout(toolbar)
+        layout.setContentsMargins(4, 0, 4, 0)
+        layout.setSpacing(12)
+        title = self._label(self._t("agent_management"), "SectionTitle")
+        subtitle = self._label(self._t("agent_management_desc"), "MutedText")
+        copy = QVBoxLayout()
+        copy.setSpacing(4)
+        copy.addWidget(title)
+        copy.addWidget(subtitle)
+        layout.addLayout(copy, 1)
+        return toolbar
+
     def _build_agents_summary(self) -> QWidget:
         summary = QFrame()
         summary.setObjectName("AgentsSummary")
         layout = QHBoxLayout(summary)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.addWidget(self._label(self._t("configured_agents").format(count=len(self.library_assets)), "MutedText"))
+        layout.addStretch(1)
+        return summary
+
+    def _build_agent_summary(self) -> QWidget:
+        summary = QFrame()
+        summary.setObjectName("AgentSummary")
+        layout = QHBoxLayout(summary)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.addWidget(self._label(self._t("configured_agent").format(count=len(self.library_assets)), "MutedText"))
         layout.addStretch(1)
         return summary
 
@@ -862,6 +902,9 @@ class MainWindow(QMainWindow):
         elif self.current_view == "agents_md":
             self.asset_library_header_layout.addWidget(self._build_agents_toolbar())
             self.asset_library_header_layout.addWidget(self._build_agents_summary())
+        elif self.current_view == "agent":
+            self.asset_library_header_layout.addWidget(self._build_agent_toolbar())
+            self.asset_library_header_layout.addWidget(self._build_agent_summary())
         else:
             self.asset_library_header_layout.addLayout(
                 self._section_header(self._t("component_library"), self._t("component_library_desc"))
@@ -1192,6 +1235,7 @@ class MainWindow(QMainWindow):
         self.back_to_business_button.clicked.connect(self._show_previous_business_view)
         self.harnesses_view_button.clicked.connect(self._show_harnesses_view)
         self.agents_view_button.clicked.connect(lambda: self._show_asset_view("agents_md"))
+        self.agent_view_button.clicked.connect(lambda: self._show_asset_view("agent"))
         self.mcp_view_button.clicked.connect(lambda: self._show_asset_view("mcp"))
         self.skills_view_button.clicked.connect(self._show_skills_view)
         self.new_package_button.clicked.connect(self._guard(self._new_harness))
@@ -1386,6 +1430,9 @@ class MainWindow(QMainWindow):
         self.agents_view_button.setObjectName(
             "SegmentButtonChecked" if self.current_view == "agents_md" else "SegmentButton"
         )
+        self.agent_view_button.setObjectName(
+            "SegmentButtonChecked" if self.current_view == "agent" else "SegmentButton"
+        )
         self.mcp_view_button.setObjectName(
             "SegmentButtonChecked" if self.current_view == "mcp" else "SegmentButton"
         )
@@ -1395,6 +1442,8 @@ class MainWindow(QMainWindow):
         self.skills_view_button.style().polish(self.skills_view_button)
         self.agents_view_button.style().unpolish(self.agents_view_button)
         self.agents_view_button.style().polish(self.agents_view_button)
+        self.agent_view_button.style().unpolish(self.agent_view_button)
+        self.agent_view_button.style().polish(self.agent_view_button)
         self.mcp_view_button.style().unpolish(self.mcp_view_button)
         self.mcp_view_button.style().polish(self.mcp_view_button)
         self.settings_button.setObjectName(
@@ -1408,6 +1457,9 @@ class MainWindow(QMainWindow):
         if self.current_view == "agents_md":
             self.library_assets = self.controller.list_assets_by_type("agents_md")
             empty_text = self._t("empty_agents")
+        elif self.current_view == "agent":
+            self.library_assets = self.controller.list_assets_by_type("agent")
+            empty_text = self._t("empty_agent")
         elif self.current_view == "mcp":
             self.library_assets = self.controller.list_assets_by_type("mcp")
             empty_text = self._t("empty_mcp")
@@ -1741,6 +1793,11 @@ class MainWindow(QMainWindow):
             self._t("empty_agents").split("\n", 1)[0],
         )
         self._add_asset_group(
+            self._t("joined_agent"),
+            self.controller.list_harness_assets_by_type(harness.id, "agent"),
+            self._t("empty_agent").split("\n", 1)[0],
+        )
+        self._add_asset_group(
             self._t("joined_mcp"),
             self.controller.list_harness_assets_by_type(harness.id, "mcp"),
             self._t("empty_mcp").split("\n", 1)[0],
@@ -1810,7 +1867,7 @@ class MainWindow(QMainWindow):
         return 112 + extra_lines * 20
 
     def _asset_type_label(self, asset_type: str) -> str:
-        return {"agents_md": "AGENTS.md", "mcp": "MCP", "skill": self._t("skill_label")}.get(
+        return {"agents_md": "AGENTS.md", "agent": self._t("agent_label"), "mcp": "MCP", "skill": self._t("skill_label")}.get(
             asset_type, self._t("component_label")
         )
 
@@ -2020,6 +2077,7 @@ class MainWindow(QMainWindow):
         self.settings_button.setToolTip(self._t("settings_tip"))
         self.harnesses_view_button.setText(self._t("harnesses"))
         self.agents_view_button.setText(self._t("agents"))
+        self.agent_view_button.setText(self._t("agent"))
         self.mcp_view_button.setText(self._t("mcp"))
         self.skills_view_button.setText(self._t("skills"))
         self.new_package_button.setText(self._t("new"))
